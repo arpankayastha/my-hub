@@ -91,5 +91,8 @@ screenshots/
 # Duplicate GitHub Pages staging folder
 docs/github-pages/
 
+# Generated GitHub Pages build output (scripts/build-pages.mjs)
+site/
+
 # macOS sync duplicates (" 2" suffix)
 * 2.*

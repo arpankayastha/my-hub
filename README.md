@@ -42,7 +42,16 @@ Open http://localhost:3000 — local mode is enabled automatically.
 node scripts/build-pages.mjs
 ```
 
-This copies `public/` to `docs/` for GitHub Pages deployment.
+This copies `public/` to `site/` for GitHub Pages deployment.
+
+## Enable GitHub Pages
+
+After merging to `main`, the **Deploy GitHub Pages** workflow pushes the built site to the `gh-pages` branch.
+
+1. Open **Settings → Pages**
+2. Under **Build and deployment**, set **Source** to **Deploy from a branch**
+3. Choose branch **`gh-pages`** and folder **`/ (root)`**
+4. Save — the site will be at **https://arpankayastha.github.io/Genospace/**
 
 ## Original project
 
