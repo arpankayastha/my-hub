@@ -8,7 +8,7 @@
 
   <p>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT-Lizenz"></a>
-    <a href="https://github.com/arpankayastha/my-hub/releases"><img src="https://img.shields.io/github/v/release/arpankayastha/my-hub?style=flat-square&color=6c3aed&label=release" alt="Neuestes Release"></a>
+    <a href="https://github.com/arpankayastha/my-hub/releases"><img src="https://img.shields.io/github/v/release/arpankayastha/my-hub?style=flat-square&color=2563eb&label=release" alt="Neuestes Release"></a>
     <a href="https://github.com/arpankayastha/my-hub/pkgs/container/myhub"><img src="https://img.shields.io/badge/ghcr.io-my-hub-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker-Image"></a>
     <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%E2%89%A522-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js ≥22"></a>
     <img src="https://img.shields.io/badge/PWA-ready-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA">
