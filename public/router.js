@@ -22,7 +22,7 @@ import { openModal, confirmModal } from '/components/modal.js';
 import '/components/datepicker.js';
 import { NAV_ICONS } from '/nav-icons.js';
 import { RENAMED_SETTINGS_SOURCE_PATHS, SETTINGS_LEAVES } from '/settings/registry.js';
-import { toAppUrl, fromAppUrl } from '/app-path.js';
+import { toAppUrl, fromAppUrl, assetUrl } from '/app-path.js';
 import {
   NAV_SECTION,
   resolveMobileNavOrder,
@@ -127,7 +127,7 @@ let activePageStyle = null;
 
 function loadPageStyle(moduleName, routeStyle = null) {
   if (!moduleName && !routeStyle) return { ready: Promise.resolve(), cleanup: () => {} };
-  const href = routeStyle || `/styles/${moduleName}.css`;
+  const href = routeStyle || assetUrl(`/styles/${moduleName}.css`);
   if (activePageStyle?.getAttribute('href') === href) {
     return { ready: Promise.resolve(), cleanup: () => {} };
   }
@@ -158,8 +158,9 @@ function loadPageStyle(moduleName, routeStyle = null) {
 const moduleCache = new Map();
 
 async function importPage(pagePath) {
+  const url = assetUrl(pagePath);
   if (!moduleCache.has(pagePath)) {
-    moduleCache.set(pagePath, await import(pagePath));
+    moduleCache.set(pagePath, await import(url));
   }
   return moduleCache.get(pagePath);
 }
@@ -1713,10 +1714,10 @@ function showChangelogModal() {
 }
 
 function loadReminderStyles() {
-  if (document.querySelector('link[href="/styles/reminders.css"]')) return;
+  if (document.querySelector(`link[href="${assetUrl('/styles/reminders.css')}"]`)) return;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/styles/reminders.css';
+  link.href = assetUrl('/styles/reminders.css');
   document.head.appendChild(link);
 }
 
