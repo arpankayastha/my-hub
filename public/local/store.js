@@ -83,6 +83,9 @@ export function emptyState() {
     health_lab_reports: [],
     health_lab_results: [],
     health_activities: [],
+    cycle_periods: [],
+    cycle_day_logs: [],
+    cycle_settings: [],
   };
 }
 
