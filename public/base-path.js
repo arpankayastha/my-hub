@@ -1,14 +1,10 @@
 /**
  * GitHub Pages base-path bootstrap and local-mode flag.
- * Loaded synchronously before other scripts.
+ * Inline copy lives in index.html; this file is kept for local root hosting.
  */
 (function () {
-  const host = location.hostname;
-  const parts = location.pathname.split('/').filter(Boolean);
-  if (host.endsWith('github.io') && parts.length > 0) {
-    window.__YUVOMI_BASE__ = '/' + parts[0];
-  } else {
-    window.__YUVOMI_BASE__ = '';
-  }
+  const m = location.pathname.match(/^\/([^/]+)(?:\/|$)/);
+  const seg = m && m[1];
+  window.__YUVOMI_BASE__ = (seg && !seg.includes('.')) ? '/' + seg : '';
   window.__YUVOMI_LOCAL_MODE__ = true;
 })();

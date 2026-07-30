@@ -6,9 +6,15 @@
  */
 
 if ('serviceWorker' in navigator) {
-  const swBase = typeof window !== 'undefined' && window.__YUVOMI_BASE__ ? window.__YUVOMI_BASE__ : '';
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${swBase}/sw.js`, { updateViaCache: 'none' })
+    // Local-only GitHub Pages build: API is in IndexedDB; SW scope/path breaks on subpaths.
+    if (window.__YUVOMI_LOCAL_MODE__) return;
+
+    const swBase = window.__YUVOMI_BASE__ || '';
+    const swUrl = `${swBase}/sw.js`;
+    const scope = swBase ? `${swBase}/` : '/';
+
+    navigator.serviceWorker.register(swUrl, { scope, updateViaCache: 'none' })
       .then((registration) => registration.update())
       .catch((err) => {
         console.warn('[SW] Registrierung fehlgeschlagen:', err);

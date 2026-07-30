@@ -27,41 +27,60 @@ function resolveBasePath() {
   return '';
 }
 
-const TEXT_EXT = new Set([
-  '.js', '.mjs', '.html', '.css', '.json', '.webmanifest', '.svg',
-]);
+const WEB_EXT = new Set(['.html', '.css', '.json', '.webmanifest', '.svg']);
 
-/** SPA route definitions — not static asset URLs. */
-// Route paths are skipped inside rewriteLine via lookbehind on `path:`.
+function alreadyPrefixed(afterSlash, repoSegment) {
+  return repoSegment && afterSlash.startsWith(`${repoSegment}/`);
+}
 
-/**
- * Prefix root-absolute URLs (/api.js → /Genospace/api.js).
- * Skips SPA route paths (path: '/login') and already-prefixed paths.
- */
-function rewriteRootPaths(content, basePath, { perLine = false } = {}) {
+/** href/src only — inline <script> may use '/' + variable (must not become '/Genospace/' + seg). */
+function rewriteHtmlPaths(content, basePath) {
   if (!basePath) return content;
   const base = basePath.replace(/\/$/, '');
   const repoSegment = base.slice(1);
 
-  const rewriteLine = (line) => {
-    // Runtime helpers already apply the GitHub Pages base path.
+  return content.replace(
+    /\b(href|src)=(['"])\/(?!\/)/gi,
+    (match, _attr, quote, offset, whole) => {
+      const afterSlash = whole.slice(offset + match.length);
+      if (alreadyPrefixed(afterSlash, repoSegment)) return match;
+      return match.replace(`${quote}/`, `${quote}${base}/`);
+    },
+  );
+}
+
+/** Quote-prefixed root paths in CSS/JSON/manifest (includes bare "/"). */
+function rewriteQuotedRootPaths(content, basePath) {
+  if (!basePath) return content;
+  const base = basePath.replace(/\/$/, '');
+  const repoSegment = base.slice(1);
+
+  return content.replace(/(['"])\/(?!\/)/g, (match, quote, offset, whole) => {
+    const afterSlash = whole.slice(offset + match.length);
+    if (alreadyPrefixed(afterSlash, repoSegment)) return match;
+    return `${quote}${base}/`;
+  });
+}
+
+/** Static imports and page module paths only — never backticks or regex literals. */
+function rewriteJsPaths(content, basePath) {
+  if (!basePath) return content;
+  const base = basePath.replace(/\/$/, '');
+  const repoSegment = base.slice(1);
+
+  return content.split('\n').map((line) => {
     if (/\bassetUrl\s*\(/.test(line) || /\btoAppUrl\s*\(/.test(line) || /\bfromAppUrl\s*\(/.test(line)) {
       return line;
     }
-    return line.replace(/(['"`])\/(?!\/)/g, (match, quote, offset, whole) => {
-    const before = whole.slice(0, offset);
-    // SPA route slug (path: '/login') — not a static asset URL.
-    if (/\bpath:\s*$/.test(before)) return match;
-    const afterSlash = whole.slice(offset + match.length);
-    if (repoSegment && afterSlash.startsWith(`${repoSegment}/`)) return match;
-    return `${quote}${base}/`;
-    });
-  };
-
-  if (perLine) {
-    return content.split('\n').map((line) => rewriteLine(line)).join('\n');
-  }
-  return rewriteLine(content);
+    return line.replace(
+      /(\bfrom\s+|\bimport\s+|import\s*\(\s*)(['"])\/(?!\/)/g,
+      (match, prefix, quote, offset, whole) => {
+        const afterSlash = whole.slice(offset + match.length);
+        if (alreadyPrefixed(afterSlash, repoSegment)) return match;
+        return `${prefix}${quote}${base}/`;
+      },
+    );
+  }).join('\n');
 }
 
 function walkAndRewrite(dir, basePath) {
@@ -73,10 +92,15 @@ function walkAndRewrite(dir, basePath) {
       continue;
     }
     const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
-    if (!TEXT_EXT.has(ext)) continue;
     const original = readFileSync(path, 'utf8');
-    const perLine = ext === '.js' || ext === '.mjs';
-    const rewritten = rewriteRootPaths(original, basePath, { perLine });
+    let rewritten = original;
+    if (ext === '.js' || ext === '.mjs') {
+      rewritten = rewriteJsPaths(original, basePath);
+    } else if (ext === '.html') {
+      rewritten = rewriteHtmlPaths(original, basePath);
+    } else if (WEB_EXT.has(ext)) {
+      rewritten = rewriteQuotedRootPaths(original, basePath);
+    }
     if (rewritten !== original) writeFileSync(path, rewritten);
   }
 }

@@ -17,8 +17,14 @@
   <meta name="description" content="Yuvomi - Familienplaner" />
   <title>Yuvomi</title>
 
-  <!-- GitHub Pages base path + local-only data mode -->
-  <script src="/base-path.js"></script>
+  <script>
+    (function () {
+      var m = location.pathname.match(/^\/([^/]+)(?:\/|$)/);
+      var seg = m && m[1];
+      window.__YUVOMI_BASE__ = (seg && !seg.includes('.')) ? '/' + seg : '';
+      window.__YUVOMI_LOCAL_MODE__ = true;
+    })();
+  </script>
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.webmanifest" />

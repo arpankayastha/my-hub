@@ -17,6 +17,7 @@ export function toAppUrl(path) {
 export function assetUrl(path) {
   const base = getBasePath();
   if (!base || !path.startsWith('/')) return path;
+  if (path === base || path.startsWith(`${base}/`)) return path;
   return `${base}${path}`;
 }
 
