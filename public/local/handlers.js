@@ -14,6 +14,11 @@ import { ensureBudgetState, handleBudgetApi } from './budget-handlers.js';
 import { handleHealthApi } from './health-handlers.js';
 import { handleSplitExpensesApi } from './split-expenses-handlers.js';
 import { handleBirthdaysApi } from './birthdays-handlers.js';
+import { handleContactsApi } from './contacts-handlers.js';
+import { handleMealsApi, handleRecipesApi } from './meals-recipes-handlers.js';
+import { handleRewardsApi, syncTaskRewardEarn } from './rewards-handlers.js';
+import { handleHousekeepingApi } from './housekeeping-handlers.js';
+import { handleDocumentsApi } from './documents-handlers.js';
 
 const APP_VERSION = '1.58.0-local';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
@@ -434,6 +439,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
       if (!task) throw apiError('Task not found.', 404);
       task.status = body.status;
       task.updated_at = nowIso();
+      if (task.status === 'done') syncTaskRewardEarn(state, task, userId);
       await saveState();
       return { data: enrichTask(task, userId) };
     }
@@ -467,6 +473,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
         recurrence_rule: body.recurrence_rule ?? task.recurrence_rule,
         updated_at: nowIso(),
       });
+      if (task.status === 'done') syncTaskRewardEarn(state, task, userId);
       await saveState();
       return { data: enrichTask(task, userId) };
     }
@@ -669,12 +676,40 @@ export async function handleLocalApi(method, path, body, query = {}) {
     }
   }
 
-  if (resource === 'documents' && m === 'GET') {
-    return { data: [] };
+  if (resource === 'documents') {
+    const documentsResult = await handleDocumentsApi(m, parts, query, body, state, userId, findUser);
+    if (documentsResult !== null) return documentsResult;
+    throw apiError('Not found.', 404);
   }
 
-  if (resource === 'documents' && parts[1] === 'meta' && parts[2] === 'options') {
-    return { data: { categories: [], folders: [] } };
+  if (resource === 'contacts') {
+    const contactsResult = await handleContactsApi(m, parts, query, body, state, userId);
+    if (contactsResult !== null) return contactsResult;
+    throw apiError('Not found.', 404);
+  }
+
+  if (resource === 'meals') {
+    const mealsResult = await handleMealsApi(m, parts, query, body, state, userId, findUser);
+    if (mealsResult !== null) return mealsResult;
+    throw apiError('Not found.', 404);
+  }
+
+  if (resource === 'recipes') {
+    const recipesResult = await handleRecipesApi(m, parts, query, body, state, userId, findUser);
+    if (recipesResult !== null) return recipesResult;
+    throw apiError('Not found.', 404);
+  }
+
+  if (resource === 'rewards') {
+    const rewardsResult = await handleRewardsApi(m, parts, query, body, state, userId, findUser, state.users);
+    if (rewardsResult !== null) return rewardsResult;
+    throw apiError('Not found.', 404);
+  }
+
+  if (resource === 'housekeeping') {
+    const hkResult = await handleHousekeepingApi(m, parts, query, body, state, userId, findUser);
+    if (hkResult !== null) return hkResult;
+    throw apiError('Not found.', 404);
   }
 
   if (resource === 'pantry' && parts[1] === 'locations' && m === 'GET') {
@@ -684,7 +719,11 @@ export async function handleLocalApi(method, path, body, query = {}) {
   if (resource === 'search' && m === 'GET') {
     const q = String(query.q || '').toLowerCase();
     const tasks = state.tasks.filter((t) => String(t.title || '').toLowerCase().includes(q)).map((t) => enrichTask(t, userId));
-    return { data: { tasks, events: [], notes: [], contacts: [] } };
+    const contacts = state.contacts.filter((c) =>
+      String(c.name || '').toLowerCase().includes(q)
+      || String(c.phone || '').toLowerCase().includes(q),
+    ).map((c) => ({ id: c.id, name: c.name, phone: c.phone, category: c.category }));
+    return { data: { tasks, events: [], notes: [], contacts } };
   }
 
   if (resource === 'permissions' && parts[1] === 'catalog' && m === 'GET') {

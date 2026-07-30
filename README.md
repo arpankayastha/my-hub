@@ -34,12 +34,11 @@ If a page calls e.g. `api.post('/birthdays', …)` but no handler exists, you ge
 ### Currently implemented local API modules
 
 - Auth (setup, login, logout, me)
-- Preferences, dashboard (partial), reminders, tasks, shopping, calendar, notes
+- Preferences, dashboard (partial), reminders, tasks (+ reward points on completion), shopping, calendar, notes
 - Budget, health (vitals, meds, labs, activities, cycle), birthdays, split-expenses (stubs)
-- Family members, search (tasks only), pantry locations, documents (empty stubs)
-- Weather / push / permissions (stubs)
-
-Modules without handlers still load in the UI but saves may fail until handlers are added (same pattern as `birthdays-handlers.js`).
+- Contacts (+ categories), meals, recipes, rewards, housekeeping, documents (+ folders)
+- Family members, search, pantry locations
+- Weather / push / permissions (stubs); DMS cloud links (not available locally)
 
 ### GitHub Pages path prefix
 
