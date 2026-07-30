@@ -69,6 +69,13 @@ export function emptyState() {
     recipes: [],
     pantry_items: [],
     pantry_locations: [],
+    budget_entries: [],
+    budget_categories: [],
+    budget_subcategories: [],
+    budget_accounts: [],
+    budget_loans: [],
+    budget_loan_payments: [],
+    budget_plans: [],
   };
 }
 

@@ -10,6 +10,7 @@ import {
   createSeedState, publicUser, adminPermissions, hashPasswordSimple,
   verifyPasswordSimple, AVATAR_COLORS,
 } from './seed.js';
+import { ensureBudgetState, handleBudgetApi } from './budget-handlers.js';
 
 const APP_VERSION = '1.58.0-local';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
@@ -695,6 +696,12 @@ export async function handleLocalApi(method, path, body, query = {}) {
     return { data: null };
   }
 
+  if (resource === 'budget') {
+    const budgetResult = await handleBudgetApi(m, parts, query, body, state, userId, findUser);
+    if (budgetResult !== null) return budgetResult;
+    throw apiError('Not found.', 404);
+  }
+
   // Default empty list for unimplemented read endpoints
   if (m === 'GET') {
     return { data: [] };
@@ -706,6 +713,11 @@ export async function handleLocalApi(method, path, body, query = {}) {
 export async function initLocalStore() {
   await loadState();
   const state = getState();
+  const hadCategories = state.budget_categories?.length > 0;
+  ensureBudgetState(state);
+  if (!hadCategories && state.budget_categories.length > 0) {
+    await saveState();
+  }
   if (!state.task_categories?.length) {
     const { resetState } = await import('./store.js');
     await resetState(createSeedState());

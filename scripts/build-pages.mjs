@@ -126,3 +126,9 @@ if (basePath) {
 } else {
   console.log('GitHub Pages build complete → site/ (root paths unchanged)');
 }
+
+// GitHub Pages serves 404.html for missing paths while keeping the URL — required for SPA deep links.
+const indexHtml = resolve(siteDir, 'index.html');
+if (existsSync(indexHtml)) {
+  cpSync(indexHtml, resolve(siteDir, '404.html'));
+}

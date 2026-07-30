@@ -3,6 +3,7 @@
  */
 
 import { emptyState } from './store.js';
+import { ensureBudgetState } from './budget-handlers.js';
 
 const DEFAULT_CATEGORIES = [
   { key: 'misc', name: 'Misc', label_key: 'tasks.category.misc', sort_order: 0 },
@@ -34,6 +35,7 @@ export function createSeedState() {
     { id: 2, name: 'Dairy', sort_order: 1 },
     { id: 3, name: 'Other', sort_order: 2 },
   ];
+  ensureBudgetState(state);
   state.nextId = 10;
   return state;
 }
