@@ -23,6 +23,8 @@ jobs:
           node-version: '22'
 
       - name: Build static site
+        env:
+          GITHUB_PAGES_BASE: /${{ github.event.repository.name }}
         run: node scripts/build-pages.mjs
 
       - name: Deploy to gh-pages branch
