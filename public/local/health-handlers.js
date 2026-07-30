@@ -60,7 +60,7 @@ function filterCycleRows(rows, viewerId, query, dateField) {
       filtered = rows.filter((r) => r.user_id === personId && r.visibility === 'family');
     }
   } else {
-    filtered = rows.filter((r) => r.user_id === viewerId || r.visibility === 'family');
+    filtered = rows.filter((r) => r.user_id === viewerId);
   }
   if (query.from) filtered = filtered.filter((r) => r[dateField] >= query.from);
   if (query.to) filtered = filtered.filter((r) => r[dateField] <= query.to);
@@ -256,7 +256,7 @@ function apiError(message, status) {
 }
 
 function filterVitals(state, userId, query) {
-  let rows = state.health_vitals.filter((v) => v.user_id === userId || v.visibility === 'family');
+  let rows = state.health_vitals.filter((v) => v.user_id === userId);
   if (query.user_id) {
     const pid = Number(query.user_id);
     rows = rows.filter((v) => v.user_id === pid);

@@ -12,6 +12,7 @@ import { syncTaskRewards } from '../services/rewards.js';
 import { normalizeVisibility, visibilityWhere } from '../services/visibility.js';
 import { uniqueKey } from '../utils/category-slug.js';
 import * as v from '../middleware/validate.js';
+import { viewerId } from './budget/helpers.js';
 
 const log = createLogger('Tasks');
 
@@ -308,7 +309,7 @@ router.get('/', (req, res) => {
     if (category)    { sql += ' AND t.category = ?';    params.push(category); }
 
     // Sichtbarkeit (#474): eigene + für alle sichtbare + zugewiesene-sichtbare.
-    const me = req.authUserId || req.session.userId;
+    const me = viewerId(req);
     sql += ` AND ${visibilityWhere('t', 'task_assignments', 'task_id')}`;
     params.push(me, me);
 
@@ -336,7 +337,7 @@ router.get('/', (req, res) => {
 // --------------------------------------------------------
 router.get('/:id', (req, res) => {
   try {
-    const me = req.authUserId || req.session.userId;
+    const me = viewerId(req);
     const task = db.get().prepare(`
       SELECT t.*, u.display_name AS assigned_name, u.avatar_color AS assigned_color,
         u.avatar_data AS assigned_avatar, ${ASSIGNED_USERS_SQL}
@@ -410,7 +411,7 @@ router.post('/', (req, res) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         title.trim(), description, category, priority,
-        start_date, due_date, due_time, firstUid, req.authUserId || req.session.userId, parent_task_id,
+        start_date, due_date, due_time, firstUid, viewerId(req), parent_task_id,
         is_recurring ? 1 : 0, recurrence_rule, points, visibility
       );
       setAssignments(db.get(), result.lastInsertRowid, userIds);
@@ -614,7 +615,7 @@ function loadTaskDocuments(taskId, me) {
 // GET /api/v1/tasks/:id/documents → { data: LinkedDocument[] }
 router.get('/:id/documents', (req, res) => {
   try {
-    const me = req.authUserId || req.session.userId;
+    const me = viewerId(req);
     const task = findVisibleTask(req.params.id, me);
     if (!task) return res.status(404).json({ error: 'Task not found.', code: 404 });
     res.json({ data: loadTaskDocuments(task.id, me) });
@@ -630,7 +631,7 @@ router.get('/:id/documents', (req, res) => {
 // ersetzt — unsichtbare (z.B. private Dokumente anderer) bleiben unberührt.
 router.put('/:id/documents', (req, res) => {
   try {
-    const me = req.authUserId || req.session.userId;
+    const me = viewerId(req);
     const task = findVisibleTask(req.params.id, me);
     if (!task) return res.status(404).json({ error: 'Task not found.', code: 404 });
 

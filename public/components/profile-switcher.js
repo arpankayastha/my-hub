@@ -133,7 +133,7 @@ async function switchProfileTo(user, targetId, onContextChanged) {
   const selfId = Number(user.id);
   if (!await maybeVerifyBiometric()) return false;
   try {
-    const res = await auth.switchContext(targetId === selfId ? null : targetId);
+    const res = await auth.switchContext(targetId);
     const merged = { ...res.user, acting_as: res.acting_as ?? null };
     localStorage.setItem('myhub.biometric.credential', _biometricCredentialId || '');
     onContextChanged?.(merged);

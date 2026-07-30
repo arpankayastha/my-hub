@@ -66,7 +66,7 @@ async function syncPersonContext(personId) {
   const target = Number(personId);
   if (target === effectiveMeId()) return;
   try {
-    const res = await auth.switchContext(target === selfId ? null : target);
+    const res = await auth.switchContext(target);
     _sessionUser = { ...res.user, acting_as: res.acting_as ?? null };
     window.dispatchEvent(new CustomEvent('profile:context-changed', { detail: _sessionUser }));
   } catch (err) {
