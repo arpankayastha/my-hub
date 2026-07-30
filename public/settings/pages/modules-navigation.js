@@ -593,7 +593,7 @@ export async function render(container, { user }) {
     isAdmin ? api.get('/modules?admin=1') : Promise.resolve({ data: [] }),
   ]);
 
-  const preferences = preferencesResult.status === 'fulfilled' ? (preferencesResult.value?.data ?? {}) : {};
+  const preferences = preferencesResult.status === 'fulfilled' ? (preferencesResult.value ?? {}) : {};
   const thirdPartyModules = modulesResult.status === 'fulfilled' ? (modulesResult.value?.data ?? []) : [];
 
   const rows = buildRows(preferences, thirdPartyModules);
