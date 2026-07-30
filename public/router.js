@@ -29,6 +29,11 @@ import {
   resolveMobileNavOrder,
   sortNavigationItems,
 } from '/settings/module-order.js';
+import {
+  loadProfileSwitcherState,
+  profileSwitcherMarkup,
+  wireProfileSwitcher,
+} from '/components/profile-switcher.js';
 
 // --------------------------------------------------------
 // Routen-Definitionen
@@ -225,6 +230,22 @@ function warmPrimaryRoutes() {
 // Globaler App-State
 // --------------------------------------------------------
 let currentUser = null;
+
+function mergeAuthUser(result) {
+  if (!result) return null;
+  if (result.user) {
+    return { ...result.user, acting_as: result.acting_as ?? null };
+  }
+  return { ...result, acting_as: result.acting_as ?? null };
+}
+
+async function applyProfileContext(mergedUser) {
+  currentUser = mergedUser;
+  _navBuiltForUserId = null;
+  clearApiCache();
+  await rebuildNavigation();
+  await navigate(currentPath || '/', false, false);
+}
 // Für welchen Nutzer wurde die Nav zuletzt gebaut? Bei Nutzerwechsel (Logout →
 // Login als anderes Konto im selben Tab) bleibt die alte Shell im DOM; die Nav
 // muss dann mit den Rechten des neuen Nutzers neu gefiltert werden (#467).
@@ -440,7 +461,7 @@ async function navigate(path, userOrPushState = true, pushState = true) {
   try {
     // Überlastung: navigate(path, user) nach Login vs navigate(path, false) beim Init
     if (typeof userOrPushState === 'object' && userOrPushState !== null) {
-      currentUser = userOrPushState;
+      currentUser = mergeAuthUser(userOrPushState);
       _setupRequired = false;
       await syncPreferencesOnce();
       startThirdPartyModulePolling();
@@ -509,7 +530,7 @@ async function navigate(path, userOrPushState = true, pushState = true) {
     if (route.requiresAuth && !currentUser) {
       try {
         const result = await auth.me();
-        currentUser = result.user;
+        currentUser = mergeAuthUser(result);
         await syncPreferencesOnce();
         startThirdPartyModulePolling();
         // currentUser kann während des await oben auf null gesetzt worden sein
@@ -934,7 +955,7 @@ async function renderPage(route, previousPath = null) {
     // main-content muss im DOM existieren damit document.getElementById()
     // in Seiten-Modulen funktioniert.
     else if (!document.querySelector('.nav-bottom') && currentUser) {
-      renderAppShell(app);
+      await renderAppShell(app);
       _navBuiltForUserId = currentUser.id;
     } else if (currentUser && _navBuiltForUserId !== currentUser.id) {
       // Shell besteht bereits, aber der Nutzer hat gewechselt → Nav mit den
@@ -1050,7 +1071,7 @@ async function renderPage(route, previousPath = null) {
 /**
  * App-Shell mit Navigation einmalig aufbauen (nach erstem Login).
  */
-function renderAppShell(container) {
+async function renderAppShell(container) {
   const isGuest = currentUser?.access_scope === 'split_guest';
   const skipLink = document.createElement('a');
   skipLink.href = '#main-content';
@@ -1193,6 +1214,15 @@ function renderAppShell(container) {
   // sie ignorieren): Hilfe und Live-Changelog.
   const sidebarFooter = document.createElement('div');
   sidebarFooter.className = 'nav-sidebar__footer-actions';
+  await loadProfileSwitcherState();
+  const profileHtml = profileSwitcherMarkup(currentUser);
+  if (profileHtml) {
+    const profileWrap = document.createElement('div');
+    profileWrap.className = 'nav-sidebar__profile';
+    profileWrap.insertAdjacentHTML('beforeend', profileHtml);
+    sidebarFooter.appendChild(profileWrap);
+    wireProfileSwitcher(profileWrap, currentUser, applyProfileContext);
+  }
   sidebarFooter.append(
     sidebarActionEl({
       labelKey: 'nav.help',

@@ -10,7 +10,7 @@ import { prefersInkText } from '/utils/contrast.js';
 import { openModal, closeModal, confirmModal } from '/components/modal.js';
 import { createRetryState, toggleRowHtml } from '/settings/components.js';
 
-const FAMILY_ROLES = ['dad', 'mom', 'parent', 'child', 'grandparent', 'relative', 'other'];
+import { FAMILY_ROLES, isValidFamilyRole } from '/utils/family-roles.js';
 const AVATAR_COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#AF52DE', '#FF2D55'];
 const MAX_AVATAR_DATA_LENGTH = 768 * 1024;
 const randomAvatarColor = () => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];

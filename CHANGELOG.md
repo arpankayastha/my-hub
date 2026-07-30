@@ -2,6 +2,13 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.8] - 2026-07-30
+
+### Added
+- Household profile switcher for admins (manage each member's budget and health without re-login).
+- Extended family roles (spouse, wife, husband, mother, father, son, daughter, sibling).
+- Optional biometric lock when switching profiles (Settings → Account).
+
 ## [1.1.7] - 2026-07-30
 
 ### Fixed

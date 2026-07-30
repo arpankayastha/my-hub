@@ -11,8 +11,8 @@
  *        /components/modal.js, /utils/health-vitals.js, /utils/health-tabs.js
  */
 
-import { api } from '/api.js';
-import { fromAppUrl } from '/app-path.js';
+import { api, auth } from '/api.js';
+import { effectiveUserId } from '/utils/profile-context.js';
 import { t, formatDate, formatTime, getLocale, getNumberFormat } from '/i18n.js';
 import { esc } from '/utils/html.js';
 import { wireScrollFade, scheduleUndoableDelete } from '/utils/ux.js';
@@ -50,6 +50,26 @@ async function loadHealthPrefs() {
     cycleEnabled = res?.data?.health_cycle_enabled !== false;
   } catch {
     cycleEnabled = true;
+  }
+}
+
+let _sessionUser = null;
+
+function effectiveMeId() {
+  return effectiveUserId(_sessionUser) ?? _sessionUser?.id ?? null;
+}
+
+async function syncPersonContext(personId) {
+  if (!_sessionUser || _sessionUser.role !== 'admin') return;
+  const selfId = Number(_sessionUser.id);
+  const target = Number(personId);
+  if (target === effectiveMeId()) return;
+  try {
+    const res = await auth.switchContext(target === selfId ? null : target);
+    _sessionUser = { ...res.user, acting_as: res.acting_as ?? null };
+    window.dispatchEvent(new CustomEvent('profile:context-changed', { detail: _sessionUser }));
+  } catch (err) {
+    console.error('[Health] profile context sync failed:', err);
   }
 }
 
@@ -252,22 +272,30 @@ function refreshHealthFab() {
 
 export async function render(container, ctx = {}) {
   _container = container;
-  vitals.meId = ctx.user?.id ?? vitals.meId;
+  _sessionUser = ctx.user ?? null;
+  const meId = effectiveMeId();
+  vitals.meId = meId;
+  vitals.personId = meId;
   vitals.root = null;
   vitals.loaded = false;
-  meds.meId = ctx.user?.id ?? meds.meId;
+  meds.meId = meId;
+  meds.personId = meId;
   meds.root = null;
   meds.loaded = false;
-  labs.meId = ctx.user?.id ?? labs.meId;
+  labs.meId = meId;
+  labs.personId = meId;
   labs.root = null;
   labs.loaded = false;
-  activity.meId = ctx.user?.id ?? activity.meId;
+  activity.meId = meId;
+  activity.personId = meId;
   activity.root = null;
   activity.loaded = false;
-  cycle.meId = ctx.user?.id ?? cycle.meId;
+  cycle.meId = meId;
+  cycle.personId = meId;
   cycle.root = null;
   cycle.loaded = false;
-  overview.meId = ctx.user?.id ?? overview.meId;
+  overview.meId = meId;
+  overview.personId = meId;
   overview.root = null;
   overview.loaded = false;
   await loadHealthPrefs();
@@ -360,7 +388,8 @@ async function loadVitals() {
 }
 
 function isOwnView() {
-  return vitals.personId != null && vitals.personId === vitals.meId;
+  const me = effectiveMeId();
+  return vitals.personId != null && vitals.personId === me;
 }
 
 function renderVitalsShell() {
@@ -508,6 +537,7 @@ function wireVitals() {
       const id = Number(chip.dataset.personId);
       if (id === vitals.personId) return;
       vitals.personId = id;
+      syncPersonContext(id);
       switchPerson();
     }));
 
@@ -1093,7 +1123,7 @@ async function loadMeds() {
 }
 
 function isOwnMedsView() {
-  return meds.personId != null && meds.personId === meds.meId;
+  return meds.personId != null && meds.personId === effectiveMeId();
 }
 
 function allSchedules() {
@@ -1311,6 +1341,7 @@ function wireMeds() {
       const id = Number(chip.dataset.personId);
       if (id === meds.personId) return;
       meds.personId = id;
+      syncPersonContext(id);
       switchMedsPerson();
     }));
 
@@ -1714,7 +1745,7 @@ async function loadLabs() {
 }
 
 function isOwnLabsView() {
-  return labs.personId != null && labs.personId === labs.meId;
+  return labs.personId != null && labs.personId === effectiveMeId();
 }
 
 function selectedReport() {
@@ -2018,6 +2049,7 @@ function wireLabs() {
       const id = Number(chip.dataset.personId);
       if (id === labs.personId) return;
       labs.personId = id;
+      syncPersonContext(id);
       switchLabsPerson();
     }));
 
@@ -2387,7 +2419,7 @@ async function loadActivity() {
 }
 
 function isOwnActivityView() {
-  return activity.personId != null && activity.personId === activity.meId;
+  return activity.personId != null && activity.personId === effectiveMeId();
 }
 
 async function switchActivityPerson() {
@@ -2599,6 +2631,7 @@ function wireActivity() {
       const id = Number(chip.dataset.personId);
       if (id === activity.personId) return;
       activity.personId = id;
+      syncPersonContext(id);
       switchActivityPerson();
     }));
 
@@ -2886,7 +2919,7 @@ async function loadOverview() {
 }
 
 function isOwnOverviewView() {
-  return overview.personId != null && overview.personId === overview.meId;
+  return overview.personId != null && overview.personId === effectiveMeId();
 }
 
 function overviewAllSchedules() {
@@ -3237,6 +3270,7 @@ function wireOverview() {
       const id = Number(chip.dataset.personId);
       if (id === overview.personId) return;
       overview.personId = id;
+      syncPersonContext(id);
       switchOverviewPerson();
     }));
 
@@ -3370,7 +3404,7 @@ async function loadCycle() {
 }
 
 function isOwnCycleView() {
-  return cycle.personId != null && cycle.personId === cycle.meId;
+  return cycle.personId != null && cycle.personId === effectiveMeId();
 }
 
 function cycleSettings() {
@@ -3820,6 +3854,7 @@ function wireCycle() {
       const id = Number(chip.dataset.personId);
       if (id === cycle.personId) return;
       cycle.personId = id;
+      syncPersonContext(id);
       switchCyclePerson();
     }));
 

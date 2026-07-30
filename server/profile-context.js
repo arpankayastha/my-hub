@@ -1,0 +1,24 @@
+/**
+ * Session profile context — admin acts as another household member without re-login.
+ */
+
+import {
+  actingUserIdFromSession,
+  publicActingAs,
+} from '../public/utils/profile-context.js';
+
+export { actingUserIdFromSession, publicActingAs };
+
+export function resolveContextTarget(authUserId, targetId, findUser) {
+  const actor = findUser(authUserId);
+  if (!actor) return { error: 'User not found.', status: 401 };
+  if (actor.role !== 'admin') {
+    return { error: 'Admin access required.', status: 403 };
+  }
+  if (targetId == null || targetId === '' || Number(targetId) === Number(authUserId)) {
+    return { contextUserId: null };
+  }
+  const target = findUser(Number(targetId));
+  if (!target) return { error: 'Family member not found.', status: 404 };
+  return { contextUserId: target.id };
+}

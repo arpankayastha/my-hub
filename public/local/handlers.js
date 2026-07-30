@@ -31,6 +31,11 @@ import {
 import { normalizeMobileNavOrder } from '../settings/module-order.js';
 import { APP_VERSION } from '../version.js';
 import { loadLocalChangelog, buildChangelogPayload } from './changelog.js';
+import { FAMILY_ROLES, isValidFamilyRole } from '../utils/family-roles.js';
+import {
+  actingUserIdFromSession,
+  publicActingAs,
+} from '../utils/profile-context.js';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
 const VALID_STATUSES = ['open', 'in_progress', 'done', 'archived'];
 const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -53,6 +58,36 @@ function requireAuth() {
   const id = authUserId();
   if (!id) throw apiError('Unauthorized', 401);
   return id;
+}
+
+function effectiveAuthUserId() {
+  const authId = requireAuth();
+  return actingUserIdFromSession(getSession(), authId);
+}
+
+function authMePayload(user) {
+  const session = getSession();
+  const acting_as = publicActingAs(findUser, session?.contextUserId, user.id);
+  return {
+    user: publicUser(user),
+    acting_as,
+    permissions: adminPermissions(),
+    csrfToken: session?.csrfToken,
+  };
+}
+
+function resolveContextTarget(authUserId, targetId) {
+  const actor = findUser(authUserId);
+  if (!actor) return { error: 'User not found.', status: 401 };
+  if (actor.role !== 'admin') {
+    return { error: 'Admin access required.', status: 403 };
+  }
+  if (targetId == null || targetId === '' || Number(targetId) === Number(authUserId)) {
+    return { contextUserId: null };
+  }
+  const target = findUser(Number(targetId));
+  if (!target) return { error: 'Family member not found.', status: 404 };
+  return { contextUserId: target.id };
 }
 
 function apiError(message, status, data = null) {
@@ -235,7 +270,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
       const csrf = crypto.randomUUID();
       setSession({ userId: user.id, csrfToken: csrf });
       await saveState();
-      return { user: publicUser(user), permissions: adminPermissions(), csrfToken: csrf };
+      return { user: publicUser(user), acting_as: null, permissions: adminPermissions(), csrfToken: csrf };
     }
     if (sub === 'logout' && m === 'POST') {
       setSession(null);
@@ -245,8 +280,48 @@ export async function handleLocalApi(method, path, body, query = {}) {
       const userId = requireAuth();
       const user = findUser(userId);
       if (!user) throw apiError('User not found.', 401);
-      const session = getSession();
-      return { user: publicUser(user), permissions: adminPermissions(), csrfToken: session?.csrfToken };
+      return authMePayload(user);
+    }
+    if (sub === 'context' && m === 'POST') {
+      const authId = requireAuth();
+      const rawTarget = body.user_id;
+      const resolved = resolveContextTarget(authId, rawTarget);
+      if (resolved.error) throw apiError(resolved.error, resolved.status);
+      const session = getSession() || {};
+      if (resolved.contextUserId) {
+        session.contextUserId = resolved.contextUserId;
+      } else {
+        delete session.contextUserId;
+      }
+      setSession(session);
+      const user = findUser(authId);
+      return authMePayload(user);
+    }
+    if (sub === 'biometric' && m === 'GET') {
+      const authId = requireAuth();
+      const cred = cfgUserGet('biometric_credential_id', authId);
+      return {
+        data: {
+          enabled: cfgUserGet('biometric_profile_switch', authId) === '1',
+          registered: Boolean(cred),
+        },
+      };
+    }
+    if (sub === 'biometric' && m === 'POST') {
+      const authId = requireAuth();
+      const credentialId = String(body.credential_id || '').trim();
+      if (!credentialId) throw apiError('credential_id is required.', 400);
+      cfgUserSet('biometric_credential_id', authId, credentialId);
+      cfgUserSet('biometric_profile_switch', authId, '1');
+      await saveState();
+      return { ok: true };
+    }
+    if (sub === 'biometric' && m === 'DELETE') {
+      const authId = requireAuth();
+      cfgUserSet('biometric_credential_id', authId, null);
+      cfgUserSet('biometric_profile_switch', authId, '0');
+      await saveState();
+      return { ok: true };
     }
     if (sub === 'users' && m === 'GET') {
       requireAuth();
@@ -271,9 +346,8 @@ export async function handleLocalApi(method, path, body, query = {}) {
       if (state.users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
         throw apiError('Username is already taken.', 409);
       }
-      const FAMILY_ROLES = ['dad', 'mom', 'parent', 'child', 'grandparent', 'relative', 'other'];
       const family_role = String(body.family_role || 'other').trim();
-      if (!FAMILY_ROLES.includes(family_role)) {
+      if (!isValidFamilyRole(family_role)) {
         throw apiError('Invalid family role.', 400);
       }
       const systemAdmin = body.system_admin === true || body.system_admin === 'true' || body.role === 'admin';
@@ -301,6 +375,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
   }
 
   const userId = requireAuth();
+  const effectiveUserId = effectiveAuthUserId();
 
   if (resource === 'preferences' && parts.length === 1) {
     if (m === 'GET') return { data: preferencesData(userId) };
@@ -868,13 +943,13 @@ export async function handleLocalApi(method, path, body, query = {}) {
   }
 
   if (resource === 'budget') {
-    const budgetResult = await handleBudgetApi(m, parts, query, body, state, userId, findUser);
+    const budgetResult = await handleBudgetApi(m, parts, query, body, state, effectiveUserId, findUser);
     if (budgetResult !== null) return budgetResult;
     throw apiError('Not found.', 404);
   }
 
   if (resource === 'health') {
-    const healthResult = await handleHealthApi(m, parts, query, body, state, userId);
+    const healthResult = await handleHealthApi(m, parts, query, body, state, effectiveUserId);
     if (healthResult !== null) return healthResult;
     throw apiError('Not found.', 404);
   }

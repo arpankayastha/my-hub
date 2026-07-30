@@ -6,6 +6,14 @@ import {
 } from '/i18n.js';
 import { esc } from '/utils/html.js';
 import { prefersInkText } from '/utils/contrast.js';
+import {
+  webAuthnAvailable,
+  registerPlatformPasskey,
+} from '/utils/webauthn.js';
+import {
+  setProfileSwitcherBiometric,
+  setProfileSwitcherCredentialId,
+} from '/components/profile-switcher.js';
 
 const MAX_AVATAR_DATA_LENGTH = 768 * 1024;
 
@@ -114,7 +122,7 @@ function consumeAccessNotice() {
   return notice === 'accessRedirected' ? t('settings.accessRedirected') : null;
 }
 
-function renderPage(container, user, refreshFailed, accessNotice) {
+function renderPage(container, user, refreshFailed, accessNotice, biometric = {}) {
   container.replaceChildren();
   container.insertAdjacentHTML('beforeend', `
     ${accessNotice ? `
@@ -200,6 +208,33 @@ function renderPage(container, user, refreshFailed, accessNotice) {
           <button type="submit" class="btn btn--primary">${t('settings.savePassword')}</button>
         </form>
       </div>
+
+      ${biometric.available ? `
+      <div class="settings-card">
+        <h3 class="settings-card__title">${t('settings.biometricTitle')}</h3>
+        <p class="form-hint">${t('settings.biometricHint')}</p>
+        <div class="settings-form-actions settings-form-actions--cluster">
+          <label class="settings-toggle">
+            <input type="checkbox" id="biometric-enabled" ${biometric.enabled ? 'checked' : ''}
+              ${biometric.registered ? '' : 'disabled'}>
+            <span>${t('settings.biometricEnable')}</span>
+          </label>
+          <button type="button" class="btn btn--secondary" id="biometric-register"
+            ${biometric.registered ? 'hidden' : ''}>${t('settings.biometricRegister')}</button>
+          <button type="button" class="btn btn--secondary" id="biometric-remove"
+            ${biometric.registered ? '' : 'hidden'}>${t('settings.biometricRemove')}</button>
+        </div>
+        <p id="biometric-status" class="form-hint" role="status">
+          ${biometric.registered ? esc(t('settings.biometricRegistered')) : esc(t('settings.biometricNotRegistered'))}
+        </p>
+        <div id="biometric-error" class="form-error" role="alert" hidden></div>
+      </div>
+      ` : `
+      <div class="settings-card">
+        <h3 class="settings-card__title">${t('settings.biometricTitle')}</h3>
+        <p class="form-hint">${t('settings.biometricUnavailable')}</p>
+      </div>
+      `}
     </section>
 
     <section class="settings-section">
@@ -314,6 +349,76 @@ function bindEvents(container, user, profileState) {
     }
   });
 
+  const biometricError = container.querySelector('#biometric-error');
+  const biometricStatus = container.querySelector('#biometric-status');
+  const biometricEnabled = container.querySelector('#biometric-enabled');
+  const biometricRegister = container.querySelector('#biometric-register');
+  const biometricRemove = container.querySelector('#biometric-remove');
+
+  biometricRegister?.addEventListener('click', async () => {
+    clearError(biometricError);
+    biometricRegister.disabled = true;
+    try {
+      const credId = await registerPlatformPasskey(user?.id, user?.display_name);
+      await auth.registerBiometric(credId);
+      setProfileSwitcherCredentialId(credId);
+      setProfileSwitcherBiometric(true);
+      if (biometricEnabled) {
+        biometricEnabled.disabled = false;
+        biometricEnabled.checked = true;
+      }
+      biometricRegister.hidden = true;
+      biometricRemove.hidden = false;
+      if (biometricStatus) biometricStatus.textContent = t('settings.biometricRegistered');
+      window.myHub?.showToast(t('settings.biometricSavedToast'), 'success');
+    } catch (err) {
+      showError(biometricError, err.message === 'webauthn_unavailable'
+        ? t('settings.biometricUnavailable')
+        : t('settings.biometricFailed'));
+    } finally {
+      biometricRegister.disabled = false;
+    }
+  });
+
+  biometricRemove?.addEventListener('click', async () => {
+    clearError(biometricError);
+    biometricRemove.disabled = true;
+    try {
+      await auth.removeBiometric();
+      setProfileSwitcherCredentialId(null);
+      setProfileSwitcherBiometric(false);
+      if (biometricEnabled) {
+        biometricEnabled.checked = false;
+        biometricEnabled.disabled = true;
+      }
+      biometricRegister.hidden = false;
+      biometricRemove.hidden = true;
+      if (biometricStatus) biometricStatus.textContent = t('settings.biometricNotRegistered');
+      window.myHub?.showToast(t('settings.biometricRemovedToast'), 'success');
+    } catch (err) {
+      showError(biometricError, err.message);
+    } finally {
+      biometricRemove.disabled = false;
+    }
+  });
+
+  biometricEnabled?.addEventListener('change', async () => {
+    if (!biometricEnabled.checked) {
+      try {
+        await auth.removeBiometric();
+        setProfileSwitcherBiometric(false);
+        setProfileSwitcherCredentialId(null);
+        biometricEnabled.disabled = true;
+        biometricRegister.hidden = false;
+        biometricRemove.hidden = true;
+        if (biometricStatus) biometricStatus.textContent = t('settings.biometricNotRegistered');
+      } catch (err) {
+        biometricEnabled.checked = true;
+        showError(biometricError, err.message);
+      }
+    }
+  });
+
   container.querySelector('#logout-btn')?.addEventListener('click', async () => {
     try {
       await auth.logout();
@@ -337,9 +442,22 @@ export async function render(container, { user }) {
   }
 
   const accessNotice = consumeAccessNotice();
+  const biometric = {
+    available: webAuthnAvailable(),
+    enabled: false,
+    registered: false,
+  };
+  try {
+    const bioRes = await auth.getBiometric();
+    biometric.enabled = bioRes?.data?.enabled === true;
+    biometric.registered = bioRes?.data?.registered === true;
+    setProfileSwitcherBiometric(biometric.enabled);
+  } catch {
+    /* optional */
+  }
 
   try {
-    renderPage(container, currentUser, refreshFailed, accessNotice);
+    renderPage(container, currentUser, refreshFailed, accessNotice, biometric);
     bindEvents(container, currentUser, {
       avatarData: currentUser?.avatar_data ?? null,
     });

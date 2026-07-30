@@ -218,7 +218,7 @@ export async function render(container) {
 
     try {
       const result = await auth.login(username, password);
-      window.myHub.navigate('/', result.user);
+      window.myHub.navigate('/', { ...result.user, acting_as: result.acting_as ?? null });
     } catch (err) {
       // Fehler-Ehrlichkeit: nur 401 heißt „falsche Zugangsdaten". 429 ist die
       // Sperre; alles andere (Status 0 = offline, 5xx = Serverfehler) ist ein

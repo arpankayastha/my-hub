@@ -36,6 +36,8 @@ const SHARED_ISOMORPHIC = new Set([
   'public/utils/recipe-meal-types.js',
   'public/utils/contact-name.js',
   'public/utils/pantry-units.js',
+  'public/utils/family-roles.js',
+  'public/utils/profile-context.js',
 ]);
 
 const SOURCE_EXT = /\.(js|mjs)$/;
