@@ -183,6 +183,56 @@ function computePlanProgress(state, month) {
   return { month, plans, savings, totalPlanned, totalActual };
 }
 
+/** Dashboard widget slice — mirrors server/routes/dashboard.js budget block. */
+export function computeDashboardBudget(state, userId, budgetMode = 'shared') {
+  ensureBudgetState(state);
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const { from, to } = monthRange(currentMonth);
+  let rows = entriesInRange(state, from, to);
+  if (budgetMode === 'personal') {
+    rows = rows.filter((e) => e.created_by === userId);
+  }
+
+  let income = 0;
+  let expenses = 0;
+  const expenseByCategory = new Map();
+  for (const e of rows) {
+    const amt = Number(e.amount) || 0;
+    if (amt > 0) income += amt;
+    if (amt < 0) {
+      expenses += amt;
+      const cat = e.category || 'financial_other';
+      expenseByCategory.set(cat, (expenseByCategory.get(cat) || 0) + amt);
+    }
+  }
+
+  let topExpenseCategory = null;
+  let topExpenseAmount = 0;
+  for (const [cat, amt] of expenseByCategory) {
+    const abs = Math.abs(amt);
+    if (abs > topExpenseAmount) {
+      topExpenseAmount = abs;
+      topExpenseCategory = cat;
+    }
+  }
+
+  const savingsPlan = state.budget_plans.find((p) => p.category === BUDGET_SAVINGS_KEY);
+  const savingsGoal = savingsPlan != null
+    ? Math.round(Number(savingsPlan.amount) * 100) / 100
+    : null;
+
+  return {
+    month: currentMonth,
+    income,
+    expenses: Math.abs(expenses),
+    balance: income + expenses,
+    entryCount: rows.length,
+    topExpenseCategory,
+    topExpenseAmount,
+    savingsGoal,
+  };
+}
+
 function computeStatsRange(range, anchor) {
   const d = /^\d{4}-\d{2}-\d{2}$/.test(anchor) ? new Date(anchor + 'T12:00:00') : new Date();
   const pad = (n) => String(n).padStart(2, '0');

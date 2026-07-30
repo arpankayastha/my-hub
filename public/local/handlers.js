@@ -10,7 +10,7 @@ import {
   createSeedState, publicUser, adminPermissions, hashPasswordSimple,
   verifyPasswordSimple, AVATAR_COLORS,
 } from './seed.js';
-import { ensureBudgetState, handleBudgetApi } from './budget-handlers.js';
+import { ensureBudgetState, handleBudgetApi, computeDashboardBudget } from './budget-handlers.js';
 import { handleHealthApi } from './health-handlers.js';
 import { handleSplitExpensesApi } from './split-expenses-handlers.js';
 import { handleBirthdaysApi } from './birthdays-handlers.js';
@@ -281,7 +281,9 @@ export async function handleLocalApi(method, path, body, query = {}) {
   }
 
   if (resource === 'dashboard' && m === 'GET') {
+    ensureBudgetState(state);
     const today = new Date().toISOString().slice(0, 10);
+    const budgetMode = cfgGet('budget_mode') === 'personal' ? 'personal' : 'shared';
     const tasks = state.tasks
       .filter((t) => !t.parent_task_id && t.status !== 'done')
       .slice(0, 5)
@@ -299,7 +301,29 @@ export async function handleLocalApi(method, path, body, query = {}) {
       urgentTasks: tasks,
       todayMeals: [],
       pinnedNotes: notes,
+      shoppingLists: [],
+      birthdays: [],
+      birthdayCount: state.birthdays?.length ?? 0,
       users: state.users.map(publicUser),
+      budget: computeDashboardBudget(state, userId, budgetMode),
+      rewards: { standings: [], participantCount: 0, pending: 0 },
+      health: {
+        hasMeds: false,
+        dosesTotal: 0,
+        dosesTaken: 0,
+        dosesSkipped: 0,
+        nextDose: null,
+        lowStockCount: 0,
+      },
+      housekeeping: {
+        configured: false,
+        present: false,
+        presentSince: null,
+        workerName: null,
+        visitsThisMonth: 0,
+        unpaidAmount: 0,
+        lastVisit: null,
+      },
     };
   }
 
