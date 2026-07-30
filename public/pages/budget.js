@@ -89,7 +89,9 @@ function subcategoryLabel(subcategory) {
     : Object.values(state.meta.expenseSubcategories ?? {}).flat().find((s) => s.key === subcategory);
   const key = item?.key ?? subcategory;
   const name = item?.name ?? subcategory;
-  return SUBCATEGORY_I18N()[key] ?? name;
+  const localized = SUBCATEGORY_I18N()[key];
+  if (localized && name && name !== localized) return name;
+  return localized ?? name;
 }
 
 function expenseCategories() {
@@ -1537,7 +1539,7 @@ function openCategoryManager() {
           { key: 'income',  labelKey: 'budget.income',   addLabelKey: 'budget.addCategory' },
         ],
         supportsSubcategories: true,
-        labelResolver: (item) => item.label ?? budgetCategoryLabel(item.key, item.name, t),
+        labelResolver: (item) => item.name || budgetCategoryLabel(item.key, item.name, t),
         titleKey: 'budget.manageCategories',
         hintKey: 'category.manageHint',
       });
