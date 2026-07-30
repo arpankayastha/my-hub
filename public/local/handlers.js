@@ -21,6 +21,14 @@ import { handleHousekeepingApi } from './housekeeping-handlers.js';
 import { handleDocumentsApi } from './documents-handlers.js';
 import { handleNotificationsApi } from './notifications-handlers.js';
 import { handlePermissionsApi } from './permissions-handlers.js';
+import {
+  parseDisabledModules,
+  parseModuleOrder,
+  parseMobileNavOrder,
+  normalizeDisabledModulesInput,
+  normalizeModuleOrderInput,
+} from './preferences-helpers.js';
+import { normalizeMobileNavOrder } from '../settings/module-order.js';
 
 const APP_VERSION = '1.0.0';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
@@ -133,10 +141,9 @@ function preferencesData(userId) {
     region: cfgGet('region') || null,
     app_name: cfgGet('app_name') ?? 'Yuvomi',
     dashboard_widgets: parseJson(cfgGet('dashboard_widgets') ?? '[]', []),
-    disabled_modules: parseJson(cfgGet('disabled_modules') ?? '[]', []),
-    module_order: (cfgUserGet('module_order', userId) ?? cfgGet('module_order') ?? '')
-      .split(',').filter(Boolean),
-    mobile_nav_order: (cfgUserGet('mobile_nav_order', userId) ?? '').split(',').filter(Boolean),
+    disabled_modules: parseDisabledModules(cfgGet('disabled_modules')),
+    module_order: parseModuleOrder(cfgUserGet('module_order', userId) ?? cfgGet('module_order')),
+    mobile_nav_order: parseMobileNavOrder(cfgUserGet('mobile_nav_order', userId)),
     housekeeping_payment_tasks: cfgGet('housekeeping_payment_tasks') === '1',
     budget_mode: cfgGet('budget_mode') ?? 'shared',
     calendar_default_duration: Number(cfgGet('calendar_default_duration')) || 60,
@@ -253,28 +260,62 @@ export async function handleLocalApi(method, path, body, query = {}) {
   if (resource === 'preferences' && parts.length === 1) {
     if (m === 'GET') return { data: preferencesData(userId) };
     if (m === 'PUT') {
-      if (body.visible_meal_types) cfgSet('visible_meal_types', body.visible_meal_types.join(','));
-      if (body.currency) cfgSet('currency', body.currency);
-      if (body.date_format) cfgSet('date_format', body.date_format);
-      if (body.time_format) cfgSet('time_format', body.time_format);
-      if (body.week_start) cfgSet('week_start', body.week_start);
+      const user = findUser(userId);
+      if (body.visible_meal_types !== undefined) {
+        cfgSet('visible_meal_types', body.visible_meal_types.join(','));
+      }
+      if (body.currency !== undefined) cfgSet('currency', body.currency);
+      if (body.date_format !== undefined) cfgSet('date_format', body.date_format);
+      if (body.time_format !== undefined) cfgSet('time_format', body.time_format);
+      if (body.week_start !== undefined) cfgSet('week_start', body.week_start);
       if (body.region !== undefined) cfgSet('region', body.region || '');
-      if (body.app_name) cfgSet('app_name', body.app_name);
-      if (body.dashboard_widgets) cfgSet('dashboard_widgets', JSON.stringify(body.dashboard_widgets));
-      if (body.disabled_modules) cfgSet('disabled_modules', JSON.stringify(body.disabled_modules));
-      if (body.module_order) cfgUserSet('module_order', userId, body.module_order.join(','));
-      if (body.mobile_nav_order) cfgUserSet('mobile_nav_order', userId, body.mobile_nav_order.join(','));
-      if (body.budget_mode) cfgSet('budget_mode', body.budget_mode);
-      if (body.calendar_default_duration) cfgSet('calendar_default_duration', String(body.calendar_default_duration));
-      if (body.calendar_default_reminders) cfgUserSet('calendar_default_reminders', userId, JSON.stringify(body.calendar_default_reminders));
-      if (body.calendar_default_assign_me !== undefined) cfgUserSet('calendar_default_assign_me', userId, body.calendar_default_assign_me ? '1' : '0');
+      if (body.app_name !== undefined) cfgSet('app_name', body.app_name);
+      if (body.dashboard_widgets !== undefined) {
+        cfgSet('dashboard_widgets', JSON.stringify(body.dashboard_widgets));
+      }
+      if (body.disabled_modules !== undefined) {
+        if (user?.role !== 'admin') throw apiError('Admin access required.', 403);
+        const normalized = normalizeDisabledModulesInput(body.disabled_modules);
+        if (!normalized) throw apiError('disabled_modules muss ein Array sein', 400);
+        cfgSet('disabled_modules', JSON.stringify(normalized));
+      }
+      if (body.module_order !== undefined) {
+        const normalized = normalizeModuleOrderInput(body.module_order);
+        if (!normalized) throw apiError('module_order muss ein Array sein', 400);
+        cfgUserSet('module_order', userId, JSON.stringify(normalized));
+      }
+      if (body.mobile_nav_order !== undefined) {
+        if (!Array.isArray(body.mobile_nav_order)) {
+          throw apiError('mobile_nav_order muss ein Array sein', 400);
+        }
+        cfgUserSet(
+          'mobile_nav_order',
+          userId,
+          JSON.stringify(normalizeMobileNavOrder(body.mobile_nav_order)),
+        );
+      }
+      if (body.budget_mode !== undefined) cfgSet('budget_mode', body.budget_mode);
+      if (body.calendar_default_duration !== undefined) {
+        cfgSet('calendar_default_duration', String(body.calendar_default_duration));
+      }
+      if (body.calendar_default_reminders !== undefined) {
+        cfgUserSet('calendar_default_reminders', userId, JSON.stringify(body.calendar_default_reminders));
+      }
+      if (body.calendar_default_assign_me !== undefined) {
+        cfgUserSet('calendar_default_assign_me', userId, body.calendar_default_assign_me ? '1' : '0');
+      }
       await saveState();
       return { data: preferencesData(userId) };
     }
   }
 
-  if (resource === 'modules' && parts.length === 1 && m === 'GET') {
-    return { data: [] };
+  if (resource === 'modules') {
+    if (parts.length === 1 && m === 'GET') {
+      return { data: [] };
+    }
+    if (parts.length === 2 && m === 'PATCH') {
+      return { data: { id: parts[1], enabled: Boolean(body.enabled) } };
+    }
   }
 
   if (resource === 'changelog' && m === 'GET') {
