@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.7] - 2026-07-30
+
+### Fixed
+- Budget category names always use English labels again (income and expenses), regardless of region (e.g. Hindi India / INR) or UI language. Custom renames still work.
+
 ## [1.1.6] - 2026-07-30
 
 ### Fixed

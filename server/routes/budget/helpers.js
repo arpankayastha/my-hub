@@ -7,6 +7,10 @@
 
 import { readFileSync } from 'node:fs';
 import path from 'path';
+import {
+  englishBudgetCategoryLabel,
+  englishBudgetSubcategoryLabel,
+} from '../../../public/utils/budget-category-defaults.js';
 import * as db from '../../db.js';
 import { budgetVisibilityWhere, budgetScopeWhere, canEditEntry, resolveBudgetMode } from '../../services/budget-visibility.js';
 import { computeLoanSchedule, remainingPrincipalAfter } from '../../services/loan-amortization.js';
@@ -199,22 +203,18 @@ export function budgetMessages(lang) {
   return LOCALE_CACHE.get(normalized);
 }
 
-export function localizedCategory(category, lang) {
-  const budget = budgetMessages(lang);
-  const labelKey = CATEGORY_LABEL_KEYS[category.key];
-  if (!labelKey) return { ...category, label: category.name };
-  const localized = budget[labelKey] || category.name;
-  const label = isDefaultCategoryName(category.key, category.name) ? localized : category.name;
-  return { ...category, label };
+export function localizedCategory(category, _lang) {
+  return {
+    ...category,
+    label: englishBudgetCategoryLabel(category.key, category.name),
+  };
 }
 
-export function localizedSubcategory(subcategory, lang) {
-  const budget = budgetMessages(lang);
-  const labelKey = SUBCATEGORY_LABEL_KEYS[subcategory.key];
-  if (!labelKey) return { ...subcategory, label: subcategory.name };
-  const localized = budget[labelKey] || subcategory.name;
-  const label = isDefaultSubcategoryName(subcategory.key, subcategory.name) ? localized : subcategory.name;
-  return { ...subcategory, label };
+export function localizedSubcategory(subcategory, _lang) {
+  return {
+    ...subcategory,
+    label: englishBudgetSubcategoryLabel(subcategory.key, subcategory.name),
+  };
 }
 
 // --------------------------------------------------------

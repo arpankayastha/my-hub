@@ -1,6 +1,6 @@
 /**
- * Shipped default category/subcategory names (key → name).
- * Used to detect user renames vs defaults for locale display.
+ * Shipped default category/subcategory names (key → stored DB name).
+ * Used to detect user renames vs defaults.
  */
 
 export const DEFAULT_BUDGET_CATEGORY_NAMES = {
@@ -17,6 +17,25 @@ export const DEFAULT_BUDGET_CATEGORY_NAMES = {
   'Geschenke & Transfers': 'Geschenke & Transfers',
   Sozialleistungen: 'Sozialleistungen',
   'Sonstiges Einkommen': 'Sonstiges Einkommen',
+};
+
+/** English UI labels for default categories (not tied to app locale). */
+export const ENGLISH_BUDGET_CATEGORY_LABELS = {
+  housing: 'Housing / Home',
+  food: 'Food',
+  transport: 'Transport',
+  personal_health: 'Personal Care / Health',
+  leisure: 'Leisure and Entertainment',
+  shopping_clothing: 'Shopping and Clothing',
+  education: 'Education',
+  financial_other: 'Financial Services and Other',
+  income: 'Income',
+  Erwerbseinkommen: 'Earned Income',
+  Kapitalerträge: 'Investment Income',
+  'Geschenke & Transfers': 'Transfer & Gift Income',
+  Sozialleistungen: 'Government & Social Benefits',
+  'Sonstiges Einkommen': 'Other Income',
+  subscriptions: 'Subscription',
 };
 
 export const DEFAULT_BUDGET_SUBCATEGORY_NAMES = {
@@ -66,4 +85,18 @@ export function isDefaultBudgetSubcategoryName(key, name) {
   const defaultName = DEFAULT_BUDGET_SUBCATEGORY_NAMES[key];
   if (!defaultName) return false;
   return String(name || '').trim() === defaultName;
+}
+
+export function englishBudgetCategoryLabel(key, name = '') {
+  const k = String(key || '').trim();
+  const customName = String(name || '').trim();
+  if (customName && !isDefaultBudgetCategoryName(k, customName)) return customName;
+  return ENGLISH_BUDGET_CATEGORY_LABELS[k] ?? customName ?? k;
+}
+
+export function englishBudgetSubcategoryLabel(key, name = '') {
+  const k = String(key || '').trim();
+  const customName = String(name || '').trim();
+  if (customName && !isDefaultBudgetSubcategoryName(k, customName)) return customName;
+  return DEFAULT_BUDGET_SUBCATEGORY_NAMES[k] ?? customName ?? k;
 }
