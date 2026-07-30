@@ -25,6 +25,12 @@
       var canonical = window.__YUVOMI_CANONICAL_BASE__;
       if (
         canonical
+        && location.pathname.toLowerCase().indexOf(canonical.toLowerCase()) === 0
+      ) {
+        window.__YUVOMI_BASE__ = canonical;
+      }
+      if (
+        canonical
         && window.__YUVOMI_BASE__
         && window.__YUVOMI_BASE__.toLowerCase() === canonical.toLowerCase()
         && window.__YUVOMI_BASE__ !== canonical
@@ -41,6 +47,11 @@
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function (regs) {
           regs.forEach(function (r) { r.unregister(); });
+        }).catch(function () {});
+      }
+      if (window.caches) {
+        caches.keys().then(function (keys) {
+          keys.forEach(function (k) { caches.delete(k); });
         }).catch(function () {});
       }
     })();
