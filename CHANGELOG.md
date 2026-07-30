@@ -2,6 +2,12 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.14] - 2026-07-30
+
+### Fixed
+- Profile switch now scopes budget to the selected member even when household budget mode is **shared** (no more cumulative totals across profiles).
+- Budget list, summary, and dashboard widget filter by `owner_id` while acting as another household member.
+
 ## [1.1.13] - 2026-07-30
 
 ### Fixed
