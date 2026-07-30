@@ -187,7 +187,7 @@
     "express-rate-limit": "^8.6.1",
     "express-session": "^1.19.0",
     "helmet": "^8.3.0",
-    "libphonenumber-js": "^1.13.9",
+    "libphonenumber-js": "^1.13.10",
     "node-cron": "^4.6.0",
     "nodemailer": "^9.0.3",
     "openid-client": "^6.8.4",
