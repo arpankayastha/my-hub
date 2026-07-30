@@ -1760,6 +1760,10 @@ function initMoreSheet(container, openSearch) {
 
   function closeSheet({ restoreFocus = true } = {}) {
     if (sheet.getAttribute('aria-hidden') === 'true') return;
+    const active = document.activeElement;
+    if (active && sheet.contains(active) && typeof active.blur === 'function') {
+      active.blur();
+    }
     setOverlayInteractive(sheet, false);
     sheet.removeEventListener('keydown', moreSheetTrap);
     backdrop.classList.remove('more-backdrop--visible');

@@ -7,8 +7,9 @@
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Local-only GitHub Pages build: API is in IndexedDB; SW precache breaks on subpaths.
-    if (window.__YUVOMI_LOCAL_MODE__) {
+    // Local GitHub Pages build: register SW when hosted on a subpath (PWA install +
+    // offline shell). Plain `serve public` at root skips SW to avoid broken paths.
+    if (window.__YUVOMI_LOCAL_MODE__ && !window.__YUVOMI_BASE__) {
       navigator.serviceWorker.getRegistrations()
         .then((regs) => regs.forEach((r) => r.unregister()))
         .catch(() => {});

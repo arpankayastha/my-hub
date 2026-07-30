@@ -103,6 +103,7 @@ export function emptyState() {
     document_folders: [],
     document_access: [],
     notification_channels: [],
+    access_permissions: [],
   };
 }
 

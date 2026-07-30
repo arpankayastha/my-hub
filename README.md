@@ -59,6 +59,14 @@ GITHUB_PAGES_BASE=/genospace node scripts/build-pages.mjs
 
 This copies `public/` to `site/` and rewrites asset paths for subpath hosting.
 
+## Versioning (genospace releases)
+
+This fork uses **1.0.0** as the starting version (not upstream Yuvomi `1.58.x`). Bump these together on each release:
+
+- `package.json` / `package-lock.json` — `version`
+- `public/sw.js` — `APP_RELEASE` (must match `package.json`)
+- `public/local/handlers.js` — `APP_VERSION` (shown in the app after login)
+
 ## Enable GitHub Pages
 
 After merging to `main`, the **Deploy GitHub Pages** workflow pushes the built site to the `gh-pages` branch.

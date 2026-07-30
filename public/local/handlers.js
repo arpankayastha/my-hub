@@ -20,8 +20,9 @@ import { handleRewardsApi, syncTaskRewardEarn } from './rewards-handlers.js';
 import { handleHousekeepingApi } from './housekeeping-handlers.js';
 import { handleDocumentsApi } from './documents-handlers.js';
 import { handleNotificationsApi } from './notifications-handlers.js';
+import { handlePermissionsApi } from './permissions-handlers.js';
 
-const APP_VERSION = '1.58.0-local';
+const APP_VERSION = '1.0.0';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
 const VALID_STATUSES = ['open', 'in_progress', 'done', 'archived'];
 const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -751,8 +752,10 @@ export async function handleLocalApi(method, path, body, query = {}) {
     return { data: { tasks, events: [], notes: [], contacts } };
   }
 
-  if (resource === 'permissions' && parts[1] === 'catalog' && m === 'GET') {
-    return { data: { modules: [], widgets: [], roles: [], moduleAccessLevels: ['none', 'read', 'write'], widgetAccessLevels: ['none', 'allow'], defaults: { module: 'write', widget: 'allow' } } };
+  if (resource === 'permissions') {
+    const permissionsResult = await handlePermissionsApi(m, parts, body, state, userId, findUser);
+    if (permissionsResult !== null) return permissionsResult;
+    throw apiError('Not found.', 404);
   }
 
   if (resource === 'weather' && m === 'GET') {
