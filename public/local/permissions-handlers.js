@@ -120,10 +120,6 @@ function replaceSubjectPermissions(state, subjectType, subjectId, input) {
   return getSubjectPermissions(state, subjectType, subjectId);
 }
 
-function isValidFamilyRole(role) {
-  return isValidFamilyRole(role);
-}
-
 function requireAdmin(findUser, userId) {
   const user = findUser(userId);
   if (!user || user.role !== 'admin') throw apiError('Admin access required.', 403);
