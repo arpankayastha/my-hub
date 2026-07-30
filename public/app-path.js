@@ -13,6 +13,13 @@ export function toAppUrl(path) {
   return `${base}${p}`;
 }
 
+/** Prefix root-absolute asset URLs (modules, locales, styles) for GitHub Pages. */
+export function assetUrl(path) {
+  const base = getBasePath();
+  if (!base || !path.startsWith('/')) return path;
+  return `${base}${path}`;
+}
+
 /** Strip GitHub Pages repo prefix from location.pathname. */
 export function fromAppUrl(pathname) {
   const base = getBasePath();

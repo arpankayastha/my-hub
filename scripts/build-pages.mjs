@@ -31,20 +31,37 @@ const TEXT_EXT = new Set([
   '.js', '.mjs', '.html', '.css', '.json', '.webmanifest', '.svg',
 ]);
 
+/** SPA route definitions — not static asset URLs. */
+// Route paths are skipped inside rewriteLine via lookbehind on `path:`.
+
 /**
- * Prefix root-absolute URLs in built assets (/api.js → /Genospace/api.js).
- * Skips protocol-relative (//) and already-prefixed paths.
+ * Prefix root-absolute URLs (/api.js → /Genospace/api.js).
+ * Skips SPA route paths (path: '/login') and already-prefixed paths.
  */
-function rewriteRootPaths(content, basePath) {
+function rewriteRootPaths(content, basePath, { perLine = false } = {}) {
   if (!basePath) return content;
   const base = basePath.replace(/\/$/, '');
   const repoSegment = base.slice(1);
 
-  return content.replace(/(['"])\/(?!\/)/g, (match, quote, offset, whole) => {
+  const rewriteLine = (line) => {
+    // Runtime helpers already apply the GitHub Pages base path.
+    if (/\bassetUrl\s*\(/.test(line) || /\btoAppUrl\s*\(/.test(line) || /\bfromAppUrl\s*\(/.test(line)) {
+      return line;
+    }
+    return line.replace(/(['"`])\/(?!\/)/g, (match, quote, offset, whole) => {
+    const before = whole.slice(0, offset);
+    // SPA route slug (path: '/login') — not a static asset URL.
+    if (/\bpath:\s*$/.test(before)) return match;
     const afterSlash = whole.slice(offset + match.length);
     if (repoSegment && afterSlash.startsWith(`${repoSegment}/`)) return match;
     return `${quote}${base}/`;
-  });
+    });
+  };
+
+  if (perLine) {
+    return content.split('\n').map((line) => rewriteLine(line)).join('\n');
+  }
+  return rewriteLine(content);
 }
 
 function walkAndRewrite(dir, basePath) {
@@ -58,7 +75,8 @@ function walkAndRewrite(dir, basePath) {
     const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
     if (!TEXT_EXT.has(ext)) continue;
     const original = readFileSync(path, 'utf8');
-    const rewritten = rewriteRootPaths(original, basePath);
+    const perLine = ext === '.js' || ext === '.mjs';
+    const rewritten = rewriteRootPaths(original, basePath, { perLine });
     if (rewritten !== original) writeFileSync(path, rewritten);
   }
 }

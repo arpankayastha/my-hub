@@ -5,6 +5,8 @@
  * Dependencies: none (vanilla JS, Fetch API, Intl API)
  */
 
+import { assetUrl } from '/app-path.js';
+
 const SUPPORTED_LOCALES = ['de', 'en', 'es', 'fr', 'it', 'sv', 'el', 'ru', 'tr', 'zh', 'ja', 'ar', 'hi', 'pt', 'uk', 'pl', 'nl', 'cs', 'vi', 'hu', 'ko', 'id', 'fa'];
 const RTL_LOCALES = new Set(['ar', 'fa']);
 const DEFAULT_LOCALE = 'de';
@@ -45,7 +47,7 @@ function resolveLocale() {
 
 /** Lade eine Locale-JSON-Datei */
 async function loadLocale(locale) {
-  const resp = await fetch(`/locales/${locale}.json`);
+  const resp = await fetch(assetUrl(`/locales/${locale}.json`));
   if (!resp.ok) throw new Error(`Failed to load locale: ${locale}`);
   return resp.json();
 }
