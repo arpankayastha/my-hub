@@ -52,7 +52,7 @@ async function maybeVerifyBiometric() {
   }
 }
 
-export function profileSwitcherMarkup(user) {
+export function profileSwitcherMarkup(user, { variant = 'sidebar' } = {}) {
   if (!user || user.role !== 'admin' || user.access_scope === 'split_guest') return '';
   const activeId = effectiveUserId({ ...user, acting_as: user.acting_as });
   const options = _members.map((m) => {
@@ -63,22 +63,24 @@ export function profileSwitcherMarkup(user) {
   const hint = acting
     ? t('nav.profileActingAs', { name: user.acting_as.display_name })
     : t('nav.profileSwitchHint');
+  const variantClass = variant === 'sheet' ? ' nav-profile-switch--sheet' : '';
+  const hintId = variant === 'sheet' ? 'more-profile-hint' : 'nav-profile-hint';
   return `
-    <div class="nav-profile-switch" data-profile-switch>
-      <label class="nav-profile-switch__label" for="nav-profile-select">
+    <div class="nav-profile-switch${variantClass}" data-profile-switch>
+      <label class="nav-profile-switch__label" for="${hintId}-select">
         <i data-lucide="users" aria-hidden="true"></i>
         <span>${esc(t('nav.profileSwitch'))}</span>
       </label>
-      <select id="nav-profile-select" class="nav-profile-switch__select" aria-describedby="nav-profile-hint">
+      <select id="${hintId}-select" data-profile-select class="nav-profile-switch__select" aria-describedby="${hintId}">
         ${options}
       </select>
-      <p id="nav-profile-hint" class="nav-profile-switch__hint">${esc(hint)}</p>
+      <p id="${hintId}" class="nav-profile-switch__hint">${esc(hint)}</p>
     </div>`;
 }
 
 export function wireProfileSwitcher(container, user, onContextChanged) {
   const root = container.querySelector('[data-profile-switch]');
-  const select = root?.querySelector('#nav-profile-select');
+  const select = root?.querySelector('[data-profile-select]');
   if (!select) return;
 
   select.addEventListener('change', async () => {

@@ -1334,6 +1334,21 @@ p.field-hint--warn[hidden] {
     line-height: 1.35;
   }
 
+  .more-sheet__profile {
+    padding: var(--space-3) var(--space-4) var(--space-2);
+  }
+
+  .nav-profile-switch--sheet .nav-profile-switch__label {
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2);
+  }
+
+  .nav-profile-switch--sheet .nav-profile-switch__select {
+    font-size: var(--text-base);
+    padding: var(--space-3);
+  }
+
   /* Abmelden bricht in eine eigene, volle Zeile unter Hilfe/Änderungen und
    * setzt sich mit einer Haarlinie als terminale Aktion ab. Doppelte
    * Klassen-Spezifität (.nav-item.nav-item--logout) + volle flex-Shorthand

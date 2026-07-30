@@ -602,11 +602,6 @@ function renderBody() {
               title="${t('budget.hideAmountsHint')}">
         <i data-lucide="${state.hideAmounts ? 'eye-off' : 'eye'}" class="icon-sm" aria-hidden="true"></i>
       </button>
-      <button class="btn btn--secondary btn--sm" id="budget-copy-prev-month" type="button"
-              title="${t('budget.copyFromPrevMonthHint')}">
-        <i data-lucide="copy" class="icon-sm" aria-hidden="true"></i>
-        <span>${t('budget.copyFromPrevMonth')}</span>
-      </button>
     </div>
     <!-- Zusammenfassung -->
     <div class="budget-summary${expensesOnly ? ' budget-summary--expenses-only' : ''}">
@@ -669,26 +664,6 @@ function renderBody() {
     try { localStorage.setItem(HIDE_AMOUNTS_KEY, state.hideAmounts ? '1' : '0'); } catch (_) { /* Private-Mode */ }
     vibrate(10);
     renderBody();
-  });
-  _container.querySelector('#budget-copy-prev-month')?.addEventListener('click', async () => {
-    const fromMonth = addMonths(state.month, -1);
-    const btn = _container.querySelector('#budget-copy-prev-month');
-    if (btn) btn.disabled = true;
-    try {
-      const res = await api.post('/budget/clone-month', { from_month: fromMonth, to_month: state.month });
-      const copied = res.data?.copied ?? 0;
-      if (copied > 0) {
-        await loadMonth(state.month);
-        renderBody();
-        window.myHub?.showToast(t('budget.copyFromPrevMonthDone', { count: copied }), 'success');
-      } else {
-        window.myHub?.showToast(t('budget.copyFromPrevMonthEmpty'), 'default');
-      }
-    } catch (err) {
-      window.myHub?.showToast(err?.message || t('budget.loadError'), 'danger');
-    } finally {
-      if (btn) btn.disabled = false;
-    }
   });
   _container.querySelector('#budget-manage-categories')?.addEventListener('click', openCategoryManager);
   _container.querySelector('#budget-clear-account-filter')?.addEventListener('click', async () => {
