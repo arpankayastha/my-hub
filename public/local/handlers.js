@@ -19,6 +19,7 @@ import { handleMealsApi, handleRecipesApi } from './meals-recipes-handlers.js';
 import { handleRewardsApi, syncTaskRewardEarn } from './rewards-handlers.js';
 import { handleHousekeepingApi } from './housekeeping-handlers.js';
 import { handleDocumentsApi } from './documents-handlers.js';
+import { handleNotificationsApi } from './notifications-handlers.js';
 
 const APP_VERSION = '1.58.0-local';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
@@ -736,6 +737,14 @@ export async function handleLocalApi(method, path, body, query = {}) {
 
   if (resource === 'push' && parts[1] === 'vapid-public-key' && m === 'GET') {
     return { data: null };
+  }
+
+  if (resource === 'notifications') {
+    const notificationsResult = await handleNotificationsApi(
+      m, parts, body, state, userId, findUser,
+    );
+    if (notificationsResult !== null) return notificationsResult;
+    throw apiError('Not found.', 404);
   }
 
   if (resource === 'budget') {
