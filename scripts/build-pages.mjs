@@ -128,7 +128,18 @@ if (basePath) {
 }
 
 // GitHub Pages serves 404.html for missing paths while keeping the URL — required for SPA deep links.
+function injectCanonicalBase(html, basePath) {
+  if (!basePath) return html;
+  return html.replace(
+    'window.__YUVOMI_LOCAL_MODE__ = true;',
+    `window.__YUVOMI_CANONICAL_BASE__='${basePath}'; window.__YUVOMI_LOCAL_MODE__ = true;`,
+  );
+}
+
 const indexHtml = resolve(siteDir, 'index.html');
 if (existsSync(indexHtml)) {
-  cpSync(indexHtml, resolve(siteDir, '404.html'));
+  let html = readFileSync(indexHtml, 'utf8');
+  if (basePath) html = injectCanonicalBase(html, basePath);
+  writeFileSync(indexHtml, html);
+  writeFileSync(resolve(siteDir, '404.html'), html);
 }

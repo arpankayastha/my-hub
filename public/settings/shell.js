@@ -1,4 +1,5 @@
 import { t } from '/i18n.js';
+import { toAppUrl } from '/app-path.js';
 import { renderSkeletonList } from '/utils/skeleton.js';
 import { createRetryState } from './components.js';
 import { clearLeafEdits, confirmLeafExit, watchLeafForms } from './dirty-guard.js';
@@ -49,7 +50,7 @@ function bindSpaNavigation(link, href) {
 
 function createLink(href, className) {
   const link = document.createElement('a');
-  link.href = href;
+  link.href = toAppUrl(href);
   link.className = className;
   bindSpaNavigation(link, href);
   return link;

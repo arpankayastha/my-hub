@@ -9,6 +9,7 @@
 
 import { auth } from '/api.js';
 import { getLocale } from '/i18n.js';
+import { toAppUrlWithQuery, fromAppUrl } from '/app-path.js';
 import {
   SETTINGS_STORAGE_KEY,
   filterSettingsDomains,
@@ -45,7 +46,10 @@ async function refreshUser(user) {
 // korrigiert, die eigentliche Navigation aber auf den nächsten Macrotask
 // verschoben — nach dem finally des laufenden navigate().
 function redirectTo(target) {
-  history.replaceState({ path: target }, '', target);
+  const qIndex = target.indexOf('?');
+  const appPath = qIndex === -1 ? target : target.slice(0, qIndex);
+  const browserUrl = toAppUrlWithQuery(target);
+  history.replaceState({ path: appPath }, '', browserUrl);
   setTimeout(() => {
     window.yuvomi?.navigate(target, false);
   }, 0);
@@ -57,7 +61,7 @@ export async function render(container, { user } = {}) {
     renderedLocale = getLocale();
     const currentUser = await refreshUser(user);
 
-    const path = window.location.pathname;
+    const path = fromAppUrl(window.location.pathname);
     const query = new URLSearchParams(window.location.search);
     const view = query.get('view');
 

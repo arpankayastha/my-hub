@@ -12,6 +12,7 @@
  */
 
 import { api } from '/api.js';
+import { fromAppUrl } from '/app-path.js';
 import { t, formatDate, formatTime, getLocale, getNumberFormat } from '/i18n.js';
 import { esc } from '/utils/html.js';
 import { wireScrollFade, scheduleUndoableDelete } from '/utils/ux.js';
@@ -246,7 +247,7 @@ function updateHealthFab(activeRoute) {
 
 // FAB nach Panel-Mount / Personenwechsel neu bewerten (personId steht dann fest).
 function refreshHealthFab() {
-  updateHealthFab(normalizeHealthPath(window.location.pathname));
+  updateHealthFab(normalizeHealthPath(fromAppUrl(window.location.pathname)));
 }
 
 export async function render(container, ctx = {}) {
@@ -270,7 +271,7 @@ export async function render(container, ctx = {}) {
   overview.root = null;
   overview.loaded = false;
   await loadHealthPrefs();
-  const activeRoute = normalizeHealthPath(window.location.pathname);
+  const activeRoute = normalizeHealthPath(fromAppUrl(window.location.pathname));
   const panels = PANELS().filter((panel) => cycleEnabled || panel.route !== '/health/cycle');
 
   container.replaceChildren();
@@ -302,7 +303,7 @@ export async function render(container, ctx = {}) {
 export async function update({ path, user } = {}) {
   if (!_container?.isConnected) return false;
   if (user?.id) { vitals.meId = user.id; meds.meId = user.id; labs.meId = user.id; activity.meId = user.id; cycle.meId = user.id; overview.meId = user.id; }
-  const activeRoute = normalizeHealthPath(path || window.location.pathname);
+  const activeRoute = normalizeHealthPath(path || fromAppUrl(window.location.pathname));
 
   showPanel(activeRoute);
   _container.querySelector('.sub-tabs-bar')?.remove();

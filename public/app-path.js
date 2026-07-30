@@ -13,6 +13,13 @@ export function toAppUrl(path) {
   return `${base}${p}`;
 }
 
+/** toAppUrl with optional ?query (settings OAuth redirects). */
+export function toAppUrlWithQuery(pathWithQuery) {
+  const qIndex = pathWithQuery.indexOf('?');
+  if (qIndex === -1) return toAppUrl(pathWithQuery);
+  return `${toAppUrl(pathWithQuery.slice(0, qIndex))}${pathWithQuery.slice(qIndex)}`;
+}
+
 /** Prefix root-absolute asset URLs (modules, locales, styles) for GitHub Pages. */
 export function assetUrl(path) {
   const base = getBasePath();

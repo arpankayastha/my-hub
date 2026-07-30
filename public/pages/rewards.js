@@ -7,6 +7,7 @@
  */
 
 import { api } from '/api.js';
+import { toAppUrl } from '/app-path.js';
 import { t, formatDate, getLocale, getNumberFormat } from '/i18n.js';
 import { esc } from '/utils/html.js';
 import { getReadableTextColor, AVATAR_FALLBACK_COLOR } from '/utils/color.js';
@@ -392,7 +393,7 @@ function wireOverview(el) {
 
 function handleSetupStep(action) {
   if (action === 'participants') openParticipantsModal();
-  else if (action === 'tasks') location.href = '/tasks';
+  else if (action === 'tasks') location.href = toAppUrl('/tasks');
   else if (action === 'catalog') document.querySelector('[data-rw-tab="catalog"]')?.click();
 }
 
