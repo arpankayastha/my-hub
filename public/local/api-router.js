@@ -3,11 +3,13 @@
  */
 
 import { initLocalStore, handleLocalApi } from './handlers.js';
+import { installLocalFetchInterceptor } from './local-fetch.js';
 
 let _ready = false;
 
 async function ensureReady() {
   if (!_ready) {
+    installLocalFetchInterceptor();
     await initLocalStore();
     _ready = true;
   }

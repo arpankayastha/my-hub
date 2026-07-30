@@ -87,6 +87,21 @@ export function emptyState() {
     cycle_day_logs: [],
     cycle_settings: [],
     birthdays: [],
+    contacts: [],
+    contact_categories: [],
+    contact_phones: [],
+    contact_emails: [],
+    meal_ingredients: [],
+    recipe_ingredients: [],
+    reward_participants: [],
+    reward_catalog: [],
+    reward_ledger: [],
+    reward_redemptions: [],
+    housekeeping_workers: [],
+    housekeeping_sessions: [],
+    housekeeping_decay_tasks: [],
+    document_folders: [],
+    document_access: [],
   };
 }
 
