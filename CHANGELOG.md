@@ -2,6 +2,16 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.15] - 2026-07-30
+
+### Fixed
+- Household profile isolation: each profile (Arpan, Ranjan, Wifey, …) sees only their own budget, board notes, and assigned tasks — including the admin’s own profile in shared budget mode.
+- Profile switch now stores explicit self context so the default admin profile no longer shows other members’ data.
+- Health profile switch uses the same context API.
+
+### Changed
+- Overview quick-actions (+): Budget, Health, and Board only (removed Task, Shopping, Calendar).
+
 ## [1.1.14] - 2026-07-30
 
 ### Fixed

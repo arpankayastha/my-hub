@@ -8,6 +8,7 @@ import { createLogger } from '../logger.js';
 import express from 'express';
 import * as db from '../db.js';
 import { str, color, collectErrors, MAX_TEXT, MAX_TITLE } from '../middleware/validate.js';
+import { viewerId } from './budget/helpers.js';
 
 const log = createLogger('Notes');
 
@@ -20,12 +21,14 @@ const router  = express.Router();
  */
 router.get('/', (req, res) => {
   try {
+    const me = viewerId(req);
     const notes = db.get().prepare(`
       SELECT n.*, u.display_name AS creator_name, u.avatar_color AS creator_color, u.avatar_data AS creator_avatar
       FROM notes n
       LEFT JOIN users u ON u.id = n.created_by
+      WHERE n.created_by = ?
       ORDER BY n.pinned DESC, n.updated_at DESC
-    `).all();
+    `).all(me);
     res.json({ data: notes });
   } catch (err) {
     log.error('', err);
@@ -51,7 +54,7 @@ router.post('/', (req, res) => {
     const result = db.get().prepare(`
       INSERT INTO notes (content, title, color, pinned, created_by)
       VALUES (?, ?, ?, ?, ?)
-    `).run(vContent.value, vTitle.value, vColor.value, pinned ? 1 : 0, req.authUserId || req.session.userId);
+    `).run(vContent.value, vTitle.value, vColor.value, pinned ? 1 : 0, viewerId(req));
 
     const note = db.get().prepare(`
       SELECT n.*, u.display_name AS creator_name, u.avatar_color AS creator_color, u.avatar_data AS creator_avatar

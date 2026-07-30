@@ -46,6 +46,7 @@ test('resolveContextTarget admin only', () => {
 
   assert.deepEqual(resolveContextTarget(1, 2, find), { contextUserId: 2 });
   assert.deepEqual(resolveContextTarget(1, null, find), { contextUserId: null });
+  assert.deepEqual(resolveContextTarget(1, 1, find), { contextUserId: 1 });
   const denied = resolveContextTarget(2, 1, find);
   assert.equal(denied.status, 403);
 });

@@ -1541,10 +1541,9 @@ function renderWeatherWidget(weather) {
 // --------------------------------------------------------
 
 const FAB_ACTIONS = () => [
-  { route: '/tasks',    label: t('dashboard.fabTask'),     icon: 'check-square'   },
-  { route: '/calendar', label: t('dashboard.fabCalendar'), icon: 'calendar-plus'  },
-  { route: '/shopping', label: t('dashboard.fabShopping'), icon: 'shopping-cart'  },
-  { route: '/notes',    label: t('dashboard.fabNote'),     icon: 'sticky-note'    },
+  { route: '/budget',      label: t('nav.budget'), icon: 'wallet'       },
+  { route: '/health/meds', label: t('nav.health'), icon: 'heart-pulse'  },
+  { route: '/notes',       label: t('nav.notes'),  icon: 'sticky-note'  },
 ];
 
 function renderFab() {
@@ -1579,10 +1578,9 @@ function initFab(container, signal) {
 
   // "Neu"-Button-Selector auf der jeweiligen Zielseite
   const FAB_NEW_BTN = {
-    '/tasks':    '#btn-new-task',
-    '/calendar': '#fab-new-event',
-    '/shopping': '#fab-new-item',
-    '/notes':    '#fab-new-note',
+    '/budget':      '#fab-new-budget',
+    '/health/meds': '#health-fab',
+    '/notes':       '#fab-new-note',
   };
 
   let open = false;

@@ -51,10 +51,6 @@ function canEditEntry(entry, userId) {
   return entryOwnerId(entry) === userId;
 }
 
-function isProfileBudgetScope(effectiveUserId, authUserId) {
-  return Number(effectiveUserId) !== Number(authUserId);
-}
-
 /** Personal mode: visibility gate (private entries only for owner). */
 function entryReadable(entry, userId, budgetMode) {
   if (budgetMode !== 'personal') return true;
@@ -70,14 +66,15 @@ function entryMatchesScope(entry, userId, scope, budgetMode) {
 
 function filterEntriesForView(rows, effectiveUserId, scope, authUserId) {
   const mode = resolveBudgetMode();
-  const profileScope = isProfileBudgetScope(effectiveUserId, authUserId);
-  if (mode !== 'personal' && !profileScope) return rows;
-  const filterMode = 'personal';
-  let viewScope = scope === 'household' ? 'household' : 'mine';
-  if (profileScope && mode !== 'personal') viewScope = 'mine';
-  return rows.filter((e) =>
-    entryReadable(e, effectiveUserId, filterMode)
-    && entryMatchesScope(e, effectiveUserId, viewScope, filterMode));
+  if (mode === 'personal') {
+    const filterMode = 'personal';
+    const viewScope = scope === 'household' ? 'household' : 'mine';
+    return rows.filter((e) =>
+      entryReadable(e, effectiveUserId, filterMode)
+      && entryMatchesScope(e, effectiveUserId, viewScope, filterMode));
+  }
+  // Shared household mode: each profile sees only entries they own.
+  return rows.filter((e) => entryOwnerId(e) === Number(effectiveUserId));
 }
 
 function computeSummary(state, month, effectiveUserId, scope, authUserId) {
@@ -241,9 +238,7 @@ export function computeDashboardBudget(state, effectiveUserId, budgetMode = 'sha
   const currentMonth = new Date().toISOString().slice(0, 7);
   const { from, to } = monthRange(currentMonth);
   let rows = entriesInRange(state, from, to);
-  if (budgetMode === 'personal' || isProfileBudgetScope(effectiveUserId, authUserId)) {
-    rows = rows.filter((e) => entryOwnerId(e) === effectiveUserId);
-  }
+  rows = rows.filter((e) => entryOwnerId(e) === Number(effectiveUserId));
 
   let income = 0;
   let expenses = 0;

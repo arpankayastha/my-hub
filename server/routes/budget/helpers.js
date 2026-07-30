@@ -31,7 +31,7 @@ export function viewerId(req) {
   const authId = req.authUserId || req.session?.userId;
   if (req.authMethod === 'api_token') return authId;
   const ctx = req.session?.contextUserId;
-  if (ctx != null && ctx !== '' && Number(ctx) !== Number(authId)) return Number(ctx);
+  if (ctx != null && ctx !== '') return Number(ctx);
   return authId;
 }
 
@@ -57,24 +57,26 @@ export function isProfileBudgetScope(req) {
  */
 export function budgetFilter(req, alias, { scoped = true } = {}) {
   const mode = getBudgetMode();
-  const profileScope = isProfileBudgetScope(req);
-  if (mode !== 'personal' && !profileScope) return { clause: '', params: [] };
   const me = viewerId(req);
+  if (mode !== 'personal') {
+    if (!scoped) {
+      return { clause: ` AND ${alias}.owner_id = ?`, params: [me] };
+    }
+    return { clause: ` AND ${alias}.owner_id = ?`, params: [me] };
+  }
   const filterMode = 'personal';
   let clause = ` AND ${budgetVisibilityWhere(alias, '?', { mode: filterMode })}`;
   const params = [me];
   if (scoped) {
-    let scope = req.query.scope === 'household' ? 'household' : 'mine';
-    if (profileScope && mode !== 'personal') scope = 'mine';
+    const scope = req.query.scope === 'household' ? 'household' : 'mine';
     clause += ` AND ${budgetScopeWhere(scope, alias, '?')}`;
     if (scope === 'mine') params.push(me);
   }
   return { clause, params };
 }
 
-/** Prüft Schreib-Berechtigung im personal-Modus; im shared-Modus immer erlaubt. */
+/** Prüft Schreib-Berechtigung — Einträge gehören dem aktiven Haushaltsprofil (owner_id). */
 export function mayEdit(req, row) {
-  if (getBudgetMode() !== 'personal' && !isProfileBudgetScope(req)) return true;
   return canEditEntry(row, { id: viewerId(req) });
 }
 

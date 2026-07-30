@@ -115,6 +115,32 @@ test('profile switch scopes budget in shared household mode', async () => {
   assert.equal(list.data[0].title, 'Wife groceries');
 });
 
+test('admin default profile shows only own budget in shared mode', async () => {
+  sessionStore.clear();
+  const seed = createSeedState();
+  seed.sync_config = { ...(seed.sync_config || {}), budget_mode: 'shared' };
+  seed.users = [
+    { id: 1, username: 'arpan', display_name: 'Arpan', role: 'admin', password_hash: 'x', family_role: 'parent', access_scope: 'family' },
+    { id: 2, username: 'ranjan', display_name: 'Ranjan', role: 'member', password_hash: 'x', family_role: 'wife', access_scope: 'family' },
+  ];
+  ensureBudgetState(seed);
+  const today = new Date().toISOString().slice(0, 10);
+  seed.budget_entries.push({
+    id: 1, title: 'Arpan rent', amount: -1000, category: 'housing', date: today,
+    is_recurring: 0, created_by: 1, owner_id: 1, visibility: 'shared',
+  });
+  seed.budget_entries.push({
+    id: 2, title: 'Ranjan groceries', amount: -200, category: 'food', date: today,
+    is_recurring: 0, created_by: 2, owner_id: 2, visibility: 'shared',
+  });
+  await resetState(seed);
+  setSession({ userId: 1, csrfToken: 'test', contextUserId: 1 });
+
+  const list = await handleLocalApi('GET', 'budget', null, { month: today.slice(0, 7) });
+  assert.equal(list.data.length, 1);
+  assert.equal(list.data[0].title, 'Arpan rent');
+});
+
 test('PATCH auth/users/:id updates family member (local mode)', async () => {
   await withHousehold(async () => {
     const res = await handleLocalApi('PATCH', 'auth/users/2', {

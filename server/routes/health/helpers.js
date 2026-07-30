@@ -27,7 +27,7 @@ export function viewerId(req) {
   const authId = req.authUserId || req.session?.userId;
   if (req.authMethod === 'api_token') return authId;
   const ctx = req.session?.contextUserId;
-  if (ctx != null && ctx !== '' && Number(ctx) !== Number(authId)) return Number(ctx);
+  if (ctx != null && ctx !== '') return Number(ctx);
   return authId;
 }
 

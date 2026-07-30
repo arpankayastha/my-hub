@@ -15,10 +15,14 @@ export function resolveContextTarget(authUserId, targetId, findUser) {
   if (actor.role !== 'admin') {
     return { error: 'Admin access required.', status: 403 };
   }
-  if (targetId == null || targetId === '' || Number(targetId) === Number(authUserId)) {
+  if (targetId == null || targetId === '') {
     return { contextUserId: null };
   }
-  const target = findUser(Number(targetId));
+  const tid = Number(targetId);
+  if (tid === Number(authUserId)) {
+    return { contextUserId: tid };
+  }
+  const target = findUser(tid);
   if (!target) return { error: 'Family member not found.', status: 404 };
   return { contextUserId: target.id };
 }

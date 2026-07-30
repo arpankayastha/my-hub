@@ -35,6 +35,7 @@ import { FAMILY_ROLES, isValidFamilyRole } from '../utils/family-roles.js';
 import {
   actingUserIdFromSession,
   publicActingAs,
+  taskVisibleToProfile,
 } from '../utils/profile-context.js';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
 const VALID_STATUSES = ['open', 'in_progress', 'done', 'archived'];
@@ -82,10 +83,14 @@ function resolveContextTarget(authUserId, targetId) {
   if (actor.role !== 'admin') {
     return { error: 'Admin access required.', status: 403 };
   }
-  if (targetId == null || targetId === '' || Number(targetId) === Number(authUserId)) {
+  if (targetId == null || targetId === '') {
     return { contextUserId: null };
   }
-  const target = findUser(Number(targetId));
+  const tid = Number(targetId);
+  if (tid === Number(authUserId)) {
+    return { contextUserId: tid };
+  }
+  const target = findUser(tid);
   if (!target) return { error: 'Family member not found.', status: 404 };
   return { contextUserId: target.id };
 }
@@ -532,13 +537,19 @@ export async function handleLocalApi(method, path, body, query = {}) {
     const budgetMode = cfgGet('budget_mode') === 'personal' ? 'personal' : 'shared';
     const tasks = state.tasks
       .filter((t) => !t.parent_task_id && t.status !== 'done')
+      .filter((t) => taskVisibleToProfile(
+        t,
+        state.task_assignments.filter((a) => a.task_id === t.id).map((a) => a.user_id),
+        effectiveUserId,
+      ))
       .slice(0, 5)
-      .map((t) => enrichTask(t, userId));
+      .map((t) => enrichTask(t, effectiveUserId));
     const events = state.calendar_events
       .filter((e) => eventInRange(e, today, today))
       .slice(0, 5)
       .map(enrichEvent);
     const notes = state.notes
+      .filter((n) => Number(n.created_by) === Number(effectiveUserId))
       .filter((n) => n.pinned)
       .slice(0, 3)
       .map(enrichNote);
@@ -675,7 +686,12 @@ export async function handleLocalApi(method, path, body, query = {}) {
         rows = rows.filter((t) => !t.start_date || t.start_date <= today);
       }
       if (query.status) rows = rows.filter((t) => t.status === query.status);
-      return { data: rows.map((t) => enrichTask(t, userId)) };
+      rows = rows.filter((t) => taskVisibleToProfile(
+        t,
+        state.task_assignments.filter((a) => a.task_id === t.id).map((a) => a.user_id),
+        effectiveUserId,
+      ));
+      return { data: rows.map((t) => enrichTask(t, effectiveUserId)) };
     }
     if (parts.length === 1 && m === 'POST') {
       const id = nextId();
@@ -689,20 +705,21 @@ export async function handleLocalApi(method, path, body, query = {}) {
         start_date: body.start_date ?? null,
         due_date: body.due_date ?? null,
         due_time: body.due_time ?? null,
-        assigned_to: body.assigned_to ?? null,
+        assigned_to: body.assigned_to ?? effectiveUserId,
         parent_task_id: body.parent_task_id ?? null,
         points: body.points ?? 0,
         visibility: body.visibility ?? 'everyone',
         is_recurring: 0,
         recurrence_rule: null,
-        created_by: userId,
+        created_by: effectiveUserId,
         created_at: nowIso(),
         updated_at: nowIso(),
       };
       state.tasks.push(task);
-      if (body.assigned_to) state.task_assignments.push({ task_id: id, user_id: body.assigned_to });
+      const assignee = body.assigned_to ?? effectiveUserId;
+      if (assignee) state.task_assignments.push({ task_id: id, user_id: assignee });
       await saveState();
-      return { data: enrichTask(task, userId) };
+      return { data: enrichTask(task, effectiveUserId) };
     }
     const taskId = Number(parts[1]);
     if (parts[2] === 'status' && m === 'PATCH') {
@@ -899,7 +916,9 @@ export async function handleLocalApi(method, path, body, query = {}) {
 
   if (resource === 'notes') {
     if (parts.length === 1 && m === 'GET') {
-      const notes = [...state.notes].sort((a, b) => (b.pinned - a.pinned) || (b.updated_at > a.updated_at ? 1 : -1));
+      const notes = state.notes
+        .filter((n) => Number(n.created_by) === Number(effectiveUserId))
+        .sort((a, b) => (b.pinned - a.pinned) || (b.updated_at > a.updated_at ? 1 : -1));
       return { data: notes.map(enrichNote) };
     }
     if (parts.length === 1 && m === 'POST') {
@@ -910,7 +929,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
         content: body.content,
         color: body.color ?? '#FFEB3B',
         pinned: body.pinned ? 1 : 0,
-        created_by: userId,
+        created_by: effectiveUserId,
         created_at: nowIso(),
         updated_at: nowIso(),
       };

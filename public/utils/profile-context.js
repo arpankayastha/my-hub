@@ -22,11 +22,26 @@ export function profileDisplayName(user) {
   return user.display_name ?? '';
 }
 
+/** Budget rows: owner_id or legacy created_by. */
+export function rowOwnedByUser(row, userId, { ownerKey = 'owner_id', fallbackKey = 'created_by' } = {}) {
+  const raw = row?.[ownerKey] ?? row?.[fallbackKey];
+  if (raw == null || raw === '') return false;
+  return Number(raw) === Number(userId);
+}
+
+/** Tasks / board items tied to a household member. */
+export function taskVisibleToProfile(task, assignmentUserIds, userId) {
+  const id = Number(userId);
+  if (Number(task?.created_by) === id) return true;
+  if (task?.assigned_to != null && Number(task.assigned_to) === id) return true;
+  return assignmentUserIds.some((uid) => Number(uid) === id);
+}
+
 /** Session → effective id for API handlers (local IndexedDB session). */
 export function actingUserIdFromSession(session, authUserId) {
   const auth = Number(authUserId);
   const ctx = session?.contextUserId;
-  if (ctx != null && ctx !== '' && Number(ctx) !== auth) return Number(ctx);
+  if (ctx != null && ctx !== '') return Number(ctx);
   return auth;
 }
 

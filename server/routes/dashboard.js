@@ -107,7 +107,7 @@ router.get('/', (req, res) => {
           WHEN 'low' THEN 3 ELSE 4
         END ASC
       LIMIT 5
-    `).all({ now: nowIso, me: authUserId }).map(({ __due_sort, ...task }) => addAssignedUsers(task));
+    `).all({ now: nowIso, me: profileUserId }).map(({ __due_sort, ...task }) => addAssignedUsers(task));
   } catch (err) {
     log.error('urgentTasks error:', err.message);
     result.urgentTasks = [];
@@ -144,9 +144,10 @@ router.get('/', (req, res) => {
       SELECT n.*, u.display_name AS author_name, u.avatar_color AS author_color
       FROM notes n
       LEFT JOIN users u ON n.created_by = u.id
+      WHERE n.created_by = ?
       ORDER BY n.pinned DESC, n.updated_at DESC
       LIMIT 3
-    `).all();
+    `).all(profileUserId);
   } catch (err) {
     log.error('pinnedNotes error:', err.message);
     result.pinnedNotes = [];
@@ -209,9 +210,8 @@ router.get('/', (req, res) => {
     // Persönlich/geteilt (#476/#505): im personal-Modus zeigt das Dashboard-Widget
     // das eigene Budget (owner_id = me). Bei Profilwechsel (admin → Mitglied)
     // ebenfalls nur Einträge dieser Person — auch wenn budget_mode noch shared ist.
-    const profileScoped = Number(profileUserId) !== Number(authUserId);
-    const ownerClause = (resolveBudgetMode(d) === 'personal' || profileScoped) ? ' AND owner_id = ?' : '';
-    const ownerParams = ownerClause ? [profileUserId] : [];
+    const ownerClause = ' AND owner_id = ?';
+    const ownerParams = [profileUserId];
 
     const totals = d.prepare(`
       SELECT
