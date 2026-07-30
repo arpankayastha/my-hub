@@ -18,6 +18,7 @@ import { renderStats } from '/pages/budget-stats.js';
 import { renderPlans } from '/pages/budget-plans.js';
 import { toLocalDateKey } from '/utils/date.js';
 import { budgetCategoryLabel } from '/utils/category-labels.js';
+import { isDefaultBudgetSubcategoryName } from '/utils/budget-category-defaults.js';
 import { appendCurrencyOptions } from '/settings/currency.js';
 import '/components/category-manager.js';
 
@@ -90,7 +91,7 @@ function subcategoryLabel(subcategory) {
   const key = item?.key ?? subcategory;
   const name = item?.name ?? subcategory;
   const localized = SUBCATEGORY_I18N()[key];
-  if (localized && name && name !== localized) return name;
+  if (name && !isDefaultBudgetSubcategoryName(key, name)) return name;
   return localized ?? name;
 }
 
@@ -1539,7 +1540,7 @@ function openCategoryManager() {
           { key: 'income',  labelKey: 'budget.income',   addLabelKey: 'budget.addCategory' },
         ],
         supportsSubcategories: true,
-        labelResolver: (item) => item.name || budgetCategoryLabel(item.key, item.name, t),
+        labelResolver: (item) => budgetCategoryLabel(item.key, item.name, t),
         titleKey: 'budget.manageCategories',
         hintKey: 'category.manageHint',
       });

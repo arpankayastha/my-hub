@@ -1,3 +1,7 @@
+import {
+  isDefaultBudgetCategoryName,
+} from './budget-category-defaults.js';
+
 const BUDGET_CATEGORY_LABEL_KEYS = {
   income: 'budget.categoryIncome',
   housing: 'budget.categoryHousing',
@@ -33,7 +37,7 @@ export function budgetCategoryLabel(category, fallback = '', translate = null) {
   const labelKey = budgetCategoryLabelKey(category);
   if (labelKey && typeof translate === 'function') {
     const localized = translate(labelKey);
-    if (customName && customName !== localized) return customName;
+    if (customName && !isDefaultBudgetCategoryName(key, customName)) return customName;
     return localized;
   }
   return customName || key;

@@ -2,6 +2,15 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.6] - 2026-07-30
+
+### Fixed
+- Budget income categories show in the selected language (Hindi etc.) instead of German default names.
+- Category rename still works: only user-changed names override locale labels.
+
+### Changed
+- Hindi locale: more budget expense category and subcategory labels translated.
+
 ## [1.1.5] - 2026-07-30
 
 ### Fixed
