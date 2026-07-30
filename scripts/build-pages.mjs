@@ -13,7 +13,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const publicDir = resolve(root, 'public');
 const siteDir = resolve(root, 'site');
 
-/** e.g. GITHUB_REPOSITORY=arpankayastha/Genospace → /Genospace */
+/** e.g. GITHUB_REPOSITORY=arpankayastha/genospace → /genospace */
 function resolveBasePath() {
   if (process.env.GITHUB_PAGES_BASE) {
     const raw = process.env.GITHUB_PAGES_BASE.trim();
@@ -33,7 +33,7 @@ function alreadyPrefixed(afterSlash, repoSegment) {
   return repoSegment && afterSlash.startsWith(`${repoSegment}/`);
 }
 
-/** href/src only — inline <script> may use '/' + variable (must not become '/Genospace/' + seg). */
+/** href/src only — inline <script> may use '/' + variable (must not become '/genospace/' + seg). */
 function rewriteHtmlPaths(content, basePath) {
   if (!basePath) return content;
   const base = basePath.replace(/\/$/, '');
@@ -135,8 +135,8 @@ if (basePath) {
 function injectCanonicalBase(html, basePath) {
   if (!basePath) return html;
   return html.replace(
-    '(function () {\n      var m = location.pathname',
-    `(function () {\n      window.__YUVOMI_CANONICAL_BASE__='${basePath}';\n      var m = location.pathname`,
+    '(function () {\n      var canonical = window.__YUVOMI_CANONICAL_BASE__;',
+    `(function () {\n      window.__YUVOMI_CANONICAL_BASE__='${basePath}';\n      var canonical = window.__YUVOMI_CANONICAL_BASE__;`,
   );
 }
 

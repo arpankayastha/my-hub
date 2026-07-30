@@ -10,8 +10,6 @@ After GitHub Pages is enabled for this repository, the app is available at:
 
 **https://arpankayastha.github.io/genospace/**
 
-Visiting `/Genospace/` (any casing) redirects to the lowercase URL.
-
 ## Local API (how API calls work in this build)
 
 There is **no network backend**. When `window.__YUVOMI_LOCAL_MODE__` is true (set in `index.html` on GitHub Pages and when serving `public/` locally), every `api.get/post/put/patch/delete()` call goes through:
