@@ -2,6 +2,29 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.4] - 2026-07-30
+
+### Fixed
+- Budget tab scrolling after hide-amount controls were added.
+- Recurring amount updates no longer change past months (series update keeps historical instances).
+- Dashboard budget widget respects hide-amounts preference.
+
+### Changed
+- Hide amounts toggle is now an eye icon only (no text label).
+
+## [1.1.3] - 2026-07-30
+
+### Added
+- Budget: hide/show amounts toggle for sensitive figures on screen.
+- Budget: “Copy from previous month” for one-time entries.
+- Local mode: full budget category/subcategory CRUD.
+- Local mode: recurring budget entries auto-materialize in future months.
+- Local mode: add family members from Settings → Administration → Family roles.
+
+### Fixed
+- Budget subcategory creation failed on GitHub Pages (missing local API routes).
+- Add member from system settings failed in local mode.
+
 ## [1.1.2] - 2026-07-30
 
 ### Added

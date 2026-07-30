@@ -413,6 +413,77 @@ function effectiveMonthly(amount, interval) {
   return Math.round((Number(amount || 0) / monthsPerInterval(interval)) * 100) / 100;
 }
 
+function resolveSeriesParent(state, entry) {
+  const parentId = entry.recurrence_parent_id ?? (entry.is_recurring ? entry.id : null);
+  if (!parentId) return null;
+  return state.budget_entries.find((e) => e.id === parentId) ?? null;
+}
+
+async function updateEntrySeries(state, entryId, body, findUser) {
+  const entry = state.budget_entries.find((e) => e.id === entryId);
+  if (!entry) throw apiError('Entry not found.', 404);
+
+  const parent = resolveSeriesParent(state, entry);
+  if (!parent) throw apiError('Not a recurring entry.', 400);
+
+  const finalInterval = body.recurrence_interval !== undefined
+    ? body.recurrence_interval
+    : (parent.recurrence_interval || 'monthly');
+  const finalRecurring = body.is_recurring !== undefined ? (body.is_recurring ? 1 : 0) : parent.is_recurring;
+  let finalVirtual = body.recurrence_virtual !== undefined
+    ? (body.recurrence_virtual ? 1 : 0)
+    : parent.recurrence_virtual;
+  if (!finalRecurring) finalVirtual = 0;
+
+  const configuredFull = body.amount !== undefined
+    ? Number(body.amount)
+    : (parent.recurrence_full_amount != null ? parent.recurrence_full_amount : parent.amount);
+  const storeAmount = finalVirtual ? effectiveMonthly(configuredFull, finalInterval) : configuredFull;
+  const fullAmount = finalVirtual ? configuredFull : null;
+
+  if (body.title !== undefined) parent.title = String(body.title).trim();
+  parent.amount = storeAmount;
+  if (body.category !== undefined) parent.category = body.category;
+  if (body.subcategory !== undefined) parent.subcategory = body.subcategory;
+  parent.is_recurring = finalRecurring;
+  parent.recurrence_interval = finalInterval;
+  parent.recurrence_virtual = finalVirtual;
+  parent.recurrence_full_amount = fullAmount;
+  if (body.visibility !== undefined) parent.visibility = body.visibility;
+  if (body.account_id !== undefined) {
+    parent.account_id = body.account_id ? Number(body.account_id) : null;
+  }
+  parent.updated_at = nowIso();
+
+  const currentMonthStart = new Date().toISOString().slice(0, 7) + '-01';
+  state.budget_entries = state.budget_entries.filter((e) =>
+    e.recurrence_parent_id !== parent.id || e.date < currentMonthStart,
+  );
+
+  if (body.visibility !== undefined) {
+    for (const e of state.budget_entries) {
+      if (e.recurrence_parent_id === parent.id) e.visibility = parent.visibility;
+    }
+  }
+
+  await saveState();
+  return { data: enrichEntry(state, parent, findUser) };
+}
+
+async function deleteEntrySeries(state, entryId) {
+  const entry = state.budget_entries.find((e) => e.id === entryId);
+  if (!entry) throw apiError('Entry not found.', 404);
+
+  const parent = resolveSeriesParent(state, entry);
+  if (!parent) throw apiError('Not a recurring entry.', 400);
+
+  state.budget_entries = state.budget_entries.filter((e) =>
+    e.id !== parent.id && e.recurrence_parent_id !== parent.id,
+  );
+  await saveState();
+  return { ok: true };
+}
+
 function generateRecurringInstances(state, month) {
   if (!Array.isArray(state.budget_recurrence_skipped)) state.budget_recurrence_skipped = [];
   const [y, m] = month.split('-').map(Number);
@@ -852,6 +923,11 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
 
   const entryId = Number(sub);
   if (Number.isInteger(entryId) && entryId > 0) {
+    if (parts[2] === 'series') {
+      if (m === 'PUT') return await updateEntrySeries(state, entryId, body, findUser);
+      if (m === 'DELETE') return await deleteEntrySeries(state, entryId);
+    }
+
     const entry = state.budget_entries.find((e) => e.id === entryId);
     if (m === 'PUT' && entry) {
       Object.assign(entry, {
@@ -867,6 +943,10 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
       return { data: enrichEntry(state, entry, findUser) };
     }
     if (m === 'DELETE' && entry) {
+      if (entry.recurrence_parent_id) {
+        const month = entry.date.slice(0, 7);
+        state.budget_recurrence_skipped.push({ parent_id: entry.recurrence_parent_id, month });
+      }
       state.budget_entries = state.budget_entries.filter((e) => e.id !== entryId);
       await saveState();
       return { ok: true };
