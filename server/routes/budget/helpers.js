@@ -60,6 +60,70 @@ const SUPPORTED_LANGS = new Set([
   'ar', 'cs', 'de', 'el', 'en', 'es', 'fr', 'hi', 'it', 'ja',
   'nl', 'pl', 'pt', 'ru', 'sv', 'tr', 'uk', 'vi', 'zh',
 ]);
+
+/** Shipped default names — unchanged names use locale labels; renames keep custom text. */
+const DEFAULT_CATEGORY_NAMES = {
+  housing: 'Housing / Home',
+  food: 'Food',
+  transport: 'Transport',
+  personal_health: 'Personal Care / Health',
+  leisure: 'Leisure and Entertainment',
+  shopping_clothing: 'Shopping and Clothing',
+  education: 'Education',
+  financial_other: 'Financial Services and Other',
+  Erwerbseinkommen: 'Erwerbseinkommen',
+  Kapitalerträge: 'Kapitalerträge',
+  'Geschenke & Transfers': 'Geschenke & Transfers',
+  Sozialleistungen: 'Sozialleistungen',
+  'Sonstiges Einkommen': 'Sonstiges Einkommen',
+};
+const DEFAULT_SUBCATEGORY_NAMES = {
+  rent_mortgage: 'Rent / Mortgage',
+  condominium: 'Condominium fees',
+  utilities: 'Electricity / Water / Gas',
+  internet_tv_phone: 'Internet / TV / Phone',
+  renovation_maintenance: 'Renovation / Maintenance',
+  cleaning: 'Cleaning',
+  groceries: 'Groceries',
+  restaurants_bars: 'Restaurants / Bars',
+  snacks_fast_food: 'Snacks / Fast Food',
+  bakery: 'Bakery',
+  fuel: 'Fuel',
+  parking_tolls: 'Parking / Tolls',
+  public_transport: 'Public transport',
+  apps_taxi: 'Apps / Taxi',
+  maintenance_insurance: 'Maintenance / Insurance',
+  pharmacy: 'Pharmacy',
+  health_insurance: 'Health insurance',
+  gym_sports: 'Gym / Sports',
+  beauty_cosmetics: 'Beauty / Cosmetics',
+  travel: 'Travel',
+  streaming: 'Streaming',
+  events: 'Events',
+  hobbies: 'Hobbies',
+  clothes_shoes: 'Clothes / Shoes',
+  electronics: 'Electronics',
+  gifts: 'Gifts',
+  courses_college: 'Courses / College',
+  school_supplies: 'School supplies',
+  languages: 'Languages',
+  loans_interest: 'Loans / Interest',
+  bank_fees: 'Bank fees',
+  insurance_other: 'Insurance',
+  investments: 'Investments',
+  taxes: 'Taxes',
+};
+
+function isDefaultCategoryName(key, name) {
+  const d = DEFAULT_CATEGORY_NAMES[key];
+  return d && String(name || '').trim() === d;
+}
+
+function isDefaultSubcategoryName(key, name) {
+  const d = DEFAULT_SUBCATEGORY_NAMES[key];
+  return d && String(name || '').trim() === d;
+}
+
 const CATEGORY_LABEL_KEYS = {
   housing: 'catHousing',
   food: 'catFood',
@@ -138,21 +202,19 @@ export function budgetMessages(lang) {
 export function localizedCategory(category, lang) {
   const budget = budgetMessages(lang);
   const labelKey = CATEGORY_LABEL_KEYS[category.key];
-  const localized = labelKey ? (budget[labelKey] || category.name) : category.name;
-  return {
-    ...category,
-    label: category.name !== localized ? category.name : localized,
-  };
+  if (!labelKey) return { ...category, label: category.name };
+  const localized = budget[labelKey] || category.name;
+  const label = isDefaultCategoryName(category.key, category.name) ? localized : category.name;
+  return { ...category, label };
 }
 
 export function localizedSubcategory(subcategory, lang) {
   const budget = budgetMessages(lang);
   const labelKey = SUBCATEGORY_LABEL_KEYS[subcategory.key];
-  const localized = labelKey ? (budget[labelKey] || subcategory.name) : subcategory.name;
-  return {
-    ...subcategory,
-    label: subcategory.name !== localized ? subcategory.name : localized,
-  };
+  if (!labelKey) return { ...subcategory, label: subcategory.name };
+  const localized = budget[labelKey] || subcategory.name;
+  const label = isDefaultSubcategoryName(subcategory.key, subcategory.name) ? localized : subcategory.name;
+  return { ...subcategory, label };
 }
 
 // --------------------------------------------------------
