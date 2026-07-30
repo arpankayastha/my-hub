@@ -13,6 +13,7 @@ import {
 import { ensureBudgetState, handleBudgetApi } from './budget-handlers.js';
 import { handleHealthApi } from './health-handlers.js';
 import { handleSplitExpensesApi } from './split-expenses-handlers.js';
+import { handleBirthdaysApi } from './birthdays-handlers.js';
 
 const APP_VERSION = '1.58.0-local';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
@@ -713,6 +714,12 @@ export async function handleLocalApi(method, path, body, query = {}) {
   if (resource === 'split-expenses') {
     const splitResult = await handleSplitExpensesApi(m, parts, query, body, state, userId);
     if (splitResult !== null) return splitResult;
+    throw apiError('Not found.', 404);
+  }
+
+  if (resource === 'birthdays') {
+    const birthdaysResult = await handleBirthdaysApi(m, parts, query, body, state, userId);
+    if (birthdaysResult !== null) return birthdaysResult;
     throw apiError('Not found.', 404);
   }
 
