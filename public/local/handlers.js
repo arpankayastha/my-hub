@@ -98,7 +98,9 @@ function apiError(message, status, data = null) {
 }
 
 function findUser(id) {
-  return getState().users.find((u) => u.id === id);
+  const n = Number(id);
+  if (!Number.isFinite(n)) return undefined;
+  return getState().users.find((u) => Number(u.id) === n);
 }
 
 function enrichTask(task, userId) {
@@ -371,6 +373,81 @@ export async function handleLocalApi(method, path, body, query = {}) {
       await saveState();
       return { user: publicUser(user) };
     }
+    if (sub === 'users' && parts[2] && m === 'PATCH') {
+      const actorId = requireAuth();
+      const actor = findUser(actorId);
+      if (actor?.role !== 'admin') throw apiError('Admin access required.', 403);
+      const userId = Number(parts[2]);
+      if (!Number.isFinite(userId)) throw apiError('Invalid user ID.', 400);
+      const existing = findUser(userId);
+      if (!existing) throw apiError('User not found.', 404);
+
+      const username = body.username !== undefined
+        ? String(body.username || '').trim()
+        : existing.username;
+      const display_name = body.display_name !== undefined
+        ? String(body.display_name || '').trim()
+        : existing.display_name;
+      if (!username || !display_name) {
+        throw apiError('Username and display name are required.', 400);
+      }
+      if (!/^[a-zA-Z0-9._-]{3,64}$/.test(username)) {
+        throw apiError('Username must be 3-64 characters (letters, numbers, dots, hyphens, underscores).', 400);
+      }
+      if (state.users.some((u) => u.id !== userId && u.username.toLowerCase() === username.toLowerCase())) {
+        throw apiError('Username is already taken.', 409);
+      }
+      const family_role = body.family_role !== undefined
+        ? String(body.family_role || '').trim()
+        : (existing.family_role ?? 'other');
+      if (!isValidFamilyRole(family_role)) throw apiError('Invalid family role.', 400);
+
+      const systemAdmin = body.system_admin === true || body.system_admin === 'true' || body.role === 'admin';
+      const nextRole = body.system_admin !== undefined || body.role !== undefined
+        ? (systemAdmin ? 'admin' : 'member')
+        : existing.role;
+      if (userId === actorId && nextRole !== 'admin') {
+        throw apiError('At least one admin account is required.', 400);
+      }
+
+      existing.username = username;
+      existing.display_name = display_name;
+      if (body.avatar_color !== undefined) {
+        existing.avatar_color = String(body.avatar_color || '').trim() || existing.avatar_color;
+      }
+      if (body.avatar_data !== undefined) {
+        existing.avatar_data = body.avatar_data || null;
+      }
+      existing.role = nextRole;
+      existing.family_role = family_role;
+      if (body.phone !== undefined) existing.phone = body.phone || null;
+      if (body.email !== undefined) existing.email = body.email || null;
+      if (body.birth_date !== undefined) existing.birth_date = body.birth_date || null;
+      if (body.password) {
+        const pwd = String(body.password);
+        if (pwd.length < 8) throw apiError('Password must be at least 8 characters long.', 400);
+        existing.password_hash = hashPasswordSimple(pwd);
+      }
+      await saveState();
+      return { user: publicUser(existing) };
+    }
+    if (sub === 'users' && parts[2] && m === 'DELETE') {
+      const actorId = requireAuth();
+      const actor = findUser(actorId);
+      if (actor?.role !== 'admin') throw apiError('Admin access required.', 403);
+      const userId = Number(parts[2]);
+      if (!Number.isFinite(userId)) throw apiError('Invalid user ID.', 400);
+      if (userId === actorId) throw apiError('You cannot delete your own account.', 400);
+      const idx = state.users.findIndex((u) => Number(u.id) === userId);
+      if (idx === -1) throw apiError('User not found.', 404);
+      const admins = state.users.filter((u) => u.role === 'admin');
+      if (state.users[idx].role === 'admin' && admins.length <= 1) {
+        throw apiError('At least one admin account is required.', 400);
+      }
+      state.users.splice(idx, 1);
+      await saveState();
+      return { ok: true };
+    }
     throw apiError('Not found.', 404);
   }
 
@@ -474,7 +551,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
       birthdays: [],
       birthdayCount: state.birthdays?.length ?? 0,
       users: state.users.map(publicUser),
-      budget: computeDashboardBudget(state, userId, budgetMode),
+      budget: computeDashboardBudget(state, effectiveUserId, budgetMode),
       rewards: { standings: [], participantCount: 0, pending: 0 },
       health: {
         hasMeds: false,

@@ -2,6 +2,13 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.13] - 2026-07-30
+
+### Fixed
+- Profile switch now scopes dashboard budget widget and greeting to the selected household member (local + server).
+- Save/edit family members in local/GitHub Pages mode (`PATCH /auth/users/:id` was missing → “Not found”).
+- Local user lookup uses numeric id matching so `acting_as` resolves reliably after context switch.
+
 ## [1.1.12] - 2026-07-30
 
 ### Changed

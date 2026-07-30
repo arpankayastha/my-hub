@@ -15,6 +15,13 @@ export function isActingAsOther(user) {
   return Number(user.acting_as.id) !== Number(user.id);
 }
 
+/** Greeting / header label: effective household member name when admin is acting as someone else. */
+export function profileDisplayName(user) {
+  if (!user) return '';
+  if (isActingAsOther(user)) return user.acting_as.display_name ?? user.display_name ?? '';
+  return user.display_name ?? '';
+}
+
 /** Session → effective id for API handlers (local IndexedDB session). */
 export function actingUserIdFromSession(session, authUserId) {
   const auth = Number(authUserId);
