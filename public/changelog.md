@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.9] - 2026-07-30
+
+### Fixed
+- App stuck on loading screen after 1.1.8 (duplicate `isValidFamilyRole` declaration in local permissions handler broke JS module load).
+
 ## [1.1.8] - 2026-07-30
 
 ### Added
