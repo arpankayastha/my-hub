@@ -3,7 +3,18 @@
  */
 
 export function getBasePath() {
-  return typeof window !== 'undefined' && window.__YUVOMI_BASE__ ? window.__YUVOMI_BASE__ : '';
+  if (typeof window === 'undefined') return '';
+  const canonical =
+    typeof window.__YUVOMI_CANONICAL_BASE__ === 'string'
+      ? window.__YUVOMI_CANONICAL_BASE__
+      : '';
+  if (
+    canonical
+    && location.pathname.toLowerCase().startsWith(canonical.toLowerCase())
+  ) {
+    return canonical;
+  }
+  return window.__YUVOMI_BASE__ || '';
 }
 
 /** Browser URL for an in-app route (e.g. /tasks → /Genospace/tasks). */

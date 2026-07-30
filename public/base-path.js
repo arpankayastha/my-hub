@@ -10,6 +10,12 @@
   const canonical = window.__YUVOMI_CANONICAL_BASE__;
   if (
     canonical
+    && location.pathname.toLowerCase().startsWith(canonical.toLowerCase())
+  ) {
+    window.__YUVOMI_BASE__ = canonical;
+  }
+  if (
+    canonical
     && window.__YUVOMI_BASE__
     && window.__YUVOMI_BASE__.toLowerCase() === canonical.toLowerCase()
     && window.__YUVOMI_BASE__ !== canonical
