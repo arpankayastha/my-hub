@@ -28,6 +28,11 @@ export function assetUrl(path) {
   return `${base}${path}`;
 }
 
+/** Dynamic import() with GitHub Pages base path applied. */
+export function importModule(path) {
+  return import(assetUrl(path));
+}
+
 /** Strip GitHub Pages repo prefix from location.pathname. */
 export function fromAppUrl(pathname) {
   const base = getBasePath();

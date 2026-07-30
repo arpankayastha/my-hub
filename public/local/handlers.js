@@ -11,6 +11,8 @@ import {
   verifyPasswordSimple, AVATAR_COLORS,
 } from './seed.js';
 import { ensureBudgetState, handleBudgetApi } from './budget-handlers.js';
+import { handleHealthApi } from './health-handlers.js';
+import { handleSplitExpensesApi } from './split-expenses-handlers.js';
 
 const APP_VERSION = '1.58.0-local';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
@@ -700,6 +702,34 @@ export async function handleLocalApi(method, path, body, query = {}) {
     const budgetResult = await handleBudgetApi(m, parts, query, body, state, userId, findUser);
     if (budgetResult !== null) return budgetResult;
     throw apiError('Not found.', 404);
+  }
+
+  if (resource === 'health') {
+    const healthResult = await handleHealthApi(m, parts, query, body, state, userId);
+    if (healthResult !== null) return healthResult;
+    throw apiError('Not found.', 404);
+  }
+
+  if (resource === 'split-expenses') {
+    const splitResult = await handleSplitExpensesApi(m, parts, query, body, state, userId);
+    if (splitResult !== null) return splitResult;
+    throw apiError('Not found.', 404);
+  }
+
+  if (resource === 'family' && parts[1] === 'members' && m === 'GET') {
+    return {
+      data: state.users.map((u) => ({
+        id: u.id,
+        display_name: u.display_name,
+        avatar_color: u.avatar_color,
+        avatar_data: u.avatar_data ?? null,
+        family_role: u.family_role ?? null,
+        phone: u.phone ?? null,
+        email: u.email ?? null,
+        birth_date: u.birth_date ?? null,
+        created_at: u.created_at,
+      })),
+    };
   }
 
   // Default empty list for unimplemented read endpoints

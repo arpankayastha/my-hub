@@ -37,8 +37,9 @@ function setHtml(element, html) {
 
 function money(amount, currency) {
   const n = Number(amount || 0);
-  if (!Number.isFinite(n)) return `${amount} ${currency}`;
-  return getNumberFormat({ style: 'currency', currency }).format(n);
+  const code = currency || state.meta?.default_currency || 'EUR';
+  if (!Number.isFinite(n)) return `${amount} ${code}`;
+  return getNumberFormat({ style: 'currency', currency: code }).format(n);
 }
 
 function groupIcon(type) {

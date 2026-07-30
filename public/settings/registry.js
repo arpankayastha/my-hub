@@ -1,3 +1,5 @@
+import { assetUrl } from '/app-path.js';
+
 export const SETTINGS_STORAGE_KEY = 'yuvomi:settings:path';
 export const LEGACY_SETTINGS_STORAGE_KEY = 'yuvomi:settings:tab';
 
@@ -19,7 +21,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageAccountDescription',
     icon: 'circle-user',
     adminOnly: false,
-    loader: () => import('/settings/pages/personal-account.js'),
+    loader: () => import(assetUrl('/settings/pages/personal-account.js')),
   },
   {
     id: 'personal-appearance',
@@ -29,7 +31,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageAppearanceDescription',
     icon: 'palette',
     adminOnly: false,
-    loader: () => import('/settings/pages/personal-appearance.js'),
+    loader: () => import(assetUrl('/settings/pages/personal-appearance.js')),
   },
   {
     id: 'personal-device',
@@ -39,7 +41,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageDeviceDescription',
     icon: 'smartphone',
     adminOnly: false,
-    loader: () => import('/settings/pages/personal-device.js'),
+    loader: () => import(assetUrl('/settings/pages/personal-device.js')),
   },
   {
     id: 'personal-notifications',
@@ -49,7 +51,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageNotificationsDescription',
     icon: 'bell',
     adminOnly: false,
-    loader: () => import('/settings/pages/notifications.js'),
+    loader: () => import(assetUrl('/settings/pages/notifications.js')),
   },
   {
     // `calendar_default_reminders` und `calendar_default_assign_me` schreiben
@@ -63,7 +65,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageCalendarDefaultsDescription',
     icon: 'calendar-clock',
     adminOnly: false,
-    loader: () => import('/settings/pages/personal-calendar.js'),
+    loader: () => import(assetUrl('/settings/pages/personal-calendar.js')),
   },
   {
     id: 'personal-weather',
@@ -73,7 +75,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageWeatherDescription',
     icon: 'cloud-sun',
     adminOnly: false,
-    loader: () => import('/settings/pages/personal-weather.js'),
+    loader: () => import(assetUrl('/settings/pages/personal-weather.js')),
   },
   {
     // Reihenfolge und Mobil-Slots sind per-user (cfgUserSet, kein Admin-Check in
@@ -87,7 +89,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageNavigationDescription',
     icon: 'panel-left',
     adminOnly: false,
-    loader: () => import('/settings/pages/modules-navigation.js'),
+    loader: () => import(assetUrl('/settings/pages/modules-navigation.js')),
   },
   {
     id: 'modules-kitchen',
@@ -97,7 +99,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageKitchenDescription',
     icon: 'utensils',
     adminOnly: true,
-    loader: () => import('/settings/pages/modules-kitchen.js'),
+    loader: () => import(assetUrl('/settings/pages/modules-kitchen.js')),
   },
   {
     id: 'modules-calendar',
@@ -107,7 +109,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageCalendarModuleDescription',
     icon: 'calendar-days',
     adminOnly: true,
-    loader: () => import('/settings/pages/modules-calendar.js'),
+    loader: () => import(assetUrl('/settings/pages/modules-calendar.js')),
   },
   {
     // Budget, Gesundheit und Haushaltshilfe hatten je ein eigenes Blatt für je
@@ -120,7 +122,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageModuleOptionsDescription',
     icon: 'sliders-horizontal',
     adminOnly: true,
-    loader: () => import('/settings/pages/modules-options.js'),
+    loader: () => import(assetUrl('/settings/pages/modules-options.js')),
   },
   {
     id: 'modules-rewards',
@@ -130,7 +132,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageRewardsModuleDescription',
     icon: 'award',
     adminOnly: true,
-    loader: () => import('/settings/pages/modules-rewards.js'),
+    loader: () => import(assetUrl('/settings/pages/modules-rewards.js')),
   },
   {
     id: 'sync-calendar',
@@ -140,7 +142,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageSyncCalendarDescription',
     icon: 'calendar-sync',
     adminOnly: true,
-    loader: () => import('/settings/pages/sync-calendar.js'),
+    loader: () => import(assetUrl('/settings/pages/sync-calendar.js')),
   },
   {
     id: 'sync-contacts',
@@ -150,7 +152,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageSyncContactsDescription',
     icon: 'contact-round',
     adminOnly: true,
-    loader: () => import('/settings/pages/sync-contacts.js'),
+    loader: () => import(assetUrl('/settings/pages/sync-contacts.js')),
   },
   {
     id: 'sync-reminders',
@@ -160,7 +162,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageSyncRemindersDescription',
     icon: 'list-checks',
     adminOnly: true,
-    loader: () => import('/settings/pages/sync-reminders.js'),
+    loader: () => import(assetUrl('/settings/pages/sync-reminders.js')),
   },
   {
     // Dateiname und ID bleiben `documents-*`: interne Bezeichner, die sonst den
@@ -173,7 +175,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageDocumentStorageDescription',
     icon: 'hard-drive',
     adminOnly: true,
-    loader: () => import('/settings/pages/documents-storage.js'),
+    loader: () => import(assetUrl('/settings/pages/documents-storage.js')),
   },
   {
     id: 'documents-dms',
@@ -183,7 +185,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageDocumentDmsDescription',
     icon: 'archive',
     adminOnly: true,
-    loader: () => import('/settings/pages/documents-dms.js'),
+    loader: () => import(assetUrl('/settings/pages/documents-dms.js')),
   },
   {
     id: 'admin-family',
@@ -193,7 +195,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageFamilyRolesDescription',
     icon: 'users',
     adminOnly: true,
-    loader: () => import('/settings/pages/admin-family.js'),
+    loader: () => import(assetUrl('/settings/pages/admin-family.js')),
   },
   {
     id: 'admin-permissions',
@@ -203,7 +205,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pagePermissionsDescription',
     icon: 'shield-check',
     adminOnly: true,
-    loader: () => import('/settings/pages/admin-permissions.js'),
+    loader: () => import(assetUrl('/settings/pages/admin-permissions.js')),
   },
   {
     // Der Haushalts-Standardstandort lag als "Übersicht" in `modules` und trug
@@ -217,7 +219,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageHouseholdWeatherDescription',
     icon: 'cloud-sun',
     adminOnly: true,
-    loader: () => import('/settings/pages/admin-weather.js'),
+    loader: () => import(assetUrl('/settings/pages/admin-weather.js')),
   },
   {
     id: 'admin-api',
@@ -227,7 +229,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageApiAccessDescription',
     icon: 'key-round',
     adminOnly: true,
-    loader: () => import('/settings/pages/admin-api.js'),
+    loader: () => import(assetUrl('/settings/pages/admin-api.js')),
   },
   {
     id: 'admin-backup',
@@ -237,7 +239,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageBackupRestoreDescription',
     icon: 'database-backup',
     adminOnly: true,
-    loader: () => import('/settings/pages/admin-backup.js'),
+    loader: () => import(assetUrl('/settings/pages/admin-backup.js')),
   },
   {
     id: 'admin-email',
@@ -247,7 +249,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageEmailDescription',
     icon: 'mail',
     adminOnly: true,
-    loader: () => import('/settings/pages/admin-email.js'),
+    loader: () => import(assetUrl('/settings/pages/admin-email.js')),
   },
   {
     id: 'admin-system',
@@ -257,7 +259,7 @@ export const SETTINGS_LEAVES = freezeEntries([
     descriptionKey: 'settings.pageSystemDescription',
     icon: 'info',
     adminOnly: true,
-    loader: () => import('/settings/pages/admin-system.js'),
+    loader: () => import(assetUrl('/settings/pages/admin-system.js')),
   },
 ]);
 

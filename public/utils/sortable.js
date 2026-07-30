@@ -9,12 +9,13 @@
  * behalten, der denselben Persistenz-Handler aufruft.
  */
 import { vibrate } from './ux.js';
+import { importModule } from '/app-path.js';
 
 let sortablePromise = null;
 let SortableCtor = null;
 function loadSortable() {
   if (!sortablePromise) {
-    sortablePromise = import('/vendor/sortablejs/sortable.esm.min.js')
+    sortablePromise = importModule('/vendor/sortablejs/sortable.esm.min.js')
       .then((mod) => { SortableCtor = mod.default; return mod.default; })
       .catch((err) => {
         // Fehlgeschlagenen Import nicht dauerhaft cachen: sonst liefert jeder

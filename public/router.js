@@ -22,7 +22,7 @@ import { openModal, confirmModal } from '/components/modal.js';
 import '/components/datepicker.js';
 import { NAV_ICONS } from '/nav-icons.js';
 import { RENAMED_SETTINGS_SOURCE_PATHS, SETTINGS_LEAVES } from '/settings/registry.js';
-import { toAppUrl, fromAppUrl, assetUrl } from '/app-path.js';
+import { toAppUrl, fromAppUrl, assetUrl, importModule } from '/app-path.js';
 import {
   NAV_SECTION,
   resolveMobileNavOrder,
@@ -158,9 +158,8 @@ function loadPageStyle(moduleName, routeStyle = null) {
 const moduleCache = new Map();
 
 async function importPage(pagePath) {
-  const url = assetUrl(pagePath);
   if (!moduleCache.has(pagePath)) {
-    moduleCache.set(pagePath, await import(url));
+    moduleCache.set(pagePath, await importModule(pagePath));
   }
   return moduleCache.get(pagePath);
 }
@@ -186,7 +185,7 @@ function prefetchRoute(path) {
     _prefetchedPages.add(route.page);
     const link = document.createElement('link');
     link.rel = 'modulepreload';
-    link.href = route.page;
+    link.href = assetUrl(route.page);
     document.head.appendChild(link);
   }
 
@@ -196,7 +195,7 @@ function prefetchRoute(path) {
     const link = document.createElement('link');
     link.rel = 'prefetch';
     link.as = 'style';
-    link.href = cssHref;
+    link.href = assetUrl(cssHref);
     document.head.appendChild(link);
   }
 }

@@ -76,6 +76,13 @@ export function emptyState() {
     budget_loans: [],
     budget_loan_payments: [],
     budget_plans: [],
+    health_vitals: [],
+    health_medications: [],
+    health_medication_schedules: [],
+    health_medication_logs: [],
+    health_lab_reports: [],
+    health_lab_results: [],
+    health_activities: [],
   };
 }
 
