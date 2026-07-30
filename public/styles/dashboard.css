@@ -2006,6 +2006,71 @@ svg.weather-forecast__icon {
   height: 18px;
 }
 
+.dashboard-icon-btn--profile-active {
+  color: var(--color-text-primary);
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+}
+
+.profile-picker__hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+.profile-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.profile-picker__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  text-align: left;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.profile-picker__item:hover,
+.profile-picker__item:focus-visible {
+  border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
+  background: var(--color-surface-hover);
+}
+
+.profile-picker__item.is-active {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-elevated));
+}
+
+.profile-picker__dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.profile-picker__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-base);
+  font-weight: 500;
+}
+
+.profile-picker__check {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--color-accent);
+}
+
 /* Einmaliger Erststart-Hinweis: sanfter Akzent-Puls, der zeigt, wo Widgets
    wieder eingeblendet werden. Läuft dreimal und endet ruhig. */
 @keyframes dashboard-icon-hint {
