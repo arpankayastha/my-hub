@@ -1,4 +1,5 @@
 import {
+  englishBudgetCategoryLabel,
   isDefaultBudgetCategoryName,
 } from './budget-category-defaults.js';
 
@@ -31,14 +32,10 @@ export function budgetCategoryLabelKey(category) {
   return BUDGET_CATEGORY_LABEL_KEYS[key] ?? null;
 }
 
-export function budgetCategoryLabel(category, fallback = '', translate = null) {
-  const key = String(category || '').trim();
-  const customName = String(fallback || '').trim();
-  const labelKey = budgetCategoryLabelKey(category);
-  if (labelKey && typeof translate === 'function') {
-    const localized = translate(labelKey);
-    if (customName && !isDefaultBudgetCategoryName(key, customName)) return customName;
-    return localized;
-  }
-  return customName || key;
+/**
+ * Budget category display name. Default categories always use English labels
+ * (region/UI language does not change them). Custom renames keep the stored name.
+ */
+export function budgetCategoryLabel(category, fallback = '', _translate = null) {
+  return englishBudgetCategoryLabel(category, fallback);
 }

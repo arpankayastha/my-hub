@@ -14,6 +14,7 @@ import { predictCycle, PHASE } from '/utils/health-cycle.js';
 import { localizeBirthdayEvent } from '/utils/birthday-event.js';
 import { openModal, closeModal, confirmModal } from '/components/modal.js';
 import { renderAvatarStack } from '/components/user-multi-select.js';
+import { budgetCategoryLabel } from '/utils/category-labels.js';
 
 // Hält den AbortController des aktuellen FAB-Listeners - wird bei jedem render() erneuert.
 let _fabController = null;
@@ -370,23 +371,6 @@ function widgetIcon(id) {
   return map[id] ?? 'layout-dashboard';
 }
 
-const BUDGET_CATEGORY_LABEL_KEYS = {
-  housing: 'catHousing',
-  food: 'catFood',
-  transport: 'catTransport',
-  personal_health: 'catPersonalHealth',
-  leisure: 'catLeisure',
-  shopping_clothing: 'catShoppingClothing',
-  education: 'catEducation',
-  financial_other: 'catFinancialOther',
-  subscriptions: 'catSubscriptions',
-  'Erwerbseinkommen': 'catEarnedIncome',
-  'Kapitalerträge': 'catInvestmentIncome',
-  'Geschenke & Transfers': 'catTransferGiftIncome',
-  'Sozialleistungen': 'catGovernmentBenefits',
-  'Sonstiges Einkommen': 'catOtherIncome',
-};
-
 // --------------------------------------------------------
 // Hilfsfunktionen
 // --------------------------------------------------------
@@ -500,11 +484,6 @@ const MEAL_ICONS = {
 
 function initials(name = '') {
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-}
-
-function budgetCategoryLabel(category) {
-  const key = BUDGET_CATEGORY_LABEL_KEYS[category];
-  return key ? t(`budget.${key}`) : (category || '-');
 }
 
 function formatCurrency(amount, currency = 'EUR') {

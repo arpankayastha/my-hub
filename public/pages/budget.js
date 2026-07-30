@@ -18,7 +18,7 @@ import { renderStats } from '/pages/budget-stats.js';
 import { renderPlans } from '/pages/budget-plans.js';
 import { toLocalDateKey } from '/utils/date.js';
 import { budgetCategoryLabel } from '/utils/category-labels.js';
-import { isDefaultBudgetSubcategoryName } from '/utils/budget-category-defaults.js';
+import { englishBudgetSubcategoryLabel } from '/utils/budget-category-defaults.js';
 import { appendCurrencyOptions } from '/settings/currency.js';
 import '/components/category-manager.js';
 
@@ -90,9 +90,7 @@ function subcategoryLabel(subcategory) {
     : Object.values(state.meta.expenseSubcategories ?? {}).flat().find((s) => s.key === subcategory);
   const key = item?.key ?? subcategory;
   const name = item?.name ?? subcategory;
-  const localized = SUBCATEGORY_I18N()[key];
-  if (name && !isDefaultBudgetSubcategoryName(key, name)) return name;
-  return localized ?? name;
+  return englishBudgetSubcategoryLabel(key, name);
 }
 
 function expenseCategories() {
