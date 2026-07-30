@@ -252,6 +252,51 @@ export async function handleLocalApi(method, path, body, query = {}) {
       requireAuth();
       return { data: state.users.map(publicUser) };
     }
+    if (sub === 'users' && m === 'POST') {
+      const actorId = requireAuth();
+      const actor = findUser(actorId);
+      if (actor?.role !== 'admin') throw apiError('Admin access required.', 403);
+      const username = String(body.username || '').trim();
+      const display_name = String(body.display_name || '').trim();
+      const password = body.password;
+      if (!username || !display_name || !password) {
+        throw apiError('Username, display name, and password are required.', 400);
+      }
+      if (String(password).length < 8) {
+        throw apiError('Password must be at least 8 characters long.', 400);
+      }
+      if (!/^[a-zA-Z0-9._-]{3,64}$/.test(username)) {
+        throw apiError('Username must be 3-64 characters (letters, numbers, dots, hyphens, underscores).', 400);
+      }
+      if (state.users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
+        throw apiError('Username is already taken.', 409);
+      }
+      const FAMILY_ROLES = ['dad', 'mom', 'parent', 'child', 'grandparent', 'relative', 'other'];
+      const family_role = String(body.family_role || 'other').trim();
+      if (!FAMILY_ROLES.includes(family_role)) {
+        throw apiError('Invalid family role.', 400);
+      }
+      const systemAdmin = body.system_admin === true || body.system_admin === 'true' || body.role === 'admin';
+      const id = nextId();
+      const user = {
+        id,
+        username,
+        display_name,
+        password_hash: hashPasswordSimple(password),
+        avatar_color: body.avatar_color || AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
+        avatar_data: null,
+        role: systemAdmin ? 'admin' : 'member',
+        family_role,
+        access_scope: 'family',
+        phone: body.phone || null,
+        email: body.email || null,
+        birth_date: body.birth_date || null,
+        created_at: nowIso(),
+      };
+      state.users.push(user);
+      await saveState();
+      return { user: publicUser(user) };
+    }
     throw apiError('Not found.', 404);
   }
 
