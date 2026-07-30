@@ -73,7 +73,7 @@ const ICON = {
 
 const VALID_TYPES = ['date', 'time', 'datetime'];
 
-class My HubDatepicker extends HTMLElement {
+class MyHubDatepicker extends HTMLElement {
   // form-associated: erscheint in form.elements / FormData über `name`,
   // damit `name`-basierte Reads (form.elements.x.value) den ISO-Wert erhalten.
   static formAssociated = true;
@@ -626,7 +626,7 @@ class My HubDatepicker extends HTMLElement {
 }
 
 if (!customElements.get('my-hub-datepicker')) {
-  customElements.define('my-hub-datepicker', My HubDatepicker);
+  customElements.define('my-hub-datepicker', MyHubDatepicker);
 }
 
-export { My HubDatepicker };
+export { MyHubDatepicker };
