@@ -2,6 +2,14 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.11] - 2026-07-30
+
+### Added
+- Household profile switcher in the mobile **More** sheet (PWA / no sidebar).
+
+### Removed
+- Budget “Copy from previous month” button (recurring entries still auto-fill future months).
+
 ## [1.1.10] - 2026-07-30
 
 ### Fixed

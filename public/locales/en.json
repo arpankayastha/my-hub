@@ -873,7 +873,7 @@
         "copyFromPrevMonthHint": "Copy one-time entries from the previous month into this month (recurring entries appear automatically)",
         "copyFromPrevMonthDone": "Copied {count} entries from the previous month",
         "copyFromPrevMonthEmpty": "Nothing to copy — previous month has no one-time entries or they already exist here",
-        "recurringAutoHint": "Recurring entries are created automatically when you open a future month. Use “Copy from previous month” for one-time entries.",
+        "recurringAutoHint": "Recurring entries are created automatically when you open a future month.",
         "byCategory": "By category",
         "chartSummary": "{{count}} categories · Largest: {{top}} ({{pct}}%)",
         "transactions": "Transactions",
