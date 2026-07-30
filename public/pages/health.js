@@ -12,6 +12,7 @@
  */
 
 import { api, auth } from '/api.js';
+import { fromAppUrl } from '/app-path.js';
 import { effectiveUserId } from '/utils/profile-context.js';
 import { t, formatDate, formatTime, getLocale, getNumberFormat } from '/i18n.js';
 import { esc } from '/utils/html.js';

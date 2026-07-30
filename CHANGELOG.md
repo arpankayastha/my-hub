@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.10] - 2026-07-30
+
+### Fixed
+- Health page crash: restore missing `fromAppUrl` import (broken in 1.1.8).
+
 ## [1.1.9] - 2026-07-30
 
 ### Fixed
