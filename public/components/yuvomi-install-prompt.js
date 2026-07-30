@@ -12,6 +12,7 @@
  */
 
 import { t, whenI18nReady } from '/i18n.js';
+import { assetUrl } from '/app-path.js';
 import {
   getPwaInstallState,
   onPwaInstallStateChanged,
@@ -263,7 +264,7 @@ class YuvomiInstallPrompt extends HTMLElement {
     // App-Icon
     const icon = document.createElement('img');
     icon.className = 'icon';
-    icon.src = '/icons/icon-192.png';
+    icon.src = assetUrl('/icons/icon-192.png');
     icon.alt = 'Yuvomi';
     icon.width = 40;
     icon.height = 40;

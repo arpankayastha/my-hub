@@ -76,8 +76,8 @@ const moduleLabel = (key) => {
   return m ? t(m.labelKey) : key;
 };
 
-const widgetsForModule = (moduleKey) => state.catalog.widgets.filter((w) => w.module === moduleKey);
-const generalWidgets = () => state.catalog.widgets.filter((w) => !w.module);
+const widgetsForModule = (moduleKey) => (state.catalog?.widgets ?? []).filter((w) => w.module === moduleKey);
+const generalWidgets = () => (state.catalog?.widgets ?? []).filter((w) => !w.module);
 
 // Effektiver Modul-Zugriff (Draft ?? geerbt ?? Standard 'write').
 function effectiveModuleAccess(moduleKey) {
@@ -356,13 +356,14 @@ function renderSubjectSelector(container) {
   host.replaceChildren();
 
   if (state.mode === 'role') {
-    const chips = state.catalog.roles.map((role) => `
+    const roles = state.catalog?.roles ?? [];
+    const chips = roles.map((role) => `
       <button type="button" class="perm-chip${String(role) === String(state.subjectId) ? ' is-active' : ''}"
         data-role="${esc(role)}">${esc(familyRoleLabel(role))}</button>
     `).join('');
     host.insertAdjacentHTML('beforeend', chips);
   } else {
-    const members = state.catalog.members.filter((m) => m.access_scope !== 'split_guest');
+    const members = (state.catalog?.members ?? []).filter((m) => m.access_scope !== 'split_guest');
     if (!members.length) {
       host.insertAdjacentHTML('beforeend', `<p class="form-hint">${esc(t('settings.permNoMembers'))}</p>`);
       return;
@@ -404,7 +405,7 @@ async function selectSubject(container, mode, id) {
         const res = await api.get(`/permissions/role/${encodeURIComponent(id)}`);
         state.draft = { modules: { ...res.data.modules }, widgets: { ...res.data.widgets } };
       } else {
-        const member = state.catalog.members.find((m) => String(m.id) === String(id));
+        const member = (state.catalog?.members ?? []).find((m) => String(m.id) === String(id));
         const [ov, roleRes] = await Promise.all([
           api.get(`/permissions/user/${encodeURIComponent(id)}`),
           member && member.role !== 'admin'
