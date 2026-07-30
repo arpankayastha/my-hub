@@ -19,6 +19,7 @@ import {
   dashboardProfileToolMarkup,
   wireDashboardProfileTool,
 } from '/components/profile-switcher.js';
+import { profileDisplayName } from '/utils/profile-context.js';
 
 // Hält den AbortController des aktuellen FAB-Listeners - wird bei jedem render() erneuert.
 let _fabController = null;
@@ -1185,7 +1186,7 @@ function renderDashboardOverview(user, editing = false) {
       <div class="dashboard-overview__header${editing ? ' dashboard-overview__header--editing' : ''}">
         <div class="dashboard-overview__heading">
           <span class="dashboard-overview__date">${dateLabel}</span>
-          <h2 class="dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(user.display_name)}</h2>
+          <h2 class="dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(profileDisplayName(user))}</h2>
         </div>
         <div class="dashboard-overview__tools">
           ${editing ? `
@@ -2090,7 +2091,7 @@ export async function render(container, { user }) {
     const titleEl = container.querySelector('.dashboard-overview__title');
     if (titleEl) {
       titleEl.replaceChildren();
-      titleEl.insertAdjacentHTML('afterbegin', greeting(user.display_name));
+      titleEl.insertAdjacentHTML('afterbegin', greeting(profileDisplayName(user)));
       // Gradient-Periode mit-resyncen: sonst aktualisieren sich über Mittag/18 Uhr
       // die Worte, aber der Tageszeit-Gradient bliebe auf dem alten Fenster stehen.
       titleEl.classList.remove(

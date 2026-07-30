@@ -10,6 +10,7 @@ import {
   actingUserIdFromSession,
   effectiveUserId,
   publicActingAs,
+  profileDisplayName,
 } from '../public/utils/profile-context.js';
 import { resolveContextTarget } from '../server/profile-context.js';
 
@@ -58,4 +59,9 @@ test('publicActingAs returns member summary', () => {
   const acting = publicActingAs(find, 2, 1);
   assert.equal(acting.display_name, 'Mom');
   assert.equal(publicActingAs(find, null, 1), null);
+});
+
+test('profileDisplayName prefers acting_as', () => {
+  assert.equal(profileDisplayName({ id: 1, display_name: 'Admin', acting_as: { id: 2, display_name: 'Wife' } }), 'Wife');
+  assert.equal(profileDisplayName({ id: 1, display_name: 'Admin', acting_as: null }), 'Admin');
 });

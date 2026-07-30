@@ -11,6 +11,7 @@ import { hydrateBirthday } from '../services/birthdays.js';
 import { getUpcomingEvents } from '../services/calendar-events.js';
 import { visibilityWhere } from '../services/visibility.js';
 import { resolveBudgetMode } from '../services/budget-visibility.js';
+import { viewerId } from '../routes/budget/helpers.js';
 
 const log = createLogger('Dashboard');
 
@@ -49,7 +50,8 @@ router.get('/', (req, res) => {
   try {
   const d = db.get();
   const result = {};
-  const userId = req.authUserId || req.session.userId;
+  const authUserId = req.authUserId || req.session.userId;
+  const profileUserId = viewerId(req);
 
   // Heute und +48h als ISO-Strings
   const now = new Date();
@@ -67,7 +69,7 @@ router.get('/', (req, res) => {
   // Geteilte Logik mit /calendar/upcoming: expandiert wiederkehrende Serien,
   // sodass auch Termine erscheinen, deren Master-Start in der Vergangenheit liegt.
   try {
-    result.upcomingEvents = getUpcomingEvents(d, { userId, limit: 5, fromToday: true })
+    result.upcomingEvents = getUpcomingEvents(d, { userId: authUserId, limit: 5, fromToday: true })
       .map(({ assigned_users_json, ...event }) => {
         event.assigned_users = assigned_users_json ? JSON.parse(assigned_users_json) : [];
         return event;
@@ -105,7 +107,7 @@ router.get('/', (req, res) => {
           WHEN 'low' THEN 3 ELSE 4
         END ASC
       LIMIT 5
-    `).all({ now: nowIso, me: userId }).map(({ __due_sort, ...task }) => addAssignedUsers(task));
+    `).all({ now: nowIso, me: authUserId }).map(({ __due_sort, ...task }) => addAssignedUsers(task));
   } catch (err) {
     log.error('urgentTasks error:', err.message);
     result.urgentTasks = [];
@@ -207,7 +209,7 @@ router.get('/', (req, res) => {
     // Persönlich/geteilt (#476/#505): im personal-Modus zeigt das Dashboard-Widget
     // das eigene Budget (owner_id = me), sonst das gesamte Haushaltsbudget.
     const ownerClause = resolveBudgetMode(d) === 'personal' ? ' AND owner_id = ?' : '';
-    const ownerParams = ownerClause ? [userId] : [];
+    const ownerParams = ownerClause ? [profileUserId] : [];
 
     const totals = d.prepare(`
       SELECT
@@ -291,7 +293,7 @@ router.get('/', (req, res) => {
       SELECT id, name, stock_qty, refill_threshold
       FROM medications
       WHERE active = 1 AND user_id = ?
-    `).all(userId);
+    `).all(profileUserId);
     const scheduleStmt = d.prepare(`
       SELECT time_of_day, days_mask, start_date, end_date
       FROM medication_schedules
