@@ -1050,6 +1050,15 @@ test('persistModuleToggle does not restore the input when the re-render fails', 
   assert.equal(input.checked, true);
 });
 
+test('navigation render unwraps getPreferences without a nested .data field', async () => {
+  const source = await readFile(
+    new URL('../public/settings/pages/modules-navigation.js', import.meta.url),
+    'utf8',
+  );
+  assert.match(source, /preferencesResult\.value\s*\?\?\s*\{\}/);
+  assert.doesNotMatch(source, /preferencesResult\.value\?\.data/);
+});
+
 test('all locales contain the settings IA translation foundation', async () => {
   const localesDirectory = new URL('../public/locales/', import.meta.url);
   const localeFiles = (await readdir(localesDirectory)).filter((file) => file.endsWith('.json'));
