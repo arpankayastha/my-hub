@@ -17,7 +17,7 @@ export function getBasePath() {
   return window.__YUVOMI_BASE__ || '';
 }
 
-/** Browser URL for an in-app route (e.g. /tasks → /Genospace/tasks). */
+/** Browser URL for an in-app route (e.g. /tasks → /genospace/tasks). */
 export function toAppUrl(path) {
   const base = getBasePath();
   const p = path.startsWith('/') ? path : `/${path}`;
@@ -44,12 +44,16 @@ export function importModule(path) {
   return import(assetUrl(path));
 }
 
-/** Strip GitHub Pages repo prefix from location.pathname. */
+/** Strip GitHub Pages repo prefix from location.pathname (case-insensitive). */
 export function fromAppUrl(pathname) {
   const base = getBasePath();
-  if (base && pathname.startsWith(base)) {
-    const rest = pathname.slice(base.length) || '/';
+  const path = pathname || '/';
+  if (!base) return path;
+  const escaped = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = path.match(new RegExp(`^${escaped}`, 'i'));
+  if (match) {
+    const rest = path.slice(match[0].length) || '/';
     return rest.startsWith('/') ? rest : `/${rest}`;
   }
-  return pathname || '/';
+  return path;
 }
