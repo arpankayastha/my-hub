@@ -131,8 +131,8 @@ if (basePath) {
 function injectCanonicalBase(html, basePath) {
   if (!basePath) return html;
   return html.replace(
-    'window.__YUVOMI_LOCAL_MODE__ = true;',
-    `window.__YUVOMI_CANONICAL_BASE__='${basePath}'; window.__YUVOMI_LOCAL_MODE__ = true;`,
+    '(function () {\n      var m = location.pathname',
+    `(function () {\n      window.__YUVOMI_CANONICAL_BASE__='${basePath}';\n      var m = location.pathname`,
   );
 }
 
