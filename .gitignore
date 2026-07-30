@@ -1,0 +1,95 @@
+# Dependencies
+node_modules/
+
+# External/customized modules
+modules/*
+!modules/.gitkeep
+
+# Environment variables (NEVER commit)
+.env
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+logs/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Build artifacts & test coverage
+dist/
+.cache/
+coverage/
+
+# Local Docker volume
+data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# AI dev tooling — local only, never published (Claude Code, Codex, agent skills)
+.claude/
+.codex/
+.agents/
+.github/skills/
+AGENTS.md
+DESIGN.md
+PRODUCT.md
+
+# graphify knowledge graph — generated artifact, regenerated locally, never published
+graphify-out/
+
+# Git worktrees
+.worktrees/
+
+# Local tooling (session state, design context — not for contributors)
+.superpowers/
+.interface-design/
+.impeccable/
+
+# Claude Code work documents (internal plans/specs, not for contributors)
+docs/superpowers/
+docs/archive/superpowers/
+docs/plans/
+docs/integrations/
+REBRANDING.md
+
+# Audit reports (generated per-session, not for version control)
+docs/audit-report-*.md
+docs/claude-md-audit.md
+docs/repo-audit-*.md
+docs/legal-audit/
+
+# Installer modernization working docs (internal audit/plan/prompts, not for contributors)
+docs/installer-audit.md
+docs/installer-modernization-plan.md
+docs/installer-phase-prompts.md
+
+# Text files with tokens/keys (safety net)
+*.txt
+!public/robots.txt
+CLAUDE.md
+
+# Screenshot generation scripts (dev tooling, not part of the app)
+create-screenshots*.js
+custom-screenshots.js
+seed-demo-simple.js
+seed-english-demo*.js
+screenshots/
+
+# Database backup files
+*.db.backup-*
+
+# Duplicate GitHub Pages staging folder
+docs/github-pages/
+
+# macOS sync duplicates (" 2" suffix)
+* 2.*
