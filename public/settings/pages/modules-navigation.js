@@ -367,14 +367,16 @@ function collectVisibleGlobalOrder(list) {
 function collectOrdinaryDisabledIds(list) {
   return [...list.querySelectorAll('[data-built-in-module-toggle]')]
     .filter((input) => !input.checked)
-    .map((input) => input.dataset.builtInModuleToggle);
+    .map((input) => input.dataset.builtInModuleToggle || input.getAttribute('data-built-in-module-toggle'))
+    .filter(Boolean);
 }
 
 function collectEnabledKitchenChildren(list) {
   return new Set(
     [...list.querySelectorAll('[data-kitchen-child-toggle]')]
       .filter((input) => input.checked)
-      .map((input) => input.dataset.kitchenChildToggle),
+      .map((input) => input.dataset.kitchenChildToggle || input.getAttribute('data-kitchen-child-toggle'))
+      .filter(Boolean),
   );
 }
 
@@ -423,14 +425,15 @@ export function buildMobileNavigationPayload(order) {
 // auslösen).
 export async function persistModuleToggle(input, enabled, save, rerender) {
   input.disabled = true;
+  let savedPreferences;
   try {
-    await save();
+    savedPreferences = await save();
   } catch (error) {
     input.checked = !enabled;
     input.disabled = false;
     throw error;
   }
-  await rerender();
+  await rerender(savedPreferences);
 }
 
 async function saveNavigationState(list, isAdmin) {
@@ -442,12 +445,14 @@ async function saveNavigationState(list, isAdmin) {
     )
     : buildOrderPayload(collectVisibleGlobalOrder(list));
   const response = await savePreferences(payload);
-  const savedOrder = response?.data?.module_order ?? payload.module_order;
+  const savedPreferences = response?.data ?? {};
+  const savedOrder = savedPreferences.module_order ?? payload.module_order;
   if (isAdmin) {
-    const savedDisabled = response?.data?.disabled_modules ?? payload.disabled_modules;
+    const savedDisabled = savedPreferences.disabled_modules ?? payload.disabled_modules;
     window.yuvomi?.setDisabledModules?.(savedDisabled);
   }
   window.yuvomi?.setModuleOrder?.(savedOrder);
+  return savedPreferences;
 }
 
 function bindKitchenDisclosure(container) {
@@ -552,10 +557,11 @@ function bindModuleListEvents(container, user) {
             await api.patch(`/modules/${encodeURIComponent(input.dataset.thirdPartyModuleToggle)}`, { enabled });
             await window.yuvomi?.refreshThirdPartyModules?.();
           }
-          await saveNavigationState(list, isAdmin);
+          const savedPreferences = await saveNavigationState(list, isAdmin);
           window.yuvomi?.showToast(t('settings.thirdPartyModulesSaved'), 'success');
+          return savedPreferences;
         },
-        () => render(container, { user }),
+        (savedPreferences) => render(container, { user, preferences: savedPreferences }),
       );
     } catch (error) {
       window.yuvomi?.showToast(error.message ?? t('common.errorGeneric'), 'danger');
@@ -586,15 +592,26 @@ function bindMobileNavigationEvents(container, user) {
   });
 }
 
-export async function render(container, { user }) {
+export async function render(container, { user, preferences: preferencesOverride } = {}) {
   const isAdmin = user?.role === 'admin';
-  const [preferencesResult, modulesResult] = await Promise.allSettled([
-    getPreferences(),
-    isAdmin ? api.get('/modules?admin=1') : Promise.resolve({ data: [] }),
-  ]);
+  let preferences = preferencesOverride;
+  let thirdPartyModules = [];
 
-  const preferences = preferencesResult.status === 'fulfilled' ? (preferencesResult.value ?? {}) : {};
-  const thirdPartyModules = modulesResult.status === 'fulfilled' ? (modulesResult.value?.data ?? []) : [];
+  if (!preferences) {
+    const [preferencesResult, modulesResult] = await Promise.allSettled([
+      getPreferences(),
+      isAdmin ? api.get('/modules?admin=1') : Promise.resolve({ data: [] }),
+    ]);
+    preferences = preferencesResult.status === 'fulfilled' ? (preferencesResult.value ?? {}) : {};
+    thirdPartyModules = modulesResult.status === 'fulfilled' ? (modulesResult.value?.data ?? []) : [];
+  } else if (isAdmin) {
+    try {
+      const modulesResult = await api.get('/modules?admin=1');
+      thirdPartyModules = modulesResult?.data ?? [];
+    } catch {
+      thirdPartyModules = [];
+    }
+  }
 
   const rows = buildRows(preferences, thirdPartyModules);
   const availableMobileIds = mobileCandidateRows(rows).map((row) => row.orderId);

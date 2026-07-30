@@ -30,7 +30,7 @@ import {
 } from './preferences-helpers.js';
 import { normalizeMobileNavOrder } from '../settings/module-order.js';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
 const VALID_STATUSES = ['open', 'in_progress', 'done', 'archived'];
 const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];

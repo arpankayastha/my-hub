@@ -16,11 +16,21 @@ export function parseDisabledModules(raw) {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((m) => typeof m === 'string' && TOGGLEABLE_MODULES.has(m));
+    if (Array.isArray(parsed)) {
+      return parsed.filter((m) => typeof m === 'string' && TOGGLEABLE_MODULES.has(m));
+    }
+    if (typeof parsed === 'string' && TOGGLEABLE_MODULES.has(parsed)) {
+      return [parsed];
+    }
   } catch {
-    return [];
+    if (typeof raw === 'string') {
+      if (raw.includes(',')) {
+        return [...new Set(raw.split(',').map((m) => m.trim()).filter((m) => TOGGLEABLE_MODULES.has(m)))];
+      }
+      if (TOGGLEABLE_MODULES.has(raw)) return [raw];
+    }
   }
+  return [];
 }
 
 export function parseModuleOrder(raw) {
