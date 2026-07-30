@@ -5,7 +5,8 @@
 import { api, auth } from '/api.js';
 import { t } from '/i18n.js';
 import { esc } from '/utils/html.js';
-import { effectiveUserId } from '/utils/profile-context.js';
+import { effectiveUserId, isActingAsOther } from '/utils/profile-context.js';
+import { openModal, closeModal } from '/components/modal.js';
 import {
   webAuthnAvailable,
   verifyPlatformPasskey,
@@ -89,19 +90,9 @@ export function wireProfileSwitcher(container, user, onContextChanged) {
     if (next === prev) return;
     select.disabled = true;
     try {
-      if (!await maybeVerifyBiometric()) {
-        select.value = prev;
-        return;
-      }
       const targetId = Number(next);
-      const selfId = Number(user.id);
-      const res = await auth.switchContext(targetId === selfId ? null : targetId);
-      const merged = { ...res.user, acting_as: res.acting_as ?? null };
-      localStorage.setItem('myhub.biometric.credential', _biometricCredentialId || '');
-      onContextChanged?.(merged);
-    } catch (err) {
-      console.error('[Profile] context switch failed:', err);
-      select.value = prev;
+      const ok = await switchProfileTo(user, targetId, onContextChanged);
+      if (!ok) select.value = prev;
     } finally {
       select.disabled = false;
     }
@@ -116,4 +107,83 @@ export function setProfileSwitcherCredentialId(id) {
 
 export function setProfileSwitcherBiometric(enabled) {
   _biometricEnabled = enabled;
+}
+
+/** Compact users icon beside dashboard customize — admin only. */
+export function dashboardProfileToolMarkup(user) {
+  if (!user || user.role !== 'admin' || user.access_scope === 'split_guest') return '';
+  const acting = isActingAsOther(user);
+  const activeName = acting ? user.acting_as.display_name : user.display_name;
+  return `
+    <button type="button" class="dashboard-icon-btn dashboard-icon-btn--profile${acting ? ' dashboard-icon-btn--profile-active' : ''}"
+      id="dashboard-profile-btn"
+      aria-label="${esc(t('nav.profileSwitch'))}: ${esc(activeName)}"
+      title="${esc(acting ? t('nav.profileActingAs', { name: activeName }) : t('nav.profileSwitch'))}">
+      <i data-lucide="users" aria-hidden="true"></i>
+    </button>`;
+}
+
+export function wireDashboardProfileTool(container, user, onContextChanged) {
+  const btn = container.querySelector('#dashboard-profile-btn');
+  if (!btn || !user) return;
+  btn.addEventListener('click', () => openProfilePicker(user, onContextChanged));
+}
+
+async function switchProfileTo(user, targetId, onContextChanged) {
+  const selfId = Number(user.id);
+  if (!await maybeVerifyBiometric()) return false;
+  try {
+    const res = await auth.switchContext(targetId === selfId ? null : targetId);
+    const merged = { ...res.user, acting_as: res.acting_as ?? null };
+    localStorage.setItem('myhub.biometric.credential', _biometricCredentialId || '');
+    onContextChanged?.(merged);
+    return true;
+  } catch (err) {
+    console.error('[Profile] context switch failed:', err);
+    return false;
+  }
+}
+
+export async function openProfilePicker(user, onContextChanged) {
+  await loadProfileSwitcherState();
+  const activeId = effectiveUserId({ ...user, acting_as: user.acting_as });
+  const rows = _members.map((m) => {
+    const active = Number(m.id) === Number(activeId);
+    const dot = esc(m.avatar_color || 'var(--color-accent)');
+    return `
+      <button type="button" class="profile-picker__item${active ? ' is-active' : ''}"
+        data-member-id="${esc(m.id)}">
+        <span class="profile-picker__dot" style="background:${dot}" aria-hidden="true"></span>
+        <span class="profile-picker__name">${esc(m.display_name)}</span>
+        ${active ? '<i data-lucide="check" class="profile-picker__check" aria-hidden="true"></i>' : ''}
+      </button>`;
+  }).join('');
+
+  openModal({
+    title: t('nav.profileSwitch'),
+    content: `
+      <p class="profile-picker__hint">${esc(t('nav.profileSwitchHint'))}</p>
+      <div class="profile-picker" role="listbox" aria-label="${esc(t('nav.profileSwitch'))}">
+        ${rows}
+      </div>`,
+    size: 'sm',
+    onSave: (panel) => {
+      if (window.lucide) window.lucide.createIcons({ el: panel });
+      panel.querySelectorAll('[data-member-id]').forEach((item) => {
+        item.addEventListener('click', async () => {
+          const id = Number(item.dataset.memberId);
+          if (id === activeId) {
+            closeModal();
+            return;
+          }
+          item.disabled = true;
+          const ok = await switchProfileTo(user, id, (merged) => {
+            closeModal();
+            onContextChanged?.(merged);
+          });
+          if (!ok) item.disabled = false;
+        });
+      });
+    },
+  });
 }

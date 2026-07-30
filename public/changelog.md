@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.12] - 2026-07-30
+
+### Changed
+- Household profile switcher moved from the More sheet to the Overview header (users icon beside widget customize). Opens a high-contrast member picker modal on mobile and desktop.
+
 ## [1.1.11] - 2026-07-30
 
 ### Added

@@ -15,6 +15,10 @@ import { localizeBirthdayEvent } from '/utils/birthday-event.js';
 import { openModal, closeModal, confirmModal } from '/components/modal.js';
 import { renderAvatarStack } from '/components/user-multi-select.js';
 import { budgetCategoryLabel } from '/utils/category-labels.js';
+import {
+  dashboardProfileToolMarkup,
+  wireDashboardProfileTool,
+} from '/components/profile-switcher.js';
 
 // Hält den AbortController des aktuellen FAB-Listeners - wird bei jedem render() erneuert.
 let _fabController = null;
@@ -1193,6 +1197,7 @@ function renderDashboardOverview(user, editing = false) {
             <button class="btn btn--secondary" id="dashboard-customize-cancel">${t('common.cancel')}</button>
             <button class="btn btn--primary" id="dashboard-customize-save">${t('common.save')}</button>
           </div>` : ''}
+          ${!editing ? dashboardProfileToolMarkup(user) : ''}
           <button class="dashboard-icon-btn" id="dashboard-customize-btn"
                   aria-label="${editing ? t('dashboard.customizeExit') : t('dashboard.customize')}"
                   title="${editing ? t('dashboard.customizeExit') : t('dashboard.customize')}"
@@ -2049,6 +2054,9 @@ export async function render(container, { user }) {
     wireWeatherRefresh(container, (updatedWeather) => {
       weather = updatedWeather;
       rebuildDashboard(cfg);
+    });
+    wireDashboardProfileTool(container, user, (merged) => {
+      window.myHub?.applyProfileContext?.(merged);
     });
     container.querySelector('#dashboard-customize-btn')?.addEventListener('click', () => {
       isCustomizing = !isCustomizing;

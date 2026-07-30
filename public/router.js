@@ -871,14 +871,6 @@ function buildMoreSheetBody() {
   divider.setAttribute('aria-hidden', 'true');
   nodes.push(divider);
 
-  const profileHtml = profileSwitcherMarkup(currentUser, { variant: 'sheet' });
-  if (profileHtml) {
-    const profileWrap = document.createElement('div');
-    profileWrap.className = 'more-sheet__profile';
-    profileWrap.insertAdjacentHTML('beforeend', profileHtml);
-    nodes.push(profileWrap);
-  }
-
   // System-Cluster als kompakte 1×3-Reihe (Icon-über-Label, monochrom).
   const system = document.createElement('div');
   system.className = 'more-sheet__system';
@@ -924,16 +916,6 @@ function buildMoreSheetBody() {
   nodes.push(system);
 
   return nodes;
-}
-
-function wireMoreSheetProfileSwitcher() {
-  const wrap = document.querySelector('#more-sheet .more-sheet__profile');
-  if (!wrap || !currentUser) return;
-  wireProfileSwitcher(wrap, currentUser, (merged) => {
-    if (window._closeMoreSheet) window._closeMoreSheet({ restoreFocus: false });
-    applyProfileContext(merged);
-  });
-  if (window.lucide) window.lucide.createIcons({ el: wrap });
 }
 
 /**
@@ -1324,7 +1306,6 @@ async function renderAppShell(container) {
     // rebuildNavigation() (Sprachwechsel / Modul-Toggle) — sonst driften die
     // zwei Render-Pfade auseinander.
     moreSheet.append(...buildMoreSheetBody());
-    wireMoreSheetProfileSwitcher();
   }
 
   bottomNav.appendChild(bottomItems);
@@ -3024,7 +3005,6 @@ function rebuildNavigation({ updateLabels = true } = {}) {
     // Funktion neu bauen — identisch zu renderAppShell().
     moreSheet.replaceChildren(handle, ...(searchBar ? [searchBar] : []), ...buildMoreSheetBody());
     if (window.lucide) window.lucide.createIcons({ el: moreSheet });
-    wireMoreSheetProfileSwitcher();
   }
 
   document.querySelectorAll('[data-route]').forEach((el) => {
@@ -3144,6 +3124,7 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
 // Globale Exporte
 window.myHub = {
   navigate,
+  applyProfileContext,
   showToast,
   friendlyError,
   setThemeColor,

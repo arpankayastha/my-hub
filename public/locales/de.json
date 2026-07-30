@@ -882,7 +882,7 @@
         "copyFromPrevMonthHint": "Einmalige Einträge vom Vormonat in diesen Monat kopieren (wiederkehrende erscheinen automatisch)",
         "copyFromPrevMonthDone": "{count} Einträge vom Vormonat kopiert",
         "copyFromPrevMonthEmpty": "Nichts zu kopieren — im Vormonat keine einmaligen Einträge oder sie existieren hier bereits",
-        "recurringAutoHint": "Wiederkehrende Einträge werden automatisch erzeugt, wenn du einen künftigen Monat öffnest. Für einmalige Einträge „Vom Vormonat kopieren“ nutzen.",
+        "recurringAutoHint": "Wiederkehrende Einträge werden automatisch erzeugt, wenn du einen künftigen Monat öffnest.",
         "byCategory": "Nach Kategorie",
         "chartSummary": "{{count}} Kategorien · Größte: {{top}} ({{pct}} %)",
         "transactions": "Transaktionen",
