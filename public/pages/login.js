@@ -7,6 +7,7 @@
 import { auth } from '/api.js';
 import { t } from '/i18n.js';
 import { esc } from '/utils/html.js';
+import { LOGOMARK_MARKUP } from '/utils/logomark.js';
 
 const VERSION_URL = '/api/v1/version';
 const DEFAULT_APP_NAME = 'My Hub';
@@ -43,11 +44,7 @@ export async function render(container) {
       <div class="login-hero">
         <span class="login-hero__mark" aria-hidden="true">
           <svg viewBox="0 0 160 160" fill="currentColor">
-            <g fill-opacity="0.82">
-              <circle cx="64" cy="72" r="27" />
-              <circle cx="100" cy="78" r="25" />
-              <circle cx="80" cy="106" r="24" />
-            </g>
+            <g>${LOGOMARK_MARKUP}</g>
           </svg>
         </span>
         <h1 class="login-hero__title">${esc(storedAppName)}</h1>

@@ -18,22 +18,24 @@ const ICONS_DIR = join(__dirname, '..', 'public', 'icons');
 
 mkdirSync(ICONS_DIR, { recursive: true });
 
-/**
- * Drei transluzente, ineinander übergehende Kreise (Familie).
- * Überlappungen verdichten sich zu helleren Linsen -> weicher Blend.
- * Liegen innerhalb der maskable-Safe-Zone (Ø 80 %).
- */
-const CIRCLES = `<g fill="#fff" fill-opacity="0.82">
-    <circle cx="64" cy="72" r="27"/>
-    <circle cx="100" cy="78" r="25"/>
-    <circle cx="80" cy="106" r="24"/>
+/** Hub mark — central node with four spokes (maskable safe zone). */
+const HUB_MARK = `<g fill="#fff">
+    <circle cx="80" cy="80" r="17" fill-opacity="0.92"/>
+    <circle cx="80" cy="46" r="11" fill-opacity="0.78"/>
+    <circle cx="114" cy="80" r="11" fill-opacity="0.78"/>
+    <circle cx="80" cy="114" r="11" fill-opacity="0.78"/>
+    <circle cx="46" cy="80" r="11" fill-opacity="0.78"/>
+    <rect x="76" y="57" width="8" height="18" rx="4" fill-opacity="0.55"/>
+    <rect x="76" y="85" width="8" height="18" rx="4" fill-opacity="0.55"/>
+    <rect x="57" y="76" width="18" height="8" rx="4" fill-opacity="0.55"/>
+    <rect x="85" y="76" width="18" height="8" rx="4" fill-opacity="0.55"/>
   </g>`;
 
-/** Gemeinsame Gradient-Defs: Marken-Violett + dezenter Top-Sheen (Glas-Charakter) */
+/** Brand sapphire gradient + top sheen */
 const DEFS = `<defs>
     <linearGradient id="bg" x1="0" y1="0" x2="160" y2="160" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#8b5cf6"/>
-      <stop offset="100%" stop-color="#6c3aed"/>
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#2563eb"/>
     </linearGradient>
     <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="160" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.14"/>
@@ -47,7 +49,7 @@ function createLogoSvg(size) {
   ${DEFS}
   <rect width="160" height="160" rx="36" fill="url(#bg)"/>
   <rect width="160" height="160" rx="36" fill="url(#sheen)"/>
-  ${CIRCLES}
+  ${HUB_MARK}
 </svg>`;
 }
 
@@ -57,7 +59,7 @@ function createMaskableLogoSvg(size) {
   ${DEFS}
   <rect width="160" height="160" fill="url(#bg)"/>
   <rect width="160" height="160" fill="url(#sheen)"/>
-  ${CIRCLES}
+  ${HUB_MARK}
 </svg>`;
 }
 

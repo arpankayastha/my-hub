@@ -10,6 +10,7 @@ import { clearApiCache } from '/sw-register.js';
 import { initI18n, getLocale, t, formatDate, formatTime } from '/i18n.js';
 import { esc } from '/utils/html.js';
 import { wireScrollFade } from '/utils/ux.js';
+import { createSidebarLogomark } from '/utils/logomark.js';
 import { init as initReminders, stop as stopReminders } from '/reminders.js';
 import { initPush, stopPush } from '/push.js';
 import { numberLocaleFor } from '/settings/region-presets.js';
@@ -1062,45 +1063,11 @@ function renderAppShell(container) {
   const sidebarLogo = document.createElement('div');
   sidebarLogo.className = 'nav-sidebar__logo';
 
-  // SVG-Logomark aus docs/logo.svg — Gradient via CSS-Tokens
+  // Hub logomark — gradient from accent tokens
   const logomark = document.createElement('div');
   logomark.className = 'nav-sidebar__logomark';
   logomark.setAttribute('aria-hidden', 'true');
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-  const logoSvg = document.createElementNS(SVG_NS, 'svg');
-  logoSvg.setAttribute('viewBox', '0 0 160 160');
-  logoSvg.setAttribute('fill', 'none');
-  const defs = document.createElementNS(SVG_NS, 'defs');
-  const grad = document.createElementNS(SVG_NS, 'linearGradient');
-  const gradId = `my-hub-logo-bg-${Math.random().toString(36).slice(2, 7)}`;
-  grad.setAttribute('id', gradId);
-  grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0');
-  grad.setAttribute('x2', '160'); grad.setAttribute('y2', '160');
-  grad.setAttribute('gradientUnits', 'userSpaceOnUse');
-  const stop0 = document.createElementNS(SVG_NS, 'stop');
-  stop0.setAttribute('offset', '0%');
-  stop0.style.stopColor = 'var(--color-accent)';
-  const stop1 = document.createElementNS(SVG_NS, 'stop');
-  stop1.setAttribute('offset', '100%');
-  stop1.style.stopColor = 'var(--color-accent-secondary)';
-  grad.appendChild(stop0); grad.appendChild(stop1);
-  defs.appendChild(grad);
-  logoSvg.appendChild(defs);
-  const bgRect = document.createElementNS(SVG_NS, 'rect');
-  bgRect.setAttribute('width', '160'); bgRect.setAttribute('height', '160');
-  bgRect.setAttribute('rx', '36'); bgRect.setAttribute('fill', `url(#${gradId})`);
-  logoSvg.appendChild(bgRect);
-  // Drei transluzente, ineinander übergehende Kreise (Familie); kein Sheen in der Sidebar
-  const marks = document.createElementNS(SVG_NS, 'g');
-  marks.setAttribute('fill', 'white');
-  marks.setAttribute('fill-opacity', '0.82');
-  for (const [cx, cy, r] of [[64, 72, 27], [100, 78, 25], [80, 106, 24]]) {
-    const c = document.createElementNS(SVG_NS, 'circle');
-    c.setAttribute('cx', String(cx)); c.setAttribute('cy', String(cy)); c.setAttribute('r', String(r));
-    marks.appendChild(c);
-  }
-  logoSvg.appendChild(marks);
-  logomark.appendChild(logoSvg);
+  logomark.appendChild(createSidebarLogomark());
   sidebarLogo.appendChild(logomark);
 
   const sidebarBrandText = document.createElement('div');

@@ -463,7 +463,7 @@ function renderAreaChart(title, rows) {
 }
 
 function renderPieChart(title, rows) {
-  const colors = ['#6c3aed', '#0f766e', '#0969da', '#d97706', '#b91c1c', '#64748b'];
+  const colors = ['#2563eb', '#0f766e', '#0969da', '#d97706', '#b91c1c', '#64748b'];
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   let offset = 0;
   const gradient = total > 0

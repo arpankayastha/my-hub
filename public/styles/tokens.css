@@ -127,16 +127,15 @@
 
   /* --------------------------------------------------------
    * 2. Farben - Akzent (konfigurierbar)
-   *    Violet — lebendig, modern, unverwechselbar.
-   *    Harmoniert mit --module-calendar und dem Abend-Gradienten.
+   *    Sapphire blue — personal hub identity, distinct from legacy violet branding.
    * -------------------------------------------------------- */
-  --_color-accent:            #6c3aed;
-  --color-accent:             var(--_color-accent);   /* Violet — 6.06:1 auf weiß */
-  --_color-accent-hover:      #5b2fd4;
-  --color-accent-hover:       var(--_color-accent-hover);   /* Violet darker */
-  --_color-accent-active:     #4a26bb;
-  --color-accent-active:      var(--_color-accent-active);  /* Violet-800 */
-  --color-accent-deep:        #3d1f9e;       /* Tiefer Akzent für Gradienten, Wetter-Widget */
+  --_color-accent:            #2563eb;
+  --color-accent:             var(--_color-accent);   /* Blue-600 — 6.29:1 auf weiß */
+  --_color-accent-hover:      #1d4ed8;
+  --color-accent-hover:       var(--_color-accent-hover);   /* Blue-700 */
+  --_color-accent-active:     #1e40af;
+  --color-accent-active:      var(--_color-accent-active);  /* Blue-800 */
+  --color-accent-deep:        #1e3a8a;       /* Blue-900 — Gradienten, Wetter-Widget */
 
   /* Greeting-Gradienten: Tageszeit-Varianten (der eine sanktionierte Zwei-Stopp-
    * Verlauf pro Screen, DESIGN.md §2). Alle Stops ≥3:1 auf --color-surface → als
@@ -145,18 +144,18 @@
   --greeting-morning-to:   #D97706;  /* Amber-600 */
   --greeting-day-from:     #B45309;  /* Amber-700 — hohe Mittagssonne (4.8:1 auf Weiß) */
   --greeting-day-to:       #C2410C;  /* Orange-700 (4.5:1) — beide Stops komfortabel AA, kein grenzwertiger Pixel */
-  --greeting-evening-from: #6D28D9;  /* Violet-700 */
-  --greeting-evening-to:   #8250DF;  /* = --module-calendar */
-  --_color-accent-secondary:  #8b5cf6;
-  --color-accent-secondary:   var(--_color-accent-secondary);  /* Violet-500 — Sekundärer Akzent für Logo-Gradient */
-  --_color-accent-light:      #f5f3ff;
-  --color-accent-light:       var(--_color-accent-light);   /* Violet-50 */
-  --_color-accent-subtle:     #ede9fe;
-  --color-accent-subtle:      var(--_color-accent-subtle);  /* Violet-100 */
-  --_color-btn-primary:       #5b2fd4;
-  --color-btn-primary:        var(--_color-btn-primary);    /* Violet — WCAG AAA auf weiß */
-  --_color-btn-primary-hover: #4a26bb;
-  --color-btn-primary-hover:  var(--_color-btn-primary-hover);  /* Violet-800 */
+  --greeting-evening-from: #1d4ed8;  /* Blue-700 — Abendhimmel */
+  --greeting-evening-to:   #3b82f6;  /* Blue-500 */
+  --_color-accent-secondary:  #3b82f6;
+  --color-accent-secondary:   var(--_color-accent-secondary);  /* Blue-500 — Logo-Gradient */
+  --_color-accent-light:      #eff6ff;
+  --color-accent-light:       var(--_color-accent-light);   /* Blue-50 */
+  --_color-accent-subtle:     #dbeafe;
+  --color-accent-subtle:      var(--_color-accent-subtle);  /* Blue-100 */
+  --_color-btn-primary:       #1d4ed8;
+  --color-btn-primary:        var(--_color-btn-primary);    /* Blue-700 — WCAG AAA auf weiß */
+  --_color-btn-primary-hover: #1e40af;
+  --color-btn-primary-hover:  var(--_color-btn-primary-hover);  /* Blue-800 */
 
   /* --------------------------------------------------------
    * 3. Farben - Semantisch
@@ -198,7 +197,7 @@
    * und ihr Kontrast ist nur gegen ihre eigenen Flächen geprüft. Sieben klar
    * getrennte Farbtöne — mehr Segmente sind ohnehin nicht mehr unterscheidbar,
    * die Views fassen den Rest zu „Sonstige" zusammen. */
-  --_chart-series-1: #6C3AED;   /* Violett  */
+  --_chart-series-1: #2563EB;   /* Sapphire */
   --_chart-series-2: #0F766E;   /* Teal     */
   --_chart-series-3: #C2410C;   /* Orange   */
   --_chart-series-4: #0B66C3;   /* Blau     */
@@ -219,8 +218,8 @@
    *    Einsatz in Modul-Headern, Icons, aktiven States.
    *    Domain-Farben von Severity entkoppelt — siehe §2.5 des Redesign-Vorschlags.
    * -------------------------------------------------------- */
-  --_module-dashboard: #6c3aed;
-  --module-dashboard:  var(--_module-dashboard);  /* Violet — Übersicht (= --color-accent, bewusster Share) */
+  --_module-dashboard: #2563eb;
+  --module-dashboard:  var(--_module-dashboard);  /* Blue-600 — Übersicht (= --color-accent) */
   --_module-tasks:     #15803D;
   --module-tasks:      var(--_module-tasks);       /* Grün - Erledigung (= --color-success, bewusster Share) */
   --_module-calendar:  #4F46E5;
@@ -310,9 +309,9 @@
   --meal-lunch:            var(--_meal-lunch);
   --_meal-lunch-light:     #DAFBE1;
   --meal-lunch-light:      var(--_meal-lunch-light);
-  --_meal-dinner:          #6c3aed;
-  --meal-dinner:           var(--_meal-dinner);          /* Violet — Abend (= --color-accent) */
-  --_meal-dinner-light:    #f5f3ff;
+  --_meal-dinner:          #2563eb;
+  --meal-dinner:           var(--_meal-dinner);          /* Blue-600 — Abend (= --color-accent) */
+  --_meal-dinner-light:    #eff6ff;
   --meal-dinner-light:     var(--_meal-dinner-light);
   --_meal-snack:           #C2410C;
   --meal-snack:            var(--_meal-snack);           /* = --module-meals — Snack ist Sub-Domain */
@@ -830,14 +829,14 @@
     --_sidebar-shadow-light: rgba(255, 255, 255, 0.04);
     --_sidebar-shadow-dark:  rgba(0, 0, 0, 0.4);
 
-    --_color-accent:            #a78bfa;
-    --_color-accent-hover:      #9066f5;
-    --_color-accent-active:     #7c3aed;
-    --_color-accent-light:      #1e1040;
-    --_color-accent-subtle:     #160b30;
-    --_color-btn-primary:       #7c3aed;
-    --_color-btn-primary-hover: #6d28d9;
-    --_color-accent-secondary:  #c4b5fd;
+    --_color-accent:            #60a5fa;
+    --_color-accent-hover:      #3b82f6;
+    --_color-accent-active:     #2563eb;
+    --_color-accent-light:      #0c1929;
+    --_color-accent-subtle:     #0a1628;
+    --_color-btn-primary:       #2563eb;
+    --_color-btn-primary-hover: #1d4ed8;
+    --_color-accent-secondary:  #93c5fd;
 
     --_color-success:       #4ADE80;
     --_color-warning:       #F59E0B;
@@ -859,7 +858,7 @@
 
     /* Datenreihen: aufgehellte Varianten, damit die Segmente auf dunkler
      * Kartenfläche ≥3:1 tragen (Grafik-Kontrast, WCAG 1.4.11). */
-    --_chart-series-1: #A78BFA;
+    --_chart-series-1: #60A5FA;
     --_chart-series-2: #2DD4BF;
     --_chart-series-3: #FB923C;
     --_chart-series-4: #60A5FA;
@@ -867,7 +866,7 @@
     --_chart-series-6: #F472B6;
     --_chart-series-7: #4ADE80;
 
-    --_module-dashboard: #a78bfa;
+    --_module-dashboard: #60a5fa;
     --_module-tasks:     #4ADE80;
     --_module-calendar:  #818CF8;
     --_module-meals:     #FB923C;
@@ -894,15 +893,15 @@
     --greeting-morning-to:   #FBBF24;  /* Amber-400 */
     --greeting-day-from:     #FBBF24;  /* Amber-400 */
     --greeting-day-to:       #FCD34D;  /* Amber-300 */
-    --greeting-evening-from: #a78bfa;  /* Violet-400 = --module-dashboard dark */
-    --greeting-evening-to:   #818CF8;  /* = --module-calendar dark */
+    --greeting-evening-from: #60a5fa;  /* Blue-400 = --module-dashboard dark */
+    --greeting-evening-to:   #3b82f6;  /* Blue-500 */
 
     --_meal-breakfast:       #F59E0B;
     --_meal-breakfast-light: #332400;
     --_meal-lunch:           #4ADE80;
     --_meal-lunch-light:     #1A3325;
-    --_meal-dinner:          #a78bfa;
-    --_meal-dinner-light:    #1e1040;
+    --_meal-dinner:          #60a5fa;
+    --_meal-dinner-light:    #0c1929;
     --_meal-snack:           #FB923C;
     --_meal-snack-light:     #3D2010;
 
@@ -987,15 +986,15 @@
     --_sidebar-shadow-light: rgba(255, 255, 255, 0.04);
     --_sidebar-shadow-dark:  rgba(0, 0, 0, 0.4);
 
-    /* Akzent - Dark Mode (Violet hellt auf für Kontrast auf dunklen Flächen) */
-    --_color-accent:            #a78bfa;   /* Violet-400 — 5.86:1 auf #222220 */
-    --_color-accent-hover:      #9066f5;   /* Violet-500 */
-    --_color-accent-active:     #7c3aed;   /* Violet-600 */
-    --_color-accent-light:      #1e1040;
-    --_color-accent-subtle:     #160b30;
-    --_color-btn-primary:       #7c3aed;   /* Violet-600 — weißes Label 5.70:1 (Violet-500 #9066f5 ergab nur 3.89:1) */
-    --_color-btn-primary-hover: #6d28d9;
-    --_color-accent-secondary:  #c4b5fd;   /* Violet-300 */
+    /* Akzent - Dark Mode (Blue hellt auf für Kontrast auf dunklen Flächen) */
+    --_color-accent:            #60a5fa;   /* Blue-400 — 6.05:1 auf #222220 */
+    --_color-accent-hover:      #3b82f6;   /* Blue-500 */
+    --_color-accent-active:     #2563eb;   /* Blue-600 */
+    --_color-accent-light:      #0c1929;
+    --_color-accent-subtle:     #0a1628;
+    --_color-btn-primary:       #2563eb;   /* Blue-600 — weißes Label 5.70:1 */
+    --_color-btn-primary-hover: #1d4ed8;
+    --_color-accent-secondary:  #93c5fd;   /* Blue-300 */
 
     /* Semantische Farben */
     --_color-success:       #4ADE80;
@@ -1018,7 +1017,7 @@
 
     /* Datenreihen: aufgehellte Varianten, damit die Segmente auf dunkler
      * Kartenfläche ≥3:1 tragen (Grafik-Kontrast, WCAG 1.4.11). */
-    --_chart-series-1: #A78BFA;
+    --_chart-series-1: #60A5FA;
     --_chart-series-2: #2DD4BF;
     --_chart-series-3: #FB923C;
     --_chart-series-4: #60A5FA;
@@ -1027,7 +1026,7 @@
     --_chart-series-7: #4ADE80;
 
     /* Modul-Akzente (Entflechtung Meals/Shopping spiegelt Light-Mode) */
-    --_module-dashboard: #a78bfa;   /* Violet-400 */
+    --_module-dashboard: #60a5fa;   /* Violet-400 */
     --_module-tasks:     #4ADE80;   /* Grün-400 — lebendig */
     --_module-calendar:  #818CF8;
     --_module-meals:     #FB923C;   /* Orange-400 */
@@ -1051,8 +1050,8 @@
     --greeting-morning-to:   #FBBF24;
     --greeting-day-from:     #FBBF24;
     --greeting-day-to:       #FCD34D;
-    --greeting-evening-from: #a78bfa;
-    --greeting-evening-to:   #818CF8;
+    --greeting-evening-from: #60a5fa;
+    --greeting-evening-to:   #3b82f6;
 
     --_module-settings:    #94A3B8;
     --_module-reminders:   #22D3EE;   /* Cyan-400 */
@@ -1063,8 +1062,8 @@
     --_meal-breakfast-light: #332400;
     --_meal-lunch:           #4ADE80;
     --_meal-lunch-light:     #1A3325;
-    --_meal-dinner:          #a78bfa;   /* Violet-400 */
-    --_meal-dinner-light:    #1e1040;
+    --_meal-dinner:          #60a5fa;   /* Blue-400 */
+    --_meal-dinner-light:    #0c1929;
     --_meal-snack:           #FB923C;
     --_meal-snack-light:     #3D2010;
 

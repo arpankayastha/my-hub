@@ -40,7 +40,7 @@ export function createSeedState() {
   return state;
 }
 
-export const AVATAR_COLORS = ['#6c3aed', '#2563eb', '#059669', '#d97706', '#dc2626', '#db2777'];
+export const AVATAR_COLORS = ['#2563eb', '#0f766e', '#059669', '#d97706', '#dc2626', '#db2777'];
 
 export function hashPasswordSimple(password) {
   let h = 0;
