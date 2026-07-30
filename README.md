@@ -8,24 +8,42 @@ No Docker, no backend server, and no cloud database. Your household data stays i
 
 After GitHub Pages is enabled for this repository, the app is available at:
 
-**https://arpankayastha.github.io/Genospace/**
+**https://arpankayastha.github.io/genospace/**
 
-## What works locally
+Visiting `/Genospace/` (any casing) redirects to the lowercase URL.
 
-- First-run setup and login (credentials stored in browser IndexedDB)
-- Dashboard, tasks, shopping lists, calendar events, and notes
-- Preferences and module navigation
-- Data persists across visits in the same browser
+## Local API (how API calls work in this build)
 
-## What is not available in this build
+There is **no network backend**. When `window.__YUVOMI_LOCAL_MODE__` is true (set in `index.html` on GitHub Pages and when serving `public/` locally), every `api.get/post/put/patch/delete()` call goes through:
 
-This static build does not include server-side features from the original Yuvomi:
+1. **`public/api.js`** — detects local mode and calls `localApiFetch()` instead of `fetch('/api/v1/…')`
+2. **`public/local/api-router.js`** — parses the path and delegates to `handleLocalApi()`
+3. **`public/local/handlers.js`** — routes to module handlers and reads/writes **`public/local/store.js`** (IndexedDB)
 
-- CalDAV / Google Calendar sync, Web Push, email, backups, WebDAV
-- Budget, health, documents, rewards, housekeeping, and other modules that need the full API
-- Multi-device sync (data is per-browser only)
+### What you need for an API route to work
 
-For the full self-hosted experience with every module, use the [original Yuvomi project](https://github.com/ulsklyc/yuvomi) with Docker.
+| Requirement | Where |
+|-------------|--------|
+| Logged-in session | `localStorage` session via `/auth/login` or `/auth/setup` |
+| Handler for the path | `handleLocalApi()` in `handlers.js`, or a dedicated `*-handlers.js` |
+| State arrays / fields | `emptyState()` in `store.js` + `ensure*State()` on load |
+| Persist after writes | `await saveState()` in the handler |
+
+If a page calls e.g. `api.post('/birthdays', …)` but no handler exists, you get **`ApiError: Not found.`** (often shown as a toast, not always in the console).
+
+### Currently implemented local API modules
+
+- Auth (setup, login, logout, me)
+- Preferences, dashboard (partial), reminders, tasks, shopping, calendar, notes
+- Budget, health (vitals, meds, labs, activities, cycle), birthdays, split-expenses (stubs)
+- Family members, search (tasks only), pantry locations, documents (empty stubs)
+- Weather / push / permissions (stubs)
+
+Modules without handlers still load in the UI but saves may fail until handlers are added (same pattern as `birthdays-handlers.js`).
+
+### GitHub Pages path prefix
+
+Assets and routes use `/genospace/` (lowercase). The build sets `GITHUB_PAGES_BASE=/genospace` and injects `__YUVOMI_CANONICAL_BASE__`. Helpers in `app-path.js` (`assetUrl`, `toAppUrl`, `fromAppUrl`) apply that prefix.
 
 ## Development
 
@@ -34,15 +52,15 @@ For the full self-hosted experience with every module, use the [original Yuvomi 
 npx --yes serve public -l 3000
 ```
 
-Open http://localhost:3000 — local mode is enabled automatically.
+Open http://localhost:3000 — local mode is enabled automatically. API calls use IndexedDB; no server required.
 
 ## Build for GitHub Pages
 
 ```bash
-node scripts/build-pages.mjs
+GITHUB_PAGES_BASE=/genospace node scripts/build-pages.mjs
 ```
 
-This copies `public/` to `site/` for GitHub Pages deployment.
+This copies `public/` to `site/` and rewrites asset paths for subpath hosting.
 
 ## Enable GitHub Pages
 
@@ -51,7 +69,7 @@ After merging to `main`, the **Deploy GitHub Pages** workflow pushes the built s
 1. Open **Settings → Pages**
 2. Under **Build and deployment**, set **Source** to **Deploy from a branch**
 3. Choose branch **`gh-pages`** and folder **`/ (root)`**
-4. Save — the site will be at **https://arpankayastha.github.io/Genospace/**
+4. Save — the site will be at **https://arpankayastha.github.io/genospace/**
 
 ## Original project
 

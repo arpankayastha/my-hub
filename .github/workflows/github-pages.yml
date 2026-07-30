@@ -24,7 +24,7 @@ jobs:
 
       - name: Build static site
         env:
-          GITHUB_PAGES_BASE: /${{ github.event.repository.name }}
+          GITHUB_PAGES_BASE: /genospace
         run: node scripts/build-pages.mjs
 
       - name: Deploy to gh-pages branch

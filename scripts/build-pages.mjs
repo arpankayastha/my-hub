@@ -1,6 +1,6 @@
 /**
  * Build static site for GitHub Pages into site/
- * Rewrites root-absolute asset paths for project-site hosting (e.g. /Genospace/).
+ * Rewrites root-absolute asset paths for project-site hosting (e.g. /genospace/).
  */
 import {
   cpSync, mkdirSync, writeFileSync, existsSync, rmSync,
