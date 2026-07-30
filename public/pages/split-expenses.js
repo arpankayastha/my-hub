@@ -104,19 +104,30 @@ export async function render(container, { user } = {}) {
 }
 
 async function loadInitial() {
-  const calls = [
-    api.get('/split-expenses/meta'),
-    api.get('/split-expenses/dashboard'),
-    api.get('/split-expenses/groups'),
-  ];
-  if (!isSplitGuest()) calls.push(api.get('/family/members'));
-  const [meta, dashboard, groups, members] = await Promise.all(calls);
-  state.meta = meta.data;
-  state.dashboard = dashboard.data;
-  state.groups = groups.data || [];
-  state.members = members?.data || [];
-  state.activeGroupId = state.groups[0]?.id || null;
-  if (state.activeGroupId) await loadGroupData();
+  try {
+    const calls = [
+      api.get('/split-expenses/meta'),
+      api.get('/split-expenses/dashboard'),
+      api.get('/split-expenses/groups'),
+    ];
+    if (!isSplitGuest()) calls.push(api.get('/family/members'));
+    const [meta, dashboard, groups, members] = await Promise.all(calls);
+    state.meta = meta.data && typeof meta.data === 'object' && !Array.isArray(meta.data)
+      ? meta.data
+      : { default_currency: 'EUR' };
+    state.dashboard = dashboard.data && typeof dashboard.data === 'object' && !Array.isArray(dashboard.data)
+      ? dashboard.data
+      : { total_owed: [], total_owing: [] };
+    state.groups = groups.data || [];
+    state.members = members?.data || [];
+    state.activeGroupId = state.groups[0]?.id || null;
+    if (state.activeGroupId) await loadGroupData();
+  } catch (err) {
+    console.error('[SplitExpenses] loadInitial error:', err);
+    state.meta = { default_currency: 'EUR' };
+    state.dashboard = { total_owed: [], total_owing: [] };
+    state.groups = [];
+  }
 }
 
 function isSplitGuest() {

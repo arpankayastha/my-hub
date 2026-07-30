@@ -96,6 +96,10 @@ function walkAndRewrite(dir, basePath) {
     let rewritten = original;
     if (ext === '.js' || ext === '.mjs') {
       rewritten = rewriteJsPaths(original, basePath);
+      // sw.js caches URL lists (APP_SHELL, PAGE_MODULES) — not static import lines.
+      if (name === 'sw.js') {
+        rewritten = rewriteQuotedRootPaths(rewritten, basePath);
+      }
     } else if (ext === '.html') {
       rewritten = rewriteHtmlPaths(original, basePath);
     } else if (WEB_EXT.has(ext)) {

@@ -38,6 +38,11 @@
         return;
       }
       window.__YUVOMI_LOCAL_MODE__ = true;
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        }).catch(function () {});
+      }
     })();
   </script>
 

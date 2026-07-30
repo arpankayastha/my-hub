@@ -15,7 +15,7 @@
  *   → bypassCacheUntil (in-memory + Cache API für SW-Restart-Robustheit)
  */
 
-const APP_RELEASE   = '1.58.0';
+const APP_RELEASE   = '1.58.0-local';
 const SHELL_CACHE   = `yuvomi-shell-${APP_RELEASE}`;
 const PAGES_CACHE   = `yuvomi-pages-${APP_RELEASE}`;
 const LOCALES_CACHE = `yuvomi-locales-${APP_RELEASE}`;
@@ -299,7 +299,7 @@ function dispatchFetch(request, url) {
     return networkFirst(request, SHELL_CACHE);
   }
 
-  if (url.pathname.startsWith('/locales/')) {
+  if (url.pathname.includes('/locales/')) {
     return networkFirst(request, LOCALES_CACHE);
   }
 
@@ -309,12 +309,12 @@ function dispatchFetch(request, url) {
   // Zweig würden sie via SHELL_CACHE bedient und offline (vor dem ersten Online-
   // Besuch) als index.html statt als JS-Modul ausgeliefert.
   if (
-    url.pathname.startsWith('/pages/') ||
-    url.pathname.startsWith('/settings/') ||
-    url.pathname === '/components/category-manager.js' ||
-    url.pathname === '/utils/sortable.js' ||
-    url.pathname === '/vendor/sortablejs/sortable.esm.min.js' ||
-    url.pathname.startsWith('/vendor/libphonenumber/')
+    url.pathname.includes('/pages/') ||
+    url.pathname.includes('/settings/pages/') ||
+    url.pathname.endsWith('/components/category-manager.js') ||
+    url.pathname.endsWith('/utils/sortable.js') ||
+    url.pathname.endsWith('/vendor/sortablejs/sortable.esm.min.js') ||
+    url.pathname.includes('/vendor/libphonenumber/')
   ) {
     return networkFirst(request, PAGES_CACHE);
   }

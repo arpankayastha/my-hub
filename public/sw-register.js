@@ -7,8 +7,13 @@
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Local-only GitHub Pages build: API is in IndexedDB; SW scope/path breaks on subpaths.
-    if (window.__YUVOMI_LOCAL_MODE__) return;
+    // Local-only GitHub Pages build: API is in IndexedDB; SW precache breaks on subpaths.
+    if (window.__YUVOMI_LOCAL_MODE__) {
+      navigator.serviceWorker.getRegistrations()
+        .then((regs) => regs.forEach((r) => r.unregister()))
+        .catch(() => {});
+      return;
+    }
 
     const swBase = window.__YUVOMI_BASE__ || '';
     const swUrl = `${swBase}/sw.js`;
