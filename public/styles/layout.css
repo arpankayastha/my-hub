@@ -1302,6 +1302,38 @@ p.field-hint--warn[hidden] {
     flex-shrink: 0;
   }
 
+  .nav-sidebar__profile {
+    flex: 1 1 100%;
+    padding: var(--space-2) var(--space-1) var(--space-1);
+  }
+
+  .nav-profile-switch__label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-1);
+  }
+
+  .nav-profile-switch__select {
+    width: 100%;
+    font: inherit;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-subtle);
+    background: var(--color-surface-elevated);
+    color: var(--color-text-primary);
+  }
+
+  .nav-profile-switch__hint {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+    line-height: 1.35;
+  }
+
   /* Abmelden bricht in eine eigene, volle Zeile unter Hilfe/Änderungen und
    * setzt sich mit einer Haarlinie als terminale Aktion ab. Doppelte
    * Klassen-Spezifität (.nav-item.nav-item--logout) + volle flex-Shorthand

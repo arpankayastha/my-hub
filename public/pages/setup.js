@@ -154,7 +154,7 @@ export async function render(container) {
       await auth.setup(username, displayName, password);
       // Setup erfolgreich -> direkt einloggen
       const result = await auth.login(username, password);
-      window.myHub.navigate('/', result.user);
+      window.myHub.navigate('/', { ...result.user, acting_as: result.acting_as ?? null });
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         showError(errorEl, t('setup.errorUsernameTaken'));

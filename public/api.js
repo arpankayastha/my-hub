@@ -199,6 +199,14 @@ const auth = {
     setPermissions(res?.permissions);
     return res;
   },
+  switchContext: async (user_id) => {
+    const res = await api.post('/auth/context', { user_id });
+    setPermissions(res?.permissions);
+    return res;
+  },
+  getBiometric: () => api.get('/auth/biometric'),
+  registerBiometric: (credential_id) => api.post('/auth/biometric', { credential_id }),
+  removeBiometric: () => api.delete('/auth/biometric'),
   setup: (username, display_name, password) => api.post('/auth/setup', { username, display_name, password }),
   getUsers: () => api.get('/auth/users'),
   createUser: (data) => api.post('/auth/users', data),

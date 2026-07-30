@@ -24,7 +24,7 @@ const SPLIT_METHODS = ['equal', 'exact', 'percentage', 'shares'];
 const CATEGORIES = ['groceries', 'rent', 'utilities', 'baby', 'pets', 'school', 'travel', 'shopping', 'subscriptions', 'health', 'home', 'general'];
 const CURRENCIES = ['AED', 'AUD', 'BRL', 'CAD', 'CHF', 'CLP', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HUF', 'INR', 'JPY', 'KZT', 'NOK', 'PLN', 'RUB', 'SAR', 'SEK', 'TRY', 'UAH', 'USD', 'ZAR'];
 const FREQUENCIES = ['weekly', 'monthly', 'yearly'];
-const FAMILY_ROLES = ['dad', 'mom', 'parent', 'child', 'grandparent', 'relative', 'other'];
+import { isValidFamilyRole } from '../../public/utils/family-roles.js';
 
 function userId(req) {
   return req.authUserId || req.session.userId;
@@ -640,7 +640,7 @@ router.post('/groups/:id/guests', async (req, res) => {
     if (errors.length) return res.status(400).json({ error: errors.join(' '), code: 400 });
     const password = String(req.body.password || '');
     if (normalizePassword(password).length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters long.', code: 400 });
-    const familyRole = FAMILY_ROLES.includes(req.body.family_role) ? req.body.family_role : 'other';
+    const familyRole = isValidFamilyRole(req.body.family_role) ? req.body.family_role : 'other';
     const username = req.body.username && /^[a-zA-Z0-9._-]{3,64}$/.test(req.body.username)
       ? String(req.body.username)
       : uniqueUsername(vDisplayName.value);

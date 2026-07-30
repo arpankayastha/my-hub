@@ -5,7 +5,7 @@
 import { saveState } from './store.js';
 import { publicUser } from './seed.js';
 
-const FAMILY_ROLES = ['dad', 'mom', 'parent', 'child', 'grandparent', 'relative', 'other'];
+import { FAMILY_ROLES, isValidFamilyRole } from '../utils/family-roles.js';
 
 const PERMISSION_MODULES = [
   { key: 'calendar', labelKey: 'nav.calendar', icon: 'calendar' },
@@ -121,7 +121,7 @@ function replaceSubjectPermissions(state, subjectType, subjectId, input) {
 }
 
 function isValidFamilyRole(role) {
-  return FAMILY_ROLES.includes(role);
+  return isValidFamilyRole(role);
 }
 
 function requireAdmin(findUser, userId) {

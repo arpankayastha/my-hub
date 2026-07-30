@@ -20,13 +20,14 @@ import { passwordResetService as defaultResetService } from './services/password
 import { parseScopes, serializeScopes, normalizeScopes } from './scopes.js';
 import { hashPassword, normalizePassword, verifyPassword } from './utils/password.js';
 import { resolvePermissions, buildSessionModuleAccess, clientPermissions } from './permissions.js';
+import { isValidFamilyRole } from '../public/utils/family-roles.js';
+import { publicActingAs, resolveContextTarget } from './profile-context.js';
 
 const log = createLogger('Auth');
 const router = express.Router();
 // Präfix für NEUE API-Tokens. Bereits ausgegebene `myhub_`-Tokens bleiben gültig:
 // validiert wird über den Hash des gesamten Tokens, nicht über den Präfix.
 const API_TOKEN_PREFIX = 'myhub_';
-const FAMILY_ROLES = ['dad', 'mom', 'parent', 'child', 'grandparent', 'relative', 'other'];
 // Platzhalter-Hash für den Timing-Attack-Schutz beim Login unbekannter Benutzer.
 const DUMMY_PASSWORD_HASH = '$2b$12$invalidhashfortimingprotection000000000000000000000';
 const MAX_AVATAR_DATA_LENGTH = 768 * 1024;
@@ -234,6 +235,49 @@ function publicApiToken(row) {
     last_used_at: row.last_used_at,
     created_at: row.created_at,
   };
+}
+
+function userCfgKey(key, userId) {
+  return `${key}:user:${Number(userId)}`;
+}
+
+function cfgGet(key) {
+  const row = db.get().prepare('SELECT value FROM sync_config WHERE key = ?').get(key);
+  return row?.value ?? null;
+}
+
+function cfgSet(key, value) {
+  db.get().prepare(`
+    INSERT INTO sync_config (key, value) VALUES (?, ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(key, value);
+}
+
+function cfgUserGet(key, userId) {
+  if (!userId) return null;
+  return cfgGet(userCfgKey(key, userId));
+}
+
+function cfgUserSet(key, userId, value) {
+  if (!userId) return;
+  cfgSet(userCfgKey(key, userId), value);
+}
+
+function findUserById(id) {
+  return db.get().prepare(`SELECT ${USER_PUBLIC_COLUMNS} FROM users WHERE id = ?`).get(id);
+}
+
+function authMeJson(req, userRow) {
+  const acting_as = publicActingAs(findUserById, req.session?.contextUserId, userRow.id);
+  const payload = {
+    user: publicUser(userRow),
+    acting_as,
+    permissions: clientPermissions(db.get(), userRow),
+  };
+  if (req.authMethod !== 'api_token') {
+    payload.csrfToken = req.session.csrfToken;
+  }
+  return payload;
 }
 
 function publicUser(row) {
@@ -659,6 +703,7 @@ router.post('/login', loginLimiter, async (req, res) => {
           family_role:  user.family_role,
           access_scope: db.get().prepare('SELECT 1 FROM split_expense_guest_users WHERE user_id = ?').get(user.id) ? 'split_guest' : 'family',
         },
+        acting_as: null,
         permissions: clientPermissions(db.get(), user),
         csrfToken: req.session.csrfToken,
       });
@@ -984,7 +1029,7 @@ router.get('/me', requireAuth, (req, res) => {
     }
 
     if (req.authMethod === 'api_token') {
-      return res.json({ user: publicUser(user), permissions: clientPermissions(db.get(), user) });
+      return res.json({ user: publicUser(user), acting_as: null, permissions: clientPermissions(db.get(), user) });
     }
 
     // CSRF-Token erneuern falls vorhanden (wichtig fuer iOS-PWA-Resume:
@@ -1000,9 +1045,78 @@ router.get('/me', requireAuth, (req, res) => {
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
 
-    res.json({ user: publicUser(user), permissions: clientPermissions(db.get(), user), csrfToken: req.session.csrfToken });
+    res.json(authMeJson(req, user));
   } catch (err) {
     log.error('/me error:', err);
+    res.status(500).json({ error: 'Internal server error.', code: 500 });
+  }
+});
+
+/**
+ * POST /api/v1/auth/context
+ * Admin switches household profile context without re-login.
+ * Body: { user_id: number | null } — null or own id clears context.
+ */
+router.post('/context', requireAuth, (req, res) => {
+  try {
+    if (req.authMethod === 'api_token') {
+      return res.status(403).json({ error: 'Profile context requires a browser session.', code: 403 });
+    }
+    const resolved = resolveContextTarget(req.authUserId, req.body.user_id, findUserById);
+    if (resolved.error) {
+      return res.status(resolved.status).json({ error: resolved.error, code: resolved.status });
+    }
+    if (resolved.contextUserId) {
+      req.session.contextUserId = resolved.contextUserId;
+    } else {
+      delete req.session.contextUserId;
+    }
+    const user = findUserById(req.authUserId);
+    if (!user) return res.status(401).json({ error: 'User not found.', code: 401 });
+    res.json(authMeJson(req, user));
+  } catch (err) {
+    log.error('/context error:', err);
+    res.status(500).json({ error: 'Internal server error.', code: 500 });
+  }
+});
+
+router.get('/biometric', requireAuth, (req, res) => {
+  try {
+    const cred = cfgUserGet('biometric_credential_id', req.authUserId);
+    res.json({
+      data: {
+        enabled: cfgUserGet('biometric_profile_switch', req.authUserId) === '1',
+        registered: Boolean(cred),
+      },
+    });
+  } catch (err) {
+    log.error('/biometric GET error:', err);
+    res.status(500).json({ error: 'Internal server error.', code: 500 });
+  }
+});
+
+router.post('/biometric', requireAuth, (req, res) => {
+  try {
+    const credentialId = String(req.body.credential_id || '').trim();
+    if (!credentialId) {
+      return res.status(400).json({ error: 'credential_id is required.', code: 400 });
+    }
+    cfgUserSet('biometric_credential_id', req.authUserId, credentialId);
+    cfgUserSet('biometric_profile_switch', req.authUserId, '1');
+    res.json({ ok: true });
+  } catch (err) {
+    log.error('/biometric POST error:', err);
+    res.status(500).json({ error: 'Internal server error.', code: 500 });
+  }
+});
+
+router.delete('/biometric', requireAuth, (req, res) => {
+  try {
+    cfgUserSet('biometric_credential_id', req.authUserId, null);
+    cfgUserSet('biometric_profile_switch', req.authUserId, '0');
+    res.json({ ok: true });
+  } catch (err) {
+    log.error('/biometric DELETE error:', err);
     res.status(500).json({ error: 'Internal server error.', code: 500 });
   }
 });
@@ -1157,7 +1271,7 @@ router.post('/users', requireAuth, requireAdmin, csrfMiddleware, async (req, res
       return res.status(400).json({ error: 'Display name may be at most 128 characters long.', code: 400 });
     }
 
-    if (!FAMILY_ROLES.includes(family_role)) {
+    if (!isValidFamilyRole(family_role)) {
       return res.status(400).json({ error: 'Invalid family role.', code: 400 });
     }
 
@@ -1238,7 +1352,7 @@ router.patch('/users/:id', requireAuth, requireAdmin, csrfMiddleware, async (req
     if (displayName.length > 128) {
       return res.status(400).json({ error: 'Display name may be at most 128 characters long.', code: 400 });
     }
-    if (!FAMILY_ROLES.includes(familyRole)) {
+    if (!isValidFamilyRole(familyRole)) {
       return res.status(400).json({ error: 'Invalid family role.', code: 400 });
     }
     if (avatarData?.error) {

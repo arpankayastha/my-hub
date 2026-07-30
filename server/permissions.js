@@ -26,12 +26,11 @@
  */
 
 import { MODULE_KEYS } from './scopes.js';
+import { FAMILY_ROLES } from '../public/utils/family-roles.js';
 
 // Familienrollen (Subjekt-Achse „role"). Spiegelt den CHECK-Constraint der
 // users.family_role-Spalte (Migration, db.js).
-export const FAMILY_ROLES = Object.freeze([
-  'dad', 'mom', 'parent', 'child', 'grandparent', 'relative', 'other',
-]);
+export { FAMILY_ROLES };
 
 // Gateable, nutzer-sichtbare Module. `key` === Scope-Modulschlüssel (scopes.js),
 // `navIds` = zugehörige Navigations-/Kitchen-IDs im Frontend (für die Nav-Filterung;

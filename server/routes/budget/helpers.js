@@ -28,7 +28,11 @@ export function getBudgetMode() {
 
 /** Betrachtende User-ID (Session oder Token-Auth). requireAuth setzt authUserId immer. */
 export function viewerId(req) {
-  return req.authUserId || req.session.userId;
+  const authId = req.authUserId || req.session?.userId;
+  if (req.authMethod === 'api_token') return authId;
+  const ctx = req.session?.contextUserId;
+  if (ctx != null && ctx !== '' && Number(ctx) !== Number(authId)) return Number(ctx);
+  return authId;
 }
 
 /**
