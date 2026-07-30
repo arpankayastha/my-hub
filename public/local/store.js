@@ -86,6 +86,7 @@ export function emptyState() {
     cycle_periods: [],
     cycle_day_logs: [],
     cycle_settings: [],
+    birthdays: [],
   };
 }
 
