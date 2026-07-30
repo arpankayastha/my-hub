@@ -102,6 +102,7 @@ export function emptyState() {
     housekeeping_decay_tasks: [],
     document_folders: [],
     document_access: [],
+    notification_channels: [],
   };
 }
 

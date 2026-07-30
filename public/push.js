@@ -16,7 +16,33 @@ function urlBase64ToUint8Array(base64String) {
   return out;
 }
 
+function isLocalMode() {
+  return window.__YUVOMI_LOCAL_MODE__ === true;
+}
+
+/**
+ * Resolves when a service worker controls the page. Without a registration,
+ * navigator.serviceWorker.ready never settles — that hung settings/notifications
+ * in the browser-only build where SW registration is skipped.
+ */
+async function getActiveRegistration() {
+  if (!('serviceWorker' in navigator)) return null;
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (!registration) return null;
+  if (registration.active) return registration;
+  try {
+    await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('sw-ready-timeout')), 8000)),
+    ]);
+  } catch {
+    return registration.active ? registration : null;
+  }
+  return registration.active ? registration : null;
+}
+
 function pushSupported() {
+  if (isLocalMode()) return false;
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
@@ -32,8 +58,8 @@ async function pushStatus() {
   }
   let subscribed = false;
   try {
-    const reg = await navigator.serviceWorker.ready;
-    subscribed = Boolean(await reg.pushManager.getSubscription());
+    const reg = await getActiveRegistration();
+    subscribed = Boolean(reg && await reg.pushManager.getSubscription());
   } catch {
     subscribed = false;
   }
@@ -48,7 +74,8 @@ async function enablePush() {
     _subscribedCache = false;
     return { subscribed: false, permission };
   }
-  const reg = await navigator.serviceWorker.ready;
+  const reg = await getActiveRegistration();
+  if (!reg) throw new Error('no-service-worker');
   const { data } = await api.get('/push/vapid-public-key');
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
@@ -61,7 +88,11 @@ async function enablePush() {
 
 async function disablePush() {
   if (!pushSupported()) return { subscribed: false };
-  const reg = await navigator.serviceWorker.ready;
+  const reg = await getActiveRegistration();
+  if (!reg) {
+    _subscribedCache = false;
+    return { subscribed: false };
+  }
   const sub = await reg.pushManager.getSubscription();
   if (sub) {
     await api.post('/push/unsubscribe', { endpoint: sub.endpoint });
@@ -88,7 +119,8 @@ function matchesServerKey(sub, serverKey) {
  */
 async function resyncSubscription() {
   if (!pushSupported() || Notification.permission !== 'granted') return false;
-  const reg = await navigator.serviceWorker.ready;
+  const reg = await getActiveRegistration();
+  if (!reg) return false;
   const sub = await reg.pushManager.getSubscription();
   if (!sub) {
     _subscribedCache = false;
@@ -107,7 +139,8 @@ async function resyncSubscription() {
  */
 async function repairPush() {
   if (!pushSupported() || Notification.permission !== 'granted') return false;
-  const reg = await navigator.serviceWorker.ready;
+  const reg = await getActiveRegistration();
+  if (!reg) return false;
   const { data } = await api.get('/push/vapid-public-key');
   const serverKey = urlBase64ToUint8Array(data.key);
 
