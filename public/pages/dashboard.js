@@ -24,6 +24,7 @@ let _fabController = null;
 const ONBOARDING_KEY = 'my-hub-onboarded';
 const APP_NAME_STORAGE_KEY = 'my-hub-app-name';
 const CUSTOMIZE_HINT_KEY = 'my-hub-dash-customize-hint';
+const HIDE_AMOUNTS_KEY = 'my-hub-budget-hide-amounts';
 
 function eventOccurrenceDateKey(event) {
   const value = String(event?.start_datetime || '');
@@ -507,6 +508,9 @@ function budgetCategoryLabel(category) {
 }
 
 function formatCurrency(amount, currency = 'EUR') {
+  try {
+    if (localStorage.getItem(HIDE_AMOUNTS_KEY) === '1') return '••••';
+  } catch (_) { /* Private-Mode */ }
   return getNumberFormat({
     style: 'currency',
     currency,

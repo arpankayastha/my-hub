@@ -105,3 +105,50 @@ test('clone-month copies one-time entries only', async () => {
   assert.ok(apr.data.some((e) => e.title === 'Coffee' && e.date.startsWith('2026-04')));
   });
 });
+
+test('PUT series updates parent and keeps past instance amounts', async () => {
+  await withState(async (state) => {
+
+  const created = await handleBudgetApi(
+    'POST',
+    ['budget'],
+    {},
+    {
+      title: 'Rent',
+      amount: -1000,
+      category: 'housing',
+      subcategory: 'rent_mortgage',
+      date: '2026-01-15',
+      is_recurring: true,
+      recurrence_interval: 'monthly',
+    },
+    state,
+    1,
+    findUser,
+  );
+  const parentId = created.data.id;
+
+  await handleBudgetApi('GET', ['budget'], { month: '2026-02' }, null, state, 1, findUser);
+  const febBefore = await handleBudgetApi('GET', ['budget'], { month: '2026-02' }, null, state, 1, findUser);
+  const febInst = febBefore.data.find((e) => e.recurrence_parent_id === parentId);
+  assert.ok(febInst);
+  assert.equal(febInst.amount, -1000);
+
+  await handleBudgetApi(
+    'PUT',
+    ['budget', String(parentId), 'series'],
+    {},
+    { amount: -1200 },
+    state,
+    1,
+    findUser,
+  );
+
+  const febAfter = await handleBudgetApi('GET', ['budget'], { month: '2026-02' }, null, state, 1, findUser);
+  const febInstAfter = febAfter.data.find((e) => e.recurrence_parent_id === parentId);
+  assert.equal(febInstAfter.amount, -1000, 'past month instance keeps old amount');
+
+  const parent = state.budget_entries.find((e) => e.id === parentId);
+  assert.equal(parent.amount, -1200, 'parent carries new amount');
+  });
+});

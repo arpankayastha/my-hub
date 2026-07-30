@@ -594,12 +594,12 @@ function renderBody() {
         <i data-lucide="receipt" class="icon-sm" aria-hidden="true"></i>
         <span>${t('budget.expensesOnly')}</span>
       </button>
-      <button class="budget-expenses-toggle${state.hideAmounts ? ' budget-expenses-toggle--active' : ''}"
+      <button class="budget-expenses-toggle budget-expenses-toggle--icon${state.hideAmounts ? ' budget-expenses-toggle--active' : ''}"
               id="budget-hide-amounts" type="button" role="switch"
               aria-checked="${state.hideAmounts ? 'true' : 'false'}"
+              aria-label="${t('budget.hideAmountsHint')}"
               title="${t('budget.hideAmountsHint')}">
-        <i data-lucide="eye-off" class="icon-sm" aria-hidden="true"></i>
-        <span>${t('budget.hideAmounts')}</span>
+        <i data-lucide="${state.hideAmounts ? 'eye-off' : 'eye'}" class="icon-sm" aria-hidden="true"></i>
       </button>
       <button class="btn btn--secondary btn--sm" id="budget-copy-prev-month" type="button"
               title="${t('budget.copyFromPrevMonthHint')}">
@@ -1907,6 +1907,12 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
             }
             await loadMonth(state.month);
             renderBody();
+          } else if (entry.is_recurring) {
+            await api.put(`/budget/${entry.id}/series`, body);
+            await loadMonth(state.month);
+            closeModal({ force: true });
+            renderBody();
+            window.myHub?.showToast(t('budget.recurringSeriesSaved'), 'success');
           } else {
             const res = await api.put(`/budget/${entry.id}`, body);
             const idx = state.entries.findIndex((e) => e.id === entry.id);
