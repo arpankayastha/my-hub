@@ -463,7 +463,7 @@ class CategoryManagerElement extends HTMLElement {
     const cat = this._cats.find((c) => this._keyOf(c) === key);
     if (!cat) return;
     const { promptModal } = await import('/components/modal.js');
-    const current = this._labelResolver(cat);
+    const current = cat.name ?? this._labelResolver(cat);
     const newName = await promptModal(t('category.renamePrompt'), current);
     if (!newName || newName === current) return;
     try {
@@ -604,7 +604,7 @@ class CategoryManagerElement extends HTMLElement {
     const found = this._findSub(parent, subKey);
     if (!found) return;
     const { promptModal } = await import('/components/modal.js');
-    const current = this._labelResolver(found.sub);
+    const current = found.sub.name ?? this._labelResolver(found.sub);
     const newName = await promptModal(t('category.renamePrompt'), current);
     if (!newName || newName === current) return;
     try {

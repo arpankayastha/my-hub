@@ -2,7 +2,7 @@
  * Local API handlers for budget module (IndexedDB-backed).
  */
 
-import { saveState, nowIso } from './store.js';
+import { saveState, nowIso, cfgGet } from './store.js';
 import { DEFAULT_BUDGET_CATEGORIES, DEFAULT_BUDGET_SUBCATEGORIES } from './budget-seed.js';
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
@@ -38,9 +38,43 @@ function entriesInRange(state, from, to) {
   return state.budget_entries.filter((e) => e.date >= from && e.date <= to);
 }
 
-function computeSummary(state, month) {
+function resolveBudgetMode() {
+  return cfgGet('budget_mode') === 'personal' ? 'personal' : 'shared';
+}
+
+function entryOwnerId(entry) {
+  return entry.owner_id ?? entry.created_by;
+}
+
+function canEditEntry(entry, userId) {
+  if (!entry) return false;
+  return entryOwnerId(entry) === userId;
+}
+
+/** Personal mode: visibility gate (private entries only for owner). */
+function entryReadable(entry, userId, budgetMode) {
+  if (budgetMode !== 'personal') return true;
+  return entry.visibility === 'shared' || entryOwnerId(entry) === userId;
+}
+
+/** Personal mode: mine vs household view filter. */
+function entryMatchesScope(entry, userId, scope, budgetMode) {
+  if (budgetMode !== 'personal') return true;
+  if (scope === 'household') return entry.visibility === 'shared';
+  return entryOwnerId(entry) === userId;
+}
+
+function filterEntriesForView(rows, userId, scope) {
+  const mode = resolveBudgetMode();
+  if (mode !== 'personal') return rows;
+  const viewScope = scope === 'household' ? 'household' : 'mine';
+  return rows.filter((e) => entryReadable(e, userId, mode) && entryMatchesScope(e, userId, viewScope, mode));
+}
+
+function computeSummary(state, month, userId, scope) {
   const { from, to } = monthRange(month);
-  const rows = entriesInRange(state, from, to);
+  let rows = entriesInRange(state, from, to);
+  rows = filterEntriesForView(rows, userId, scope);
   let income = 0;
   let expenses = 0;
   const byCat = new Map();
@@ -146,10 +180,11 @@ function loansPayload(state, baseCurrency) {
   };
 }
 
-function computePlanProgress(state, month) {
+function computePlanProgress(state, month, userId, scope) {
   const { from, to } = monthRange(month);
   const planMap = new Map(state.budget_plans.map((p) => [p.category, Number(p.amount) || 0]));
-  const spentRows = entriesInRange(state, from, to);
+  let spentRows = entriesInRange(state, from, to);
+  spentRows = filterEntriesForView(spentRows, userId, scope);
   const spentMap = new Map();
   for (const e of spentRows) {
     const amt = Number(e.amount) || 0;
@@ -174,7 +209,7 @@ function computePlanProgress(state, month) {
   plans.sort((a, b) => b.ratio - a.ratio);
   const totalPlanned = plans.reduce((s, p) => s + p.planned, 0);
   const totalActual = plans.reduce((s, p) => s + p.actual, 0);
-  const summary = computeSummary(state, month);
+  const summary = computeSummary(state, month, userId, scope);
   const savingsPlanned = planMap.get(BUDGET_SAVINGS_KEY);
   const balance = summary.balance;
   const income = summary.income;
@@ -198,7 +233,7 @@ export function computeDashboardBudget(state, userId, budgetMode = 'shared') {
   const { from, to } = monthRange(currentMonth);
   let rows = entriesInRange(state, from, to);
   if (budgetMode === 'personal') {
-    rows = rows.filter((e) => e.created_by === userId);
+    rows = rows.filter((e) => entryOwnerId(e) === userId);
   }
 
   let income = 0;
@@ -419,9 +454,10 @@ function resolveSeriesParent(state, entry) {
   return state.budget_entries.find((e) => e.id === parentId) ?? null;
 }
 
-async function updateEntrySeries(state, entryId, body, findUser) {
+async function updateEntrySeries(state, entryId, body, findUser, userId) {
   const entry = state.budget_entries.find((e) => e.id === entryId);
   if (!entry) throw apiError('Entry not found.', 404);
+  if (!canEditEntry(entry, userId)) throw apiError('You cannot modify this entry.', 403);
 
   const parent = resolveSeriesParent(state, entry);
   if (!parent) throw apiError('Not a recurring entry.', 400);
@@ -470,9 +506,10 @@ async function updateEntrySeries(state, entryId, body, findUser) {
   return { data: enrichEntry(state, parent, findUser) };
 }
 
-async function deleteEntrySeries(state, entryId) {
+async function deleteEntrySeries(state, entryId, userId) {
   const entry = state.budget_entries.find((e) => e.id === entryId);
   if (!entry) throw apiError('Entry not found.', 404);
+  if (!canEditEntry(entry, userId)) throw apiError('You cannot modify this entry.', 403);
 
   const parent = resolveSeriesParent(state, entry);
   if (!parent) throw apiError('Not a recurring entry.', 400);
@@ -534,6 +571,7 @@ function generateRecurringInstances(state, month) {
       account_id: orig.account_id ?? null,
       visibility: orig.visibility || 'shared',
       created_by: orig.created_by,
+      owner_id: orig.owner_id ?? orig.created_by,
       created_at: nowIso(),
       updated_at: nowIso(),
     });
@@ -716,6 +754,7 @@ async function cloneMonthEntries(state, fromMonth, toMonth, userId) {
       recurrence_virtual: 0,
       recurrence_full_amount: null,
       visibility: src.visibility || 'shared',
+      owner_id: src.owner_id ?? src.created_by ?? userId,
       created_by: userId,
       created_at: nowIso(),
       updated_at: nowIso(),
@@ -738,7 +777,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
   if (sub === 'summary' && m === 'GET') {
     const month = query.month || new Date().toISOString().slice(0, 7);
     if (!MONTH_RE.test(month)) throw apiError('month muss YYYY-MM sein', 400);
-    return { data: computeSummary(state, month) };
+    return { data: computeSummary(state, month, userId, query.scope) };
   }
 
   if (sub === 'meta' && m === 'GET') {
@@ -841,7 +880,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
     }
     if (m === 'GET') {
       const month = MONTH_RE.test(query.month || '') ? query.month : new Date().toISOString().slice(0, 7);
-      return { data: computePlanProgress(state, month) };
+      return { data: computePlanProgress(state, month, userId, query.scope) };
     }
   }
 
@@ -884,6 +923,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
     await saveState();
     const { from, to } = monthRange(month);
     let rows = entriesInRange(state, from, to);
+    rows = filterEntriesForView(rows, userId, query.scope);
     if (query.category) rows = rows.filter((e) => e.category === query.category);
     if (query.account_id) rows = rows.filter((e) => e.account_id === Number(query.account_id));
     rows = rows.sort((a, b) => (b.date > a.date ? 1 : -1));
@@ -898,6 +938,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
     const rawAmount = Number(body.amount);
     const storeAmount = isVirtual ? effectiveMonthly(rawAmount, interval) : rawAmount;
     const fullAmount = isVirtual ? rawAmount : null;
+    const personal = resolveBudgetMode() === 'personal';
     const entry = {
       id,
       title: String(body.title || '').trim(),
@@ -911,7 +952,8 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
       recurrence_interval: isRecurring ? interval : null,
       recurrence_virtual: isVirtual,
       recurrence_full_amount: fullAmount,
-      visibility: body.visibility || 'shared',
+      visibility: body.visibility || (personal ? 'private' : 'shared'),
+      owner_id: userId,
       created_by: userId,
       created_at: nowIso(),
       updated_at: nowIso(),
@@ -924,12 +966,13 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
   const entryId = Number(sub);
   if (Number.isInteger(entryId) && entryId > 0) {
     if (parts[2] === 'series') {
-      if (m === 'PUT') return await updateEntrySeries(state, entryId, body, findUser);
-      if (m === 'DELETE') return await deleteEntrySeries(state, entryId);
+      if (m === 'PUT') return await updateEntrySeries(state, entryId, body, findUser, userId);
+      if (m === 'DELETE') return await deleteEntrySeries(state, entryId, userId);
     }
 
     const entry = state.budget_entries.find((e) => e.id === entryId);
     if (m === 'PUT' && entry) {
+      if (!canEditEntry(entry, userId)) throw apiError('You cannot modify this entry.', 403);
       Object.assign(entry, {
         title: body.title ?? entry.title,
         amount: body.amount !== undefined ? Number(body.amount) : entry.amount,
@@ -943,6 +986,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
       return { data: enrichEntry(state, entry, findUser) };
     }
     if (m === 'DELETE' && entry) {
+      if (!canEditEntry(entry, userId)) throw apiError('You cannot modify this entry.', 403);
       if (entry.recurrence_parent_id) {
         const month = entry.date.slice(0, 7);
         state.budget_recurrence_skipped.push({ parent_id: entry.recurrence_parent_id, month });

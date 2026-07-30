@@ -28,8 +28,13 @@ export function budgetCategoryLabelKey(category) {
 }
 
 export function budgetCategoryLabel(category, fallback = '', translate = null) {
-  const labelKey = budgetCategoryLabelKey(category);
-  if (labelKey && typeof translate === 'function') return translate(labelKey);
   const key = String(category || '').trim();
-  return fallback || key;
+  const customName = String(fallback || '').trim();
+  const labelKey = budgetCategoryLabelKey(category);
+  if (labelKey && typeof translate === 'function') {
+    const localized = translate(labelKey);
+    if (customName && customName !== localized) return customName;
+    return localized;
+  }
+  return customName || key;
 }

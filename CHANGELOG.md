@@ -2,6 +2,15 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.5] - 2026-07-30
+
+### Fixed
+- Budget category rename now updates the displayed name (custom names no longer overridden by locale defaults).
+- Local/GitHub Pages mode: personal budget scopes (mine vs household) and per-member entry ownership.
+
+### Added
+- Personal budget mode in local storage: each family member can track private income/expenses; shared entries appear in the household view (enable in Settings → Budget mode).
+
 ## [1.1.4] - 2026-07-30
 
 ### Fixed

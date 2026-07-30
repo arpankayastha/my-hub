@@ -138,18 +138,20 @@ export function budgetMessages(lang) {
 export function localizedCategory(category, lang) {
   const budget = budgetMessages(lang);
   const labelKey = CATEGORY_LABEL_KEYS[category.key];
+  const localized = labelKey ? (budget[labelKey] || category.name) : category.name;
   return {
     ...category,
-    label: labelKey ? (budget[labelKey] || category.name) : category.name,
+    label: category.name !== localized ? category.name : localized,
   };
 }
 
 export function localizedSubcategory(subcategory, lang) {
   const budget = budgetMessages(lang);
   const labelKey = SUBCATEGORY_LABEL_KEYS[subcategory.key];
+  const localized = labelKey ? (budget[labelKey] || subcategory.name) : subcategory.name;
   return {
     ...subcategory,
-    label: labelKey ? (budget[labelKey] || subcategory.name) : subcategory.name,
+    label: subcategory.name !== localized ? subcategory.name : localized,
   };
 }
 

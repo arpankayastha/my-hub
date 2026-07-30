@@ -152,3 +152,75 @@ test('PUT series updates parent and keeps past instance amounts', async () => {
   assert.equal(parent.amount, -1200, 'parent carries new amount');
   });
 });
+
+test('PUT budget category renames stored name', async () => {
+  await withState(async (state) => {
+    const food = state.budget_categories.find((c) => c.key === 'food');
+    assert.ok(food);
+
+    const res = await handleBudgetApi(
+      'PUT',
+      ['budget', 'categories', food.key],
+      {},
+      { name: 'Groceries' },
+      state,
+      1,
+      findUser,
+    );
+    assert.equal(res.data.name, 'Groceries');
+    const updated = state.budget_categories.find((c) => c.key === 'food');
+    assert.equal(updated.name, 'Groceries');
+  });
+});
+
+test('personal mode scopes entries per member', async () => {
+  await withState(async (state) => {
+    state.sync_config.budget_mode = 'personal';
+    state.users.push({ id: 2, username: 'member', display_name: 'Member', role: 'member', password_hash: 'x' });
+    const findMember = () => ({ id: 2, display_name: 'Member', role: 'member' });
+
+    await handleBudgetApi(
+      'POST',
+      ['budget'],
+      {},
+      { title: 'A private', amount: -50, category: 'food', date: '2026-05-10', visibility: 'private' },
+      state,
+      1,
+      findUser,
+    );
+    await handleBudgetApi(
+      'POST',
+      ['budget'],
+      {},
+      { title: 'A shared', amount: -20, category: 'food', date: '2026-05-11', visibility: 'shared' },
+      state,
+      1,
+      findUser,
+    );
+
+    const bHousehold = await handleBudgetApi(
+      'GET',
+      ['budget'],
+      { month: '2026-05', scope: 'household' },
+      null,
+      state,
+      2,
+      findMember,
+    );
+    const bTitles = bHousehold.data.map((e) => e.title);
+    assert.ok(bTitles.includes('A shared'));
+    assert.ok(!bTitles.includes('A private'));
+
+    const aMine = await handleBudgetApi(
+      'GET',
+      ['budget'],
+      { month: '2026-05', scope: 'mine' },
+      null,
+      state,
+      1,
+      findUser,
+    );
+    const aTitles = aMine.data.map((e) => e.title);
+    assert.ok(aTitles.includes('A private') && aTitles.includes('A shared'));
+  });
+});
