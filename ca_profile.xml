@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<CommunityApplications>
+  <!-- Repository overview shown in Community Apps. Markdown supported. -->
+  <Profile>
+**My Hub** — the self-hosted family planner PWA.
+
+A private, offline-capable web app that keeps your household organized — tasks, groceries, meals, recipes, pantry stock, calendar, documents, budget, housekeeping, notes, contacts, birthdays and more — in one place, without cloud accounts or subscriptions.
+
+This repository ships the official Docker template for My Hub. The image is published to GitHub Container Registry at `ghcr.io/arpankayastha/my-hub`.
+
+**Support:** open an issue at https://github.com/arpankayastha/my-hub/issues
+  </Profile>
+  <!-- Repository icon -->
+  <Icon>https://raw.githubusercontent.com/arpankayastha/my-hub/main/icon.svg</Icon>
+  <!-- Project web page -->
+  <WebPage>https://github.com/arpankayastha/my-hub</WebPage>
+</CommunityApplications>

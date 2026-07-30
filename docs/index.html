@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Security headers via meta (GitHub Pages allows no custom HTTP headers).
+       Note: X-Frame-Options / CSP frame-ancestors only take effect as HTTP headers, not via meta. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>My Hub - The Self-Hosted Family Planner</title>
+  <meta name="description" content="A privacy-first, self-hosted family planner. Tasks, shopping, meals, calendar sync, budget - one private home for everything your household runs on. No cloud, no subscriptions.">
+  <meta name="theme-color" content="#fafaf8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="My Hub - The Self-Hosted Family Planner">
+  <meta property="og:description" content="Tasks, shopping, meals, calendar, budget - all self-hosted, no cloud dependency.">
+  <meta property="og:image" content="https://myhub.cloud/og-image.png">
+  <meta property="og:url" content="https://myhub.cloud/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://myhub.cloud/twitter-image.png">
+  <link rel="canonical" href="https://myhub.cloud/">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+
+  <style>
+    /* ============================================================
+       Plus Jakarta Sans - self-hosted variable font (no CDN).
+       Matches the My Hub app exactly. Roman + italic for editorial accents.
+       ============================================================ */
+    @font-face {
+      font-family: 'Plus Jakarta Sans';
+      src: url('fonts/plus-jakarta-sans-variable.woff2') format('woff2-variations');
+      font-weight: 200 800; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'Plus Jakarta Sans';
+      src: url('fonts/plus-jakarta-sans-variable-italic.woff2') format('woff2-variations');
+      font-weight: 200 800; font-style: italic; font-display: swap;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ff: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --ff-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', ui-monospace, monospace;
+
+      /* Warm neutral surfaces - mirrors the app's tokens.css */
+      --bg: #FAFAF8;
+      --bg-alt: #F2F1ED;
+      --surface: #FFFFFF;
+      --surface-2: #FAFAF8;
+      --border: #E8E7E2;
+      --border-strong: #D8D7D1;
+      --text-1: #1C1C1A;
+      --text-2: #56554F;
+      --text-3: #6E6D67;
+
+      --accent: #6c3aed;
+      --accent-hover: #5b2fd4;
+      --accent-deep: #3d1f9e;
+      --accent-soft: #EDE9FE;
+      --accent-light: #F5F3FF;
+      --accent-glow: rgba(108, 58, 237, 0.16);
+      --accent-ink: #FFFFFF;
+
+      /* CTA drench: deliberately theme-independent deep violets so white text stays
+         >=4.5:1 in BOTH themes. NOT redefined in the dark block - the dark accents
+         (#a78bfa) are too light and dropped white text to 2.7:1. */
+      --cta-grad-1: #3d1f9e;
+      --cta-grad-2: #5b2fd4;
+      --cta-grad-3: #7c4de0;
+
+      /* Module accent signature (from the app) */
+      --m-tasks: #15803D;
+      --m-calendar: #4F46E5;
+      --m-meals: #C2410C;
+      --m-recipes: #0C7C5B;
+      --m-shopping: #DB2777;
+      --m-notes: #A16207;
+      --m-contacts: #0969DA;
+      --m-birthdays: #D6336C;
+      --m-budget: #0F766E;
+      --m-documents: #42587E;
+      --m-housekeeping: #7C3AED;
+      --m-health: #9E1E88;
+      --m-rewards: #BE4B6E;
+      --m-split: #1A7BAE;
+
+      --code-bg: #1B1A22;
+      --code-text: #E6E4F0;
+      --code-comment: #7C7A8C;
+
+      --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 22px; --r-2xl: 28px; --r-full: 999px;
+
+      --shadow-sm: 0 1px 2px rgba(18,14,8,0.05), 0 1px 4px rgba(18,14,8,0.04);
+      --shadow-md: 0 2px 8px rgba(18,14,8,0.08), 0 1px 3px rgba(18,14,8,0.05);
+      --shadow-lg: 0 10px 30px rgba(18,14,8,0.12), 0 3px 8px rgba(18,14,8,0.05);
+      --shadow-xl: 0 22px 60px rgba(18,14,8,0.18), 0 6px 16px rgba(18,14,8,0.07);
+      --shadow-hero: 0 32px 80px rgba(40,22,90,0.22), 0 10px 30px rgba(18,14,8,0.10);
+
+      --glass-bg: rgba(255,255,255,0.70);
+      --glass-border: rgba(255,255,255,0.65);
+      --glass-blur: blur(18px) saturate(180%);
+
+      --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+      --maxw: 1200px;
+      --grain: 0.025;
+    }
+
+    [data-theme="dark"] {
+      --bg: #1A1A18;
+      --bg-alt: #141413;
+      --surface: #222220;
+      --surface-2: #1C1C1A;
+      --border: #2A2A28;
+      --border-strong: #3A3A37;
+      --text-1: #F5F4F1;
+      --text-2: #B4B3B0;
+      --text-3: #8E8D89;
+
+      --accent: #a78bfa;
+      --accent-hover: #9066f5;
+      --accent-deep: #c4b5fd;
+      --accent-soft: #1E1040;
+      --accent-light: #160B30;
+      --accent-glow: rgba(167, 139, 250, 0.22);
+      --accent-ink: #1A1A18;
+
+      --m-tasks: #4ADE80;
+      --m-calendar: #818CF8;
+      --m-meals: #FB923C;
+      --m-recipes: #2ECC99;
+      --m-shopping: #F472B6;
+      --m-notes: #FCD34D;
+      --m-contacts: #60A5FA;
+      --m-birthdays: #FB7185;
+      --m-budget: #2DD4BF;
+      --m-documents: #7E9BCC;
+      --m-housekeeping: #C4B5FD;
+      --m-health: #DB60CB;
+      --m-rewards: #E68CA6;
+      --m-split: #7DA3FF;
+
+      --code-bg: #141413;
+      --code-text: #E2E1DC;
+      --code-comment: #7A786F;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.30);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.38);
+      --shadow-lg: 0 12px 30px rgba(0,0,0,0.48);
+      --shadow-xl: 0 22px 60px rgba(0,0,0,0.60);
+      --shadow-hero: 0 32px 80px rgba(0,0,0,0.66), 0 10px 30px rgba(108,58,237,0.18);
+
+      --glass-bg: rgba(28,28,26,0.66);
+      --glass-border: rgba(255,255,255,0.10);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #1A1A18; --bg-alt: #141413; --surface: #222220; --surface-2: #1C1C1A;
+        --border: #2A2A28; --border-strong: #3A3A37;
+        --text-1: #F5F4F1; --text-2: #B4B3B0; --text-3: #8E8D89;
+        --accent: #a78bfa; --accent-hover: #9066f5; --accent-deep: #c4b5fd;
+        --accent-soft: #1E1040; --accent-light: #160B30; --accent-glow: rgba(167,139,250,0.22); --accent-ink: #1A1A18;
+        --m-tasks: #4ADE80; --m-calendar: #818CF8; --m-meals: #FB923C; --m-recipes: #2ECC99;
+        --m-shopping: #F472B6; --m-notes: #FCD34D; --m-contacts: #60A5FA; --m-birthdays: #FB7185;
+        --m-budget: #2DD4BF; --m-documents: #7E9BCC; --m-housekeeping: #C4B5FD; --m-health: #DB60CB; --m-rewards: #E68CA6; --m-split: #2FB6E8;
+        --code-bg: #141413; --code-text: #E2E1DC; --code-comment: #7A786F;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.30); --shadow-md: 0 4px 12px rgba(0,0,0,0.38);
+        --shadow-lg: 0 12px 30px rgba(0,0,0,0.48); --shadow-xl: 0 22px 60px rgba(0,0,0,0.60);
+        --shadow-hero: 0 32px 80px rgba(0,0,0,0.66), 0 10px 30px rgba(108,58,237,0.18);
+        --glass-bg: rgba(28,28,26,0.66); --glass-border: rgba(255,255,255,0.10);
+      }
+    }
+
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: var(--ff);
+      background: var(--bg);
+      color: var(--text-1);
+      line-height: 1.65;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+      font-feature-settings: 'ss01';
+    }
+    /* Subtle film grain for texture (no flat sterility) */
+    body::after {
+      content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+      opacity: var(--grain);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    a { color: var(--accent); text-decoration: none; }
+    img { max-width: 100%; height: auto; display: block; }
+    ::selection { background: var(--accent-soft); color: var(--accent-deep); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+    .wrap-narrow { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+    /* ===== NAV ===== */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--border);
+      height: 62px;
+    }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 100%; }
+    .nav-logo { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; color: var(--text-1); }
+    .nav-logo svg { width: 34px; height: 34px; filter: drop-shadow(0 3px 8px var(--accent-glow)); }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+    .nav-btn {
+      background: none; border: 1px solid var(--border); color: var(--text-2);
+      cursor: pointer; padding: 8px 12px; border-radius: var(--r-sm); font-size: 0.82rem; font-weight: 600;
+      font-family: var(--ff); display: flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; min-width: 44px; /* WCAG touch target (both axes) */
+      transition: background .18s, color .18s, border-color .18s, transform .18s var(--ease-spring);
+    }
+    .nav-install { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); box-shadow: 0 3px 12px var(--accent-glow); }
+    .nav-install:hover { background: var(--accent-hover); color: var(--accent-ink); border-color: var(--accent-hover); }
+    .nav-btn:hover { background: var(--surface); color: var(--text-1); border-color: var(--border-strong); }
+    .nav-btn:active { transform: scale(0.95); }
+    .nav-btn svg { width: 16px; height: 16px; }
+    .nav-gh { background: var(--text-1); color: var(--bg); border-color: var(--text-1); }
+    .nav-gh:hover { background: var(--text-1); color: var(--bg); opacity: 0.86; }
+    #gh-stars-nav:not(:empty) { font-variant-numeric: tabular-nums; }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px; font-family: var(--ff);
+      font-weight: 600; font-size: 1rem; cursor: pointer; border: 1px solid transparent;
+      padding: 14px 26px; border-radius: var(--r-md); transition: transform .2s var(--ease-spring), box-shadow .2s, background .2s, border-color .2s, color .2s;
+      white-space: nowrap;
+    }
+    .btn svg { width: 18px; height: 18px; }
+    .btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 4px 16px var(--accent-glow); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 10px 28px var(--accent-glow); color: var(--accent-ink); }
+    .btn-primary:active { transform: translateY(0) scale(0.98); }
+    .btn-secondary { background: var(--surface); color: var(--text-1); border-color: var(--border); box-shadow: var(--shadow-sm); }
+    .btn-secondary:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .btn-secondary:active { transform: translateY(0) scale(0.98); }
+    .btn-ghost { background: none; color: var(--text-2); }
+    .btn-ghost:hover { color: var(--text-1); }
+
+    /* ===== Section primitives ===== */
+    section { position: relative; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent);
+    }
+    .eyebrow::before { content: ''; width: 22px; height: 1.5px; background: var(--accent); opacity: 0.6; }
+    .sec-head { max-width: 640px; }
+    .sec-head.center { margin: 0 auto; text-align: center; }
+    .sec-head.center .eyebrow::before { display: none; }
+    .sec-title {
+      font-size: clamp(1.9rem, 4vw, 3rem); font-weight: 700; line-height: 1.08;
+      letter-spacing: -0.035em; margin: 16px 0 14px; text-wrap: balance;
+    }
+    .sec-title em { font-style: italic; font-weight: 600; color: var(--accent); }
+    .sec-desc { font-size: 1.075rem; color: var(--text-2); line-height: 1.65; max-width: 56ch; }
+    .sec-head.center .sec-desc { margin-left: auto; margin-right: auto; }
+
+    /* ===== HERO ===== */
+    .hero { padding: 150px 0 72px; position: relative; overflow: hidden; }
+    .hero-glow {
+      position: absolute; top: -240px; left: 50%; transform: translateX(-50%);
+      width: 1100px; height: 900px; pointer-events: none; z-index: 0;
+      background: radial-gradient(50% 50% at 50% 40%, var(--accent-glow) 0%, transparent 70%);
+    }
+    .hero-glow::after {
+      content: ''; position: absolute; top: 120px; right: 120px; width: 360px; height: 360px;
+      background: radial-gradient(circle, color-mix(in srgb, var(--m-meals) 18%, transparent) 0%, transparent 70%);
+      filter: blur(20px);
+    }
+    .hero .wrap { position: relative; z-index: 1; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 12px; border-radius: var(--r-full);
+      font-size: 0.8rem; font-weight: 600; color: var(--text-2);
+      background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border); box-shadow: var(--shadow-sm); margin-bottom: 26px;
+    }
+    .hero-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--m-tasks); box-shadow: 0 0 0 3px color-mix(in srgb, var(--m-tasks) 22%, transparent); }
+    .hero h1 {
+      font-size: clamp(2.7rem, 6vw, 4.4rem); font-weight: 700; line-height: 1.03;
+      letter-spacing: -0.04em; margin-bottom: 22px; text-wrap: balance;
+    }
+    .hero h1 em { font-style: italic; font-weight: 600; color: var(--accent); }
+    .hero-sub { font-size: 1.18rem; color: var(--text-2); max-width: 30ch; margin-bottom: 34px; line-height: 1.6; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero-tags { display: flex; gap: 8px; margin-top: 26px; flex-wrap: wrap; }
+    .tag {
+      padding: 5px 13px; border-radius: var(--r-full); font-size: 0.74rem; font-weight: 600;
+      background: var(--surface); color: var(--text-2); border: 1px solid var(--border);
+    }
+
+    /* Hero visual */
+    .hero-visual { position: relative; perspective: 1600px; }
+    .hero-frame {
+      border-radius: var(--r-xl); overflow: hidden; border: 1px solid var(--border);
+      box-shadow: var(--shadow-hero);
+      transform: rotateY(-6deg) rotateX(3deg) translateZ(0); transform-origin: center;
+      transition: transform .6s var(--ease-out);
+    }
+    .hero-frame:hover { transform: rotateY(0) rotateX(0); }
+    .hero-frame img { width: 100%; display: block; }
+    .hero-float {
+      position: absolute; bottom: -28px; right: -22px; width: 150px;
+      border-radius: 26px; border: 4px solid var(--surface); box-shadow: var(--shadow-xl);
+      z-index: 2; overflow: hidden; background: var(--surface);
+    }
+    .hero-float img { width: 100%; display: block; aspect-ratio: 1320 / 2867; }
+    .hero-chip {
+      position: absolute; display: inline-flex; align-items: center; gap: 8px; z-index: 3;
+      padding: 9px 14px; border-radius: var(--r-full); font-size: 0.82rem; font-weight: 600; color: var(--text-1);
+      background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border); box-shadow: var(--shadow-lg);
+    }
+    .hero-chip svg { width: 16px; height: 16px; }
+    .hero-chip.c1 { top: 26px; left: -30px; color: var(--m-tasks); animation: float1 6s ease-in-out infinite; }
+    .hero-chip.c2 { top: 50%; left: -44px; color: var(--m-shopping); animation: float2 7s ease-in-out infinite; }
+    @keyframes float1 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes float2 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(9px); } }
+
+    /* ===== Proof bar ===== */
+    .proof { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg-alt); }
+    .proof .wrap { display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+      gap: 10px 18px; padding: 16px 24px; font-size: 0.84rem; font-weight: 600; color: var(--text-2); }
+    .proof b { color: var(--text-1); font-variant-numeric: tabular-nums; }
+    .proof .sep { color: var(--border-strong); }
+    @media (max-width: 560px) { .proof .dt { display: none; } }
+
+    /* ===== Problem ===== */
+    /* Problem section is deliberately NOT cards - flat columns under hairline rules,
+       so it reads differently from the surface-card grids elsewhere. */
+    .problem { padding: 96px 0; }
+    .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px 48px; margin-top: 48px; }
+    .problem-card { border-top: 2px solid var(--border-strong); padding-top: 22px; }
+    .problem-card .pc-ico { display: inline-grid; place-items: center; width: 34px; height: 34px; margin-bottom: 12px;
+      color: var(--m-birthdays); }
+    .problem-card .pc-ico svg { width: 26px; height: 26px; }
+    .problem-card h3 { font-size: 1.18rem; font-weight: 700; letter-spacing: -0.015em; margin-bottom: 8px; }
+    .problem-card p { font-size: 0.95rem; color: var(--text-2); line-height: 1.6; }
+    .prob-cta { text-align: center; margin-top: 40px; font-size: clamp(1.3rem, 3vw, 1.7rem); font-weight: 600; letter-spacing: -0.02em; font-style: italic; color: var(--text-1); }
+    .prob-cta span { color: var(--accent); }
+
+    /* ===== Philosophy ===== */
+    .philosophy { padding: 96px 0; background: var(--bg-alt); border-block: 1px solid var(--border); }
+    .phil-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 48px; }
+    .phil-card { display: flex; gap: 18px; padding: 28px; border-radius: var(--r-lg); background: var(--surface);
+      border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: transform .25s var(--ease-spring), box-shadow .25s; }
+    .phil-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .phil-ico { flex-shrink: 0; width: 46px; height: 46px; border-radius: var(--r-md); display: grid; place-items: center;
+      color: var(--m); background: color-mix(in srgb, var(--m) 13%, transparent); }
+    .phil-ico svg { width: 22px; height: 22px; }
+    .phil-card h3 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 6px; }
+    .phil-card p { font-size: 0.9rem; color: var(--text-2); line-height: 1.6; }
+
+    /* ===== Feature showcase (alternating) ===== */
+    .showcase { padding: 100px 0 60px; }
+    .feat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; margin-bottom: 96px; }
+    .feat-row:last-child { margin-bottom: 0; }
+    .feat-row.reverse .feat-visual { order: -1; }
+    .feat-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--m); margin-bottom: 14px; }
+    .feat-kicker .k-ico { width: 26px; height: 26px; border-radius: var(--r-sm); display: grid; place-items: center;
+      color: var(--m); background: color-mix(in srgb, var(--m) 13%, transparent); }
+    .feat-kicker .k-ico svg { width: 15px; height: 15px; }
+    .feat-info h3 { font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.12; margin-bottom: 14px; text-wrap: balance; }
+    .feat-info p { color: var(--text-2); font-size: 1.02rem; line-height: 1.65; max-width: 46ch; }
+    .feat-list { list-style: none; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .feat-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.94rem; color: var(--text-2); }
+    .feat-list svg { width: 18px; height: 18px; color: var(--m); flex-shrink: 0; margin-top: 2px; }
+    .feat-visual { position: relative; }
+    .feat-visual .shot { border-radius: var(--r-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--border); width: 100%; aspect-ratio: 4 / 3; }
+    .feat-visual::before {
+      content: ''; position: absolute; inset: -8% -6% -12% -6%; z-index: -1; border-radius: var(--r-2xl);
+      background: radial-gradient(60% 60% at 50% 40%, color-mix(in srgb, var(--m) 16%, transparent), transparent 75%);
+      filter: blur(8px);
+    }
+    .feat-mobile { width: 132px !important; aspect-ratio: 1320 / 2867; border-radius: 20px !important; border: 4px solid var(--surface);
+      box-shadow: var(--shadow-xl); position: absolute; bottom: -26px; right: -20px; z-index: 2; }
+
+    /* ===== Feature grid ===== */
+    .modules { padding: 96px 0; background: var(--bg-alt); border-block: 1px solid var(--border); }
+    .mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 16px; margin-top: 48px; }
+    .mod-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 26px; box-shadow: var(--shadow-sm);
+      transition: transform .25s var(--ease-spring), box-shadow .25s, border-color .25s; position: relative; overflow: hidden; }
+    .mod-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--m); opacity: 0; transition: opacity .25s; }
+    .mod-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: color-mix(in srgb, var(--m) 30%, var(--border)); }
+    .mod-card:hover::before { opacity: 1; }
+    .mod-ico { width: 46px; height: 46px; border-radius: var(--r-md); display: grid; place-items: center; margin-bottom: 16px;
+      color: var(--m); background: color-mix(in srgb, var(--m) 13%, transparent); }
+    .mod-ico svg { width: 23px; height: 23px; }
+    .mod-card h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 7px; }
+    .mod-card p { font-size: 0.875rem; color: var(--text-2); line-height: 1.6; }
+
+    /* ===== Carousel ===== */
+    .carousel-sec { padding: 96px 0; overflow: hidden; }
+    .carousel-track { display: flex; gap: 22px; overflow-x: auto; padding: 40px 24px 28px; scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .carousel-track::-webkit-scrollbar { display: none; }
+    .carousel-item { flex: 0 0 auto; scroll-snap-align: center; text-align: center; }
+    .carousel-item img { height: 460px; width: auto; aspect-ratio: 1320 / 2867; border-radius: 26px; box-shadow: var(--shadow-xl); border: 4px solid var(--surface); }
+    .carousel-item span { display: block; margin-top: 14px; font-size: 0.82rem; font-weight: 600; color: var(--text-3); }
+    .carousel-hint { text-align: center; font-size: 0.8rem; color: var(--text-3); margin-top: 4px; }
+
+    /* ===== Platform / Install anywhere ===== */
+    .platforms { padding: 100px 0; }
+    .plat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-top: 48px; }
+    .plat-card {
+      position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 24px;
+      box-shadow: var(--shadow-sm); transition: transform .25s var(--ease-spring), box-shadow .25s, border-color .25s; color: inherit;
+    }
+    .plat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--border-strong); }
+    .plat-logo { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-md);
+      background: color-mix(in srgb, var(--pc, var(--accent)) 12%, transparent); color: var(--pc, var(--accent)); }
+    .plat-logo svg { width: 26px; height: 26px; fill: currentColor; }
+    .plat-card h3 { font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; }
+    .plat-card p { font-size: 0.85rem; color: var(--text-2); line-height: 1.55; }
+    .plat-badge { position: absolute; top: 16px; right: 16px; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--m-tasks); background: color-mix(in srgb, var(--m-tasks) 13%, transparent);
+      padding: 4px 9px; border-radius: var(--r-full); }
+    /* Label uses the theme accent (AA-contrast on --surface in both themes); the
+       platform brand colour (--pc) stays on the logo tint only. */
+    .plat-go { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 0.84rem; font-weight: 700; color: var(--accent); }
+    .plat-go svg { width: 15px; height: 15px; transition: transform .2s var(--ease-spring); }
+    .plat-card:hover .plat-go svg { transform: translateX(4px); }
+
+    .quick-docker { margin-top: 44px; max-width: 760px; }
+    .code-block { background: var(--code-bg); color: var(--code-text); border-radius: var(--r-lg); padding: 22px 26px;
+      font-family: var(--ff-mono); font-size: 0.84rem; line-height: 1.9; overflow-x: auto; box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255,0.06);
+      white-space: pre; tab-size: 2; }
+    .code-block .c { color: var(--code-comment); }
+    .code-block .h { color: #c4b5fd; }
+    .quick-note { font-size: 0.9rem; color: var(--text-2); margin-top: 16px; line-height: 1.6; }
+    .quick-note code { font-family: var(--ff-mono); font-size: 0.82rem; background: var(--accent-soft); color: var(--accent-deep); padding: 2px 7px; border-radius: 5px; }
+
+    /* ===== Setup ===== */
+    .setup { padding: 96px 0; background: var(--bg-alt); border-block: 1px solid var(--border); }
+    .setup-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 48px; counter-reset: step; }
+    .setup-step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 28px; box-shadow: var(--shadow-sm); position: relative; }
+    .setup-step .num { width: 38px; height: 38px; border-radius: var(--r-md); display: grid; place-items: center; font-weight: 700; font-size: 1.05rem;
+      color: var(--accent); background: var(--accent-soft); margin-bottom: 16px; font-variant-numeric: tabular-nums; }
+    .setup-step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 7px; letter-spacing: -0.01em; }
+    .setup-step p { font-size: 0.9rem; color: var(--text-2); line-height: 1.6; }
+    .setup-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 28px; font-weight: 700; font-size: 0.95rem; }
+    .setup-link svg { width: 16px; height: 16px; }
+
+    /* ===== CTA ===== */
+    .cta { padding: 110px 0; }
+    .cta-box { position: relative; overflow: hidden; text-align: center; border-radius: var(--r-2xl); padding: 72px 40px;
+      background: linear-gradient(150deg, var(--cta-grad-1) 0%, var(--cta-grad-2) 46%, var(--cta-grad-3) 112%);
+      box-shadow: var(--shadow-hero); }
+    .cta-box::before { content: ''; position: absolute; inset: 0; opacity: 0.5;
+      background: radial-gradient(60% 80% at 80% -10%, rgba(255,255,255,0.28), transparent 60%); }
+    .cta-box::after { content: ''; position: absolute; inset: 0; opacity: 0.4; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    .cta-box > * { position: relative; z-index: 1; }
+    .cta-box h2 { font-size: clamp(1.8rem, 4vw, 2.7rem); font-weight: 700; letter-spacing: -0.035em; color: #fff; margin-bottom: 14px; text-wrap: balance; }
+    .cta-box h2 em { font-style: italic; font-weight: 600; }
+    .cta-box p { color: rgba(255,255,255,0.95); font-size: 1.08rem; max-width: 44ch; margin: 0 auto 32px; }
+    .cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .cta-actions .btn-primary { background: #fff; color: var(--accent-deep); box-shadow: 0 10px 30px rgba(0,0,0,0.22); }
+    .cta-actions .btn-primary:hover { background: #fff; color: var(--accent-deep); opacity: 0.94; }
+    .cta-actions .btn-secondary { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.30); box-shadow: none; }
+    .cta-actions .btn-secondary:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+    /* Honest longevity line: MIT + self-host permanence, not a fabricated metric. */
+    .cta-note { color: rgba(255,255,255,0.92); font-size: 0.92rem; line-height: 1.55; max-width: 52ch; margin: 26px auto 0; }
+
+    /* ===== Footer ===== */
+    footer { border-top: 1px solid var(--border); padding: 56px 0 48px; }
+    .foot-grid { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+    .foot-brand { max-width: 320px; }
+    .foot-brand .nav-logo { margin-bottom: 14px; }
+    .foot-brand p { font-size: 0.88rem; color: var(--text-2); line-height: 1.6; }
+    .foot-cols { display: flex; gap: 56px; flex-wrap: wrap; }
+    .foot-col h3 { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 14px; }
+    .foot-col a { display: block; font-size: 0.9rem; color: var(--text-2); padding: 6px 0; margin-bottom: 2px; transition: color .15s; }
+    .foot-col a:hover { color: var(--accent); }
+    .foot-bottom { margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+      font-size: 0.82rem; color: var(--text-3); }
+    .foot-bottom b { color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+    /* ===== Mobile sticky CTA (thumb-zone Install) ===== */
+    .mobile-cta { display: none; }
+    /* With JS, the pill fades in only after the hero scrolls away, so it doesn't
+       duplicate the in-hero Install button above the fold. No-JS keeps it visible. */
+    html.js .mobile-cta { opacity: 0; pointer-events: none; transition: opacity .3s var(--ease-out); }
+    html.js .mobile-cta.show { opacity: 1; pointer-events: auto; }
+
+    /* ===== Reveal ===== */
+    .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s var(--ease-out), transform .7s var(--ease-out); }
+    .reveal.vis { opacity: 1; transform: none; }
+    .d1 { transition-delay: .08s; } .d2 { transition-delay: .16s; } .d3 { transition-delay: .24s; }
+    /* No-JS fallback: reveal-gated content must never ship hidden (privacy visitors often disable JS). */
+    html:not(.js) .reveal { opacity: 1; transform: none; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1024px) {
+      .hero .wrap { grid-template-columns: 1fr; gap: 56px; text-align: center; }
+      .hero-sub { max-width: 46ch; margin-left: auto; margin-right: auto; }
+      .hero-actions, .hero-tags { justify-content: center; }
+      .hero-visual { max-width: 560px; margin: 0 auto; width: 100%; }
+      .hero-frame { transform: none; }
+      .hero-chip.c2 { display: none; }
+    }
+    @media (max-width: 860px) {
+      .problem-grid { grid-template-columns: 1fr; }
+      .phil-grid { grid-template-columns: 1fr; }
+      .feat-row { grid-template-columns: 1fr; gap: 40px; margin-bottom: 72px; }
+      .feat-row.reverse .feat-visual { order: 0; }
+      .setup-steps { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .hero { padding: 120px 0 56px; }
+      .carousel-item img { height: 380px; }
+      .cta-box { padding: 52px 24px; }
+      .nav-gh span:not(#gh-stars-nav) { display: none; }
+    }
+    /* Sticky Install button in the thumb zone on phones - always reachable past the hero. */
+    @media (max-width: 700px) {
+      .mobile-cta {
+        display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; width: max-content;
+        position: fixed; left: 50%; transform: translateX(-50%);
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 90;
+        padding: 14px 26px; border-radius: var(--r-full);
+        background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 0.95rem;
+        box-shadow: 0 10px 30px var(--accent-glow), 0 4px 14px rgba(0,0,0,0.20);
+        border: 1px solid color-mix(in srgb, var(--accent) 55%, #000 12%);
+      }
+      .mobile-cta svg { width: 18px; height: 18px; }
+      .mobile-cta:active { transform: translateX(-50%) scale(0.97); }
+      .nav-install { display: none; } /* the sticky pill replaces it on phones */
+      body { padding-bottom: 84px; } /* keep footer clear of the floating pill */
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; scroll-behavior: auto !important; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .hero-frame { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav aria-label="Main">
+  <div class="wrap">
+    <a href="#top" class="nav-logo" aria-label="My Hub">
+      <svg viewBox="0 0 160 160" fill="none" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="160" y2="160" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#6c3aed"/></linearGradient></defs><rect width="160" height="160" rx="36" fill="url(#g)"/><g fill="white" fill-opacity="0.82"><circle cx="64" cy="72" r="27"/><circle cx="100" cy="78" r="25"/><circle cx="80" cy="106" r="24"/></g></svg>
+      My Hub
+    </a>
+    <div class="nav-right">
+      <button class="nav-btn" id="langBtn" type="button" aria-label="Switch language"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/></svg><span id="langLbl">DE</span></button>
+      <button class="nav-btn" id="themeBtn" type="button" aria-label="Toggle theme"><svg id="sunIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><svg id="moonIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+      <a href="install.html" class="nav-btn nav-install"><span data-t="nav_install">Install</span></a>
+      <a href="https://github.com/arpankayastha/my-hub" class="nav-btn nav-gh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg><span data-t="nav_gh">GitHub</span><span id="gh-stars-nav" data-gh-stars>&nbsp;★ 1.1k</span></a>
+    </div>
+  </div>
+</nav>
+
+<!-- Sticky thumb-zone Install CTA (phones only) -->
+<a href="install.html" class="mobile-cta" aria-label="Install My Hub">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  <span data-t="hero_install">Install My Hub</span>
+</a>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="hero-content">
+      <div class="hero-badge"><span class="dot"></span><span data-t="hero_badge">Open source · Privacy-first · No subscriptions</span></div>
+      <h1><span data-t="hero_h1_pre">Your family. Your data.</span> <em data-t="hero_h1_em">Your home.</em></h1>
+      <p class="hero-sub" data-t="hero_sub">One private home for everything that keeps your family running, without handing your data to Big Tech.</p>
+      <div class="hero-actions">
+        <a href="install.html" class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span data-t="hero_install">Install My Hub</span></a>
+        <a href="#carousel" class="btn btn-secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span data-t="hero_demo">See it in action</span></a>
+      </div>
+      <div class="hero-tags">
+        <span class="tag">MIT License</span>
+        <span class="tag">Docker · Podman</span>
+        <span class="tag">PWA</span>
+        <span class="tag">23 languages</span>
+        <span class="tag" data-t="tag_nocloud">No cloud required</span>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-chip c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="chip_tasks">Tasks done</span></div>
+      <div class="hero-chip c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span data-t="chip_shop">Shared list</span></div>
+      <div class="hero-frame">
+        <img class="sc" data-light="screenshots/dashboard-light-web.png" data-dark="screenshots/dashboard-dark-web.png" src="screenshots/dashboard-light-web.png" alt="My Hub dashboard showing today's tasks, calendar, meals and shopping at a glance" width="900" height="675" loading="eager">
+      </div>
+      <div class="hero-float">
+        <img class="sc" data-light="screenshots/tasks-light-mobile.png" data-dark="screenshots/tasks-dark-mobile.png" src="screenshots/tasks-light-mobile.png" alt="My Hub tasks on mobile" loading="lazy">
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- PROOF -->
+<div class="proof">
+  <div class="wrap">
+    <span id="gh-stars-proof" data-gh-stars>★ 1.1k ·</span>
+    <span class="dt"><b>17</b> <span data-t="proof_modules">modules</span></span>
+    <span class="sep dt">·</span>
+    <span><b>23</b> <span data-t="proof_langs">languages</span></span>
+    <span class="sep">·</span>
+    <span class="dt"><b>0</b> <span data-t="proof_telemetry">trackers</span></span>
+    <span class="sep dt">·</span>
+    <span data-t="proof_mit">MIT licensed</span>
+    <span class="sep">·</span>
+    <span><b>v1.58.0</b></span>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <h2 class="sec-title" data-t="prob_title">Sound familiar?</h2>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card reveal">
+        <div class="pc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+        <h3 data-t="prob_1_t">Ten different apps</h3>
+        <p data-t="prob_1_d">Tasks here, shopping there, calendar somewhere else. Nothing talks to anything.</p>
+      </div>
+      <div class="problem-card reveal d1">
+        <div class="pc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <h3 data-t="prob_2_t">Subscriptions, forever</h3>
+        <p data-t="prob_2_d">Notion, Google One, iCloud. Another invoice every year, no way out.</p>
+      </div>
+      <div class="problem-card reveal d2">
+        <div class="pc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3 data-t="prob_3_t">Your data, everywhere</h3>
+        <p data-t="prob_3_d">Your calendar on Google's servers, your notes on Dropbox. Who actually owns your family's data?</p>
+      </div>
+    </div>
+    <p class="prob-cta reveal" data-t="prob_cta">There's a calmer way. <span>Self-hosted, and yours.</span></p>
+  </div>
+</section>
+
+<!-- PHILOSOPHY -->
+<section class="philosophy">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <h2 class="sec-title" data-t="why_title">Built for families, <em>not for profit.</em></h2>
+      <p class="sec-desc" data-t="why_desc">It all runs on hardware you own, keeps working without any subscription, and never sends your data off your home network.</p>
+    </div>
+    <div class="phil-grid">
+      <div class="phil-card reveal" style="--m: var(--m-budget)">
+        <div class="phil-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div><h3 data-t="p_priv_t">Privacy first</h3><p data-t="p_priv_d">Optional AES-256 database encryption via SQLCipher (enabled in the recommended Docker setup). Zero telemetry. Your data never leaves your server.</p></div>
+      </div>
+      <div class="phil-card reveal d1" style="--m: var(--m-contacts)">
+        <div class="phil-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div>
+        <div><h3 data-t="p_self_t">Fully self-hosted</h3><p data-t="p_self_d">Runs on a Raspberry Pi, a NAS, or any server. Docker or Podman makes setup a one-liner.</p></div>
+      </div>
+      <div class="phil-card reveal d2" style="--m: var(--m-recipes)">
+        <div class="phil-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></div>
+        <div><h3 data-t="p_open_t">Open source</h3><p data-t="p_open_d">MIT licensed. Inspect, modify, extend, contribute. Built in the open for families who value transparency.</p></div>
+      </div>
+      <div class="phil-card reveal d3" style="--m: var(--m-meals)">
+        <div class="phil-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <div><h3 data-t="p_build_t">Zero build step</h3><p data-t="p_build_d">Pure ES modules, vanilla JS and plain CSS. What we write is exactly what ships, with nothing to bundle or transpile.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE SHOWCASE -->
+<section class="showcase">
+  <div class="wrap">
+    <div class="sec-head center reveal" style="margin-bottom: 72px">
+      <p class="eyebrow" data-t="feat_label">Features</p>
+      <h2 class="sec-title" data-t="feat_title">Everything your household needs</h2>
+      <p class="sec-desc" data-t="feat_desc">A complete set of tools for families, designed to work together, not scattered across sixteen separate tabs.</p>
+    </div>
+
+    <div class="feat-row reveal" style="--m: var(--m-tasks)">
+      <div class="feat-info">
+        <span class="feat-kicker"><span class="k-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span data-t="f_tasks_k">Tasks</span></span>
+        <h3 data-t="f_tasks_t">Everyone knows what needs doing.</h3>
+        <p data-t="f_tasks_d">Shared tasks with deadlines, priorities, subtasks and recurring schedules, assignable to several family members at once.</p>
+        <ul class="feat-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_tasks_l1">Kanban board with one-tap status changes</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_tasks_l2">Multi-member assignment with stacked avatars</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_tasks_l3">Optional read-only Apple Reminders import</span></li>
+        </ul>
+      </div>
+      <div class="feat-visual">
+        <img class="sc shot" data-light="screenshots/tasks-light-web.png" data-dark="screenshots/tasks-dark-web.png" src="screenshots/tasks-light-web.png" alt="Tasks board" loading="lazy">
+        <img class="sc feat-mobile" data-light="screenshots/tasks-light-mobile.png" data-dark="screenshots/tasks-dark-mobile.png" src="screenshots/tasks-light-mobile.png" alt="Tasks on mobile" loading="lazy">
+      </div>
+    </div>
+
+    <div class="feat-row reverse reveal" style="--m: var(--m-calendar)">
+      <div class="feat-info">
+        <span class="feat-kicker"><span class="k-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span data-t="f_cal_k">Calendar</span></span>
+        <h3 data-t="f_cal_t">One calendar for the whole family.</h3>
+        <p data-t="f_cal_d">Google Calendar, iCloud, Nextcloud, all in one place. Two-way Google and CalDAV sync, public ICS subscriptions and one-time import, plus built-in public & school holidays.</p>
+        <ul class="feat-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_cal_l1">Two-way Google &amp; CalDAV sync</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_cal_l2">Recurring events with file attachments</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_cal_l3">Readable month &amp; agenda views</span></li>
+        </ul>
+      </div>
+      <div class="feat-visual">
+        <img class="sc shot" data-light="screenshots/calendar-light-web.png" data-dark="screenshots/calendar-dark-web.png" src="screenshots/calendar-light-web.png" alt="Calendar" loading="lazy">
+        <img class="sc feat-mobile" data-light="screenshots/calendar-light-mobile.png" data-dark="screenshots/calendar-dark-mobile.png" src="screenshots/calendar-light-mobile.png" alt="Calendar on mobile" loading="lazy" style="left:-20px;right:auto">
+      </div>
+    </div>
+
+    <div class="feat-row reveal" style="--m: var(--m-meals)">
+      <div class="feat-info">
+        <span class="feat-kicker"><span class="k-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2"/><path d="M5 2v20"/><path d="M19 2v20"/><path d="M19 2a4 4 0 0 0-4 4v6h4"/></svg></span><span data-t="f_meals_k">Meals &amp; recipes</span></span>
+        <h3 data-t="f_meals_t">Dinner sorted before anyone asks.</h3>
+        <p data-t="f_meals_d">A weekly drag-and-drop planner with repeating meals and ingredient lists that export straight to the shopping list in one click.</p>
+        <ul class="feat-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_meals_l1">Drag-and-drop weekly planner with repeats</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_meals_l2">Reusable recipes you can scale &amp; duplicate</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_meals_l3">One-tap export to your shopping list</span></li>
+        </ul>
+      </div>
+      <div class="feat-visual">
+        <img class="sc shot" data-light="screenshots/meals-light-web.png" data-dark="screenshots/meals-dark-web.png" src="screenshots/meals-light-web.png" alt="Meal planner" loading="lazy">
+        <img class="sc feat-mobile" data-light="screenshots/meals-light-mobile.png" data-dark="screenshots/meals-dark-mobile.png" src="screenshots/meals-light-mobile.png" alt="Meals on mobile" loading="lazy">
+      </div>
+    </div>
+
+    <div class="feat-row reverse reveal" style="--m: var(--m-budget)">
+      <div class="feat-info">
+        <span class="feat-kicker"><span class="k-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span data-t="f_budget_k">Budget</span></span>
+        <h3 data-t="f_budget_t">No surprise at the end of the month.</h3>
+        <p data-t="f_budget_d">Track who spent what, split shared costs automatically, and see exactly where the money goes.</p>
+        <ul class="feat-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_budget_l1">23 currencies, recurring entries, weekly/monthly/yearly statistics, monthly budgets &amp; savings goals</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_budget_l3">Subscription tracker with renewals, budgets &amp; alerts</span></li>
+        </ul>
+      </div>
+      <div class="feat-visual">
+        <img class="sc shot" data-light="screenshots/budget-light-web.png" data-dark="screenshots/budget-dark-web.png" src="screenshots/budget-light-web.png" alt="Budget" loading="lazy">
+        <img class="sc feat-mobile" data-light="screenshots/budget-light-mobile.png" data-dark="screenshots/budget-dark-mobile.png" src="screenshots/budget-light-mobile.png" alt="Budget on mobile" loading="lazy" style="left:-20px;right:auto">
+      </div>
+    </div>
+
+    <div class="feat-row reveal" style="--m: var(--m-shopping)">
+      <div class="feat-info">
+        <span class="feat-kicker"><span class="k-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span><span data-t="f_shop_k">Shopping</span></span>
+        <h3 data-t="f_shop_t">The list everyone actually checks.</h3>
+        <p data-t="f_shop_d">One shared shopping list for the whole family, organized by aisle and updating in real time.</p>
+        <ul class="feat-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_shop_l1">Aisle categories &amp; swipe gestures</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_shop_l2">Add a whole meal plan in one tap</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_shop_l3">Touch-safe quick add on mobile</span></li>
+        </ul>
+      </div>
+      <div class="feat-visual">
+        <img class="sc shot" data-light="screenshots/shopping-light-web.png" data-dark="screenshots/shopping-dark-web.png" src="screenshots/shopping-light-web.png" alt="Shopping list" loading="lazy">
+        <img class="sc feat-mobile" data-light="screenshots/shopping-light-mobile.png" data-dark="screenshots/shopping-dark-mobile.png" src="screenshots/shopping-light-mobile.png" alt="Shopping on mobile" loading="lazy">
+      </div>
+    </div>
+
+    <div class="feat-row reverse reveal" style="--m: var(--m-health)">
+      <div class="feat-info">
+        <span class="feat-kicker"><span class="k-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.7-1.5L12.5 16l2-8 1.5 4h4.8"/></svg></span><span data-t="f_health_k">Health</span></span>
+        <h3 data-t="f_health_t">Health that stays in the family.</h3>
+        <p data-t="f_health_d">Vitals, medications, lab results, activity and cycles, tracked per member, private by default, and never leaving your server.</p>
+        <ul class="feat-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_health_l1">Cycle ring with period &amp; fertile-window predictions</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_health_l2">Medication reminders with refill alerts</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_health_l3">Per-entry visibility: private or shared</span></li>
+        </ul>
+      </div>
+      <div class="feat-visual">
+        <img class="sc shot" data-light="screenshots/health-cycle-light-web.png" data-dark="screenshots/health-cycle-dark-web.png" src="screenshots/health-cycle-light-web.png" alt="Health - menstrual cycle ring with period and fertile-window predictions" loading="lazy">
+        <img class="sc feat-mobile" data-light="screenshots/health-vitals-light-mobile.png" data-dark="screenshots/health-vitals-dark-mobile.png" src="screenshots/health-vitals-light-mobile.png" alt="Health vitals on mobile" loading="lazy" style="left:-20px;right:auto">
+      </div>
+    </div>
+
+    <div class="feat-row reveal" style="--m: var(--m-rewards)">
+      <div class="feat-info">
+        <span class="feat-kicker"><span class="k-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg></span><span data-t="f_rewards_k">Rewards</span></span>
+        <h3 data-t="f_rewards_t">Chores that finally pay off.</h3>
+        <p data-t="f_rewards_d">Give any task a point value; finishing it credits the assigned kid. Points buy real rewards from a catalog you control, with a parent's approval.</p>
+        <ul class="feat-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_rewards_l1">Point values on any task, credited automatically</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_rewards_l2">Reward catalog with parent-approved redemptions</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_rewards_l3">Per-member opt-in and a full point ledger</span></li>
+        </ul>
+      </div>
+      <div class="feat-visual">
+        <img class="sc shot" data-light="screenshots/rewards-light-web.png" data-dark="screenshots/rewards-dark-web.png" src="screenshots/rewards-light-web.png" alt="Rewards - point standings and a catalog of parent-approved rewards" loading="lazy">
+        <img class="sc feat-mobile" data-light="screenshots/rewards-light-mobile.png" data-dark="screenshots/rewards-dark-mobile.png" src="screenshots/rewards-light-mobile.png" alt="Rewards on mobile" loading="lazy">
+      </div>
+    </div>
+
+    <div class="feat-row reverse reveal" style="--m: var(--m-split)">
+      <div class="feat-info">
+        <span class="feat-kicker"><span class="k-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg></span><span data-t="f_split_k">Split expenses</span></span>
+        <h3 data-t="f_split_t">Who owes whom, settled automatically.</h3>
+        <p data-t="f_split_d">Track shared costs across the household, trips and events. My Hub simplifies the debts so everyone settles up with the fewest payments.</p>
+        <ul class="feat-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_split_l1">Groups for household, trips and events</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_split_l2">Automatic debt simplification</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-t="f_split_l3">Multiple currencies with live conversion</span></li>
+        </ul>
+      </div>
+      <div class="feat-visual">
+        <img class="sc shot" data-light="screenshots/split-expenses-light-web.png" data-dark="screenshots/split-expenses-dark-web.png" src="screenshots/split-expenses-light-web.png" alt="Split expenses - shared cost groups with balances and settle-up" loading="lazy">
+        <img class="sc feat-mobile" data-light="screenshots/split-expenses-light-mobile.png" data-dark="screenshots/split-expenses-dark-mobile.png" src="screenshots/split-expenses-light-mobile.png" alt="Split expenses on mobile" loading="lazy" style="left:-20px;right:auto">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE GRID -->
+<section class="modules">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <h2 class="sec-title" data-t="more_title">Eight more modules</h2>
+      <p class="sec-desc" data-t="more_desc">Each module is independent. Use what fits your family, skip what doesn't.</p>
+    </div>
+    <div class="mod-grid">
+      <div class="mod-card reveal" style="--m: var(--m-documents)">
+        <div class="mod-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <h3 data-t="m_docs_t">Documents</h3><p data-t="m_docs_d">Family files with previews, visibility controls and storage badges. Multi-file upload, folders, sorting and bulk actions. New uploads and calendar attachments can use a local folder, WebDAV, or Google Drive; Paperless-ngx and Papra DMS integration is optional.</p>
+      </div>
+      <div class="mod-card reveal d1" style="--m: var(--m-notes)">
+        <div class="mod-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></div>
+        <h3 data-t="m_notes_t">Notes</h3><p data-t="m_notes_d">Colored sticky notes with Markdown. Perfect for recipes, family memos and quick reminders.</p>
+      </div>
+      <div class="mod-card reveal d2" style="--m: var(--m-contacts)">
+        <div class="mod-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3 data-t="m_contacts_t">Contacts</h3><p data-t="m_contacts_d">Shared family directory with CardDAV sync, vCard import/export and multi-account support.</p>
+      </div>
+      <div class="mod-card reveal" style="--m: var(--m-birthdays)">
+        <div class="mod-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3M12 8v3M17 8v3M7 4h.01M12 3h.01M17 4h.01"/></svg></div>
+        <h3 data-t="m_bday_t">Birthdays</h3><p data-t="m_bday_d">Birthday tracker with automatic annual calendar events, age display and custom reminders.</p>
+      </div>
+      <div class="mod-card reveal d1" style="--m: var(--m-housekeeping)">
+        <div class="mod-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2a2 2 0 0 0 2.8 0z"/><path d="m5 2 5 5"/><path d="M2 13h15"/><path d="M22 20a2 2 0 1 1-4 0c0-1.6 1.7-2.4 2-4 .3 1.6 2 2.4 2 4z"/></svg></div>
+        <h3 data-t="m_house_t">Housekeeping</h3><p data-t="m_house_d">Manage household staff: schedules, check-in/out, daily or hourly billing, chores and supplies.</p>
+      </div>
+      <div class="mod-card reveal d2" style="--m: var(--m-recipes)">
+        <div class="mod-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 0 0-7-7z"/><line x1="9" y1="22" x2="15" y2="22"/></svg></div>
+        <h3 data-t="m_recipes_t">Recipes</h3><p data-t="m_recipes_d">Create, duplicate and scale reusable recipes. Pre-fill meal slots, send the ingredients to a shopping list, or save any meal as a recipe.</p>
+      </div>
+      <div class="mod-card reveal" style="--m: var(--m-calendar)">
+        <div class="mod-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <h3 data-t="m_rem_t">Reminders</h3><p data-t="m_rem_d">Time-based notifications on tasks and calendar events, with an in-app badge so nothing slips, plus opt-in push notifications that reach you even when the app is closed.</p>
+      </div>
+      <div class="mod-card reveal d1" style="--m: var(--m-tasks)">
+        <div class="mod-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <h3 data-t="m_backup_t">Backup &amp; SSO</h3><p data-t="m_backup_d">Scheduled backups with pre-restore rollback, optional WebDAV cloud upload (Nextcloud, ownCloud, Hetzner, etc.), plus single sign-on via any OIDC provider.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CAROUSEL -->
+<section class="carousel-sec" id="carousel">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <h2 class="sec-title" data-t="screens_title">Every screen, <em>carefully crafted</em></h2>
+      <p class="sec-desc" data-t="screens_desc">A clean, intuitive interface with tuned touch targets and layouts that adapt to your device and theme.</p>
+    </div>
+  </div>
+  <div class="carousel-track" id="track" tabindex="0" aria-label="App screenshots">
+    <div class="carousel-item"><img class="sc" data-light="screenshots/health-cycle-light-mobile.png" data-dark="screenshots/health-cycle-dark-mobile.png" src="screenshots/health-cycle-light-mobile.png" alt="Health cycle tracking" loading="lazy"><span data-t="cap_health">Health</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/rewards-light-mobile.png" data-dark="screenshots/rewards-dark-mobile.png" src="screenshots/rewards-light-mobile.png" alt="Rewards" loading="lazy"><span data-t="cap_rewards">Rewards</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/split-expenses-light-mobile.png" data-dark="screenshots/split-expenses-dark-mobile.png" src="screenshots/split-expenses-light-mobile.png" alt="Split expenses" loading="lazy"><span data-t="cap_split">Split expenses</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/dashboard-light-mobile.png" data-dark="screenshots/dashboard-dark-mobile.png" src="screenshots/dashboard-light-mobile.png" alt="Dashboard" loading="lazy"><span>Dashboard</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/tasks-light-mobile.png" data-dark="screenshots/tasks-dark-mobile.png" src="screenshots/tasks-light-mobile.png" alt="Tasks" loading="lazy"><span data-t="cap_tasks">Tasks</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/calendar-light-mobile.png" data-dark="screenshots/calendar-dark-mobile.png" src="screenshots/calendar-light-mobile.png" alt="Calendar" loading="lazy"><span data-t="cap_cal">Calendar</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/budget-light-mobile.png" data-dark="screenshots/budget-dark-mobile.png" src="screenshots/budget-light-mobile.png" alt="Budget" loading="lazy"><span data-t="cap_budget">Budget</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/budget-subscriptions-light-mobile.png" data-dark="screenshots/budget-subscriptions-dark-mobile.png" src="screenshots/budget-subscriptions-light-mobile.png" alt="Subscription tracker" loading="lazy"><span data-t="cap_subs">Subscriptions</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/meals-light-mobile.png" data-dark="screenshots/meals-dark-mobile.png" src="screenshots/meals-light-mobile.png" alt="Meals" loading="lazy"><span data-t="cap_meals">Meals</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/shopping-light-mobile.png" data-dark="screenshots/shopping-dark-mobile.png" src="screenshots/shopping-light-mobile.png" alt="Shopping" loading="lazy"><span data-t="cap_shop">Shopping</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/recipes-light-mobile.png" data-dark="screenshots/recipes-dark-mobile.png" src="screenshots/recipes-light-mobile.png" alt="Recipes" loading="lazy"><span data-t="cap_recipes">Recipes</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/documents-light-mobile.png" data-dark="screenshots/documents-dark-mobile.png" src="screenshots/documents-light-mobile.png" alt="Documents" loading="lazy"><span data-t="cap_documents">Documents</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/housekeeping-light-mobile.png" data-dark="screenshots/housekeeping-dark-mobile.png" src="screenshots/housekeeping-light-mobile.png" alt="Housekeeping" loading="lazy"><span data-t="cap_house">Housekeeping</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/notes-light-mobile.png" data-dark="screenshots/notes-dark-mobile.png" src="screenshots/notes-light-mobile.png" alt="Notes" loading="lazy"><span data-t="cap_notes">Notes</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/contacts-light-mobile.png" data-dark="screenshots/contacts-dark-mobile.png" src="screenshots/contacts-light-mobile.png" alt="Contacts" loading="lazy"><span data-t="cap_contacts">Contacts</span></div>
+    <div class="carousel-item"><img class="sc" data-light="screenshots/birthdays-light-mobile.png" data-dark="screenshots/birthdays-dark-mobile.png" src="screenshots/birthdays-light-mobile.png" alt="Birthdays" loading="lazy"><span data-t="cap_bday">Birthdays</span></div>
+  </div>
+  <p class="carousel-hint" data-t="screens_hint">Drag, swipe or scroll to explore →</p>
+</section>
+
+<!-- PLATFORMS / INSTALL ANYWHERE -->
+<section class="platforms" id="install">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <h2 class="sec-title" data-t="plat_title">Runs on <em>your</em> hardware</h2>
+      <p class="sec-desc" data-t="plat_desc">A Docker or Podman container that drops onto any home server or NAS. Or install it in a couple of clicks from your platform's app store.</p>
+    </div>
+    <div class="plat-grid">
+      <a class="plat-card reveal" style="--pc:#2496ED" href="install.html#install">
+        <span class="plat-logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/></svg></span>
+        <h3>Docker</h3>
+        <p data-t="plat_docker">Pre-built image, up and running with a single <code style="font-family:var(--ff-mono);font-size:.8em">compose</code> command.</p>
+        <span class="plat-go"><span data-t="plat_guide">Guide</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </a>
+      <a class="plat-card reveal d1" style="--pc:#892CA0" href="install.html#install">
+        <span class="plat-logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.2.275L6.75.308a.259.259 0 0 0-.203.098L.056 8.602a.259.259 0 0 0-.05.219l2.356 10.194a.26.26 0 0 0 .14.174l9.43 4.511a.258.258 0 0 0 .224-.002l9.401-4.566a.259.259 0 0 0 .141-.175L23.993 8.75a.258.258 0 0 0-.051-.22L17.403.374A.259.259 0 0 0 17.2.275zm-.123.517l6.385 7.966-2.242 9.964-9.177 4.457-9.205-4.402L.54 8.827 6.875.824zM11.46 2.857c-.933 0-1.84.1-2.426.332h-.002c-1.554.569-2.725 2.105-3.074 3.952v.004c-.309 1.463-.392 2.703-.556 3.824-.07.481-.159.94-.283 1.387-.628.497-1.079 1.263-1.244 2.138v.004c-.116.547-.181 1.04-.237 1.5h-.644v.518h8.891c-.061.464-.122.996-.181 1.42H7.596v.517h7.939c-.242-.078-.486-.218-.756-.502h-.697l-.85.488-.232-.396.162-.092h-1.069c.113-.776.17-1.601.373-2.564v-.004c.22-1.164.96-2.112 1.895-2.453l.004-.002h.002c.318-.127.928-.205 1.543-.205.613 0 1.244.075 1.622.207.935.341 1.676 1.29 1.895 2.453v.004c.204.963.26 1.788.373 2.564h-.742l.162.092-.233.396-.85-.488h-.75c-.219.25-.474.412-.747.502h4.392v-.518h-.842c-.103-.743-.181-1.67-.382-2.623v-.002a4.14 4.14 0 0 0-.264-.863h1.863v-.517h-2.13a3.488 3.488 0 0 0-.8-.906h1.8v-.518H17.95a8.862 8.862 0 0 1-.193-.775h1.484v-.518h-1.576c-.013-.081-.027-.161-.039-.244-.164-1.12-.246-2.36-.555-3.824v-.004c-.348-1.848-1.52-3.383-3.075-3.952l-.002-.002h-.002c-.65-.227-1.596-.33-2.531-.33zm0 .386c.904 0 1.833.11 2.404.309h.002c1.4.514 2.5 1.934 2.826 3.666v.003c.303 1.436.385 2.66.552 3.805.076.515.173 1.013.315 1.505-.449-.135-1.05-.197-1.648-.197-.12 0-.236.003-.352.008l-1.863-1.865a2.17 2.17 0 0 0 .11-.246l2.13 1.23.13-.224-2.185-1.262c.016-.069.027-.14.036-.21l2.302.616.068-.248-2.354-.63c-.02-1.153-1.008-2.078-2.208-2.078-1.205 0-2.196.931-2.206 2.091l-2.303.617.066.25 2.252-.605c.01.076.024.151.041.224L7.436 11.24l.129.222 2.087-1.207c.034.089.074.176.12.258l-1.266 1.266a6.959 6.959 0 0 0-1.045-.075c-.603 0-1.186.064-1.578.22a2.668 2.668 0 0 0-.285.124c.076-.335.137-.675.187-1.021.168-1.144.248-2.37.551-3.805l.002-.001v-.002c.326-1.733 1.426-3.153 2.828-3.666h.002l.004-.002c.488-.194 1.381-.307 2.287-.307zM8.473 5.194a1.295 1.295 0 0 0-.965.502l-.117.153.306.236.12-.152a.923.923 0 0 1 .673-.352.92.92 0 0 1 .67.262l.139.134.271-.275-.136-.137a1.293 1.293 0 0 0-.961-.37zm6.39 0a1.289 1.289 0 0 0-.96.371l-.138.137.274.275.136-.134a.923.923 0 0 1 .672-.262.923.923 0 0 1 .674.352l.119.152.307-.236-.12-.153c-.23-.3-.587-.486-.964-.502zM8.53 6.708c-.642 0-1.164.538-1.164 1.19 0 .65.522 1.187 1.164 1.187.643 0 1.164-.536 1.164-1.188 0-.651-.521-1.19-1.164-1.19zm6.273 0c-.643 0-1.162.538-1.162 1.19 0 .65.52 1.187 1.162 1.187.643 0 1.164-.536 1.164-1.188 0-.651-.521-1.19-1.164-1.19zm-6.273.387c.428 0 .776.355.776.802 0 .447-.348.8-.776.8a.785.785 0 0 1-.775-.8c0-.035.002-.07.006-.103.07.191.248.318.445.318a.487.487 0 0 0 .477-.496.49.49 0 0 0-.383-.486.759.759 0 0 1 .23-.035zm6.273 0c.428 0 .777.355.777.802 0 .447-.349.8-.777.8a.785.785 0 0 1-.77-.9c.072.19.248.315.444.315a.486.486 0 0 0 .479-.496.491.491 0 0 0-.383-.484.755.755 0 0 1 .23-.037zm-3.08.716c1.012 0 1.819.775 1.819 1.723 0 .947-.807 1.722-1.819 1.722s-1.82-.775-1.82-1.722c0-.948.808-1.723 1.82-1.723zm-.002.528c-.142 0-.258.043-.355.076a.804.804 0 0 1-.232.054c-.107 0-.2.047-.268.127a.568.568 0 0 0-.104.207c-.04.134-.062.268-.08.315a.276.276 0 0 0 .032.25c.033.056.071.1.117.146.09.092.206.183.322.268.12.088.237.166.326.224l-.008.09c-.043.036-.14.102-.324.178a.533.533 0 0 1-.299.025.43.43 0 0 1-.236-.172c.015-.138.044-.293.068-.449l-.376-.095c-.05.238-.067.43-.094.64l.037.059c.143.224.318.344.506.392a.908.908 0 0 0 .52-.033 1.57 1.57 0 0 0 .444-.242c.088.067.244.174.446.242a.908.908 0 0 0 .52.033.868.868 0 0 0 .507-.392l.037-.059a6.292 6.292 0 0 0-.096-.637l-.377.092c.032.148.051.32.07.451a.434.434 0 0 1-.237.17.533.533 0 0 1-.3-.025c-.178-.068-.272-.14-.325-.178l-.006-.084c.09-.058.209-.137.336-.23.115-.085.231-.176.322-.268a.72.72 0 0 0 .117-.146.273.273 0 0 0 .031-.25c-.018-.047-.039-.181-.08-.315a.564.564 0 0 0-.103-.207.343.343 0 0 0-.268-.127.815.815 0 0 1-.234-.054c-.097-.033-.212-.076-.354-.076zm.002.386c.057 0 .134.024.23.057.09.03.208.07.337.076.04.102.06.237.09.338a.361.361 0 0 1-.041.045 2.66 2.66 0 0 1-.276.228c-.165.122-.271.188-.342.233a5.287 5.287 0 0 1-.34-.233 2.557 2.557 0 0 1-.275-.228.34.34 0 0 1-.04-.047c.035-.119.046-.234.089-.34.08.012.246-.042.336-.072a.837.837 0 0 1 .232-.057zm-3.234.61a.635.635 0 0 0-.611.517l1.084-.289a.614.614 0 0 0-.473-.228zm6.336 0a.61.61 0 0 0-.436.187c.352.096.69.184 1.033.275a.632.632 0 0 0-.597-.462zm-.623.607c-.007.035-.002.07-.002.103l.921.532a.648.648 0 0 0 .276-.313l-1.195-.322zm-5.086.05l-1.18.315c.078.15.207.264.362.316l.797-.46c.018-.059.015-.12.021-.17zm4.441.714l1.656 1.658a4.19 4.19 0 0 0-.826.146l-.95-1.647a2.51 2.51 0 0 0 .12-.157zm-3.646.03c.04.055.083.118.129.169l-.658 1.134a2.656 2.656 0 0 0-.276-.119l-.002-.002a3.3 3.3 0 0 0-.292-.082zm3.338.317l.892 1.547c-.623.251-1.149.725-1.523 1.33h-1.652c-.262-.75-.741-1.38-1.358-1.764l.623-1.082c.394.347.919.559 1.492.559a2.25 2.25 0 0 0 1.526-.59zM7.46 12.09c.574 0 1.167.073 1.518.195.867.319 1.555 1.203 1.76 2.285l.001.002v.002c.109.513.173.98.227 1.424H9.86a.386.386 0 0 0-.494 0H9.11a1.351 1.351 0 0 0-.078-.418.799.799 0 0 0 .569.238c.45 0 .814-.375.814-.828a.824.824 0 0 0-.814-.828.822.822 0 0 0-.791 1.016 1.495 1.495 0 0 0-1.18-.559c-.798 0-1.46.611-1.48 1.38h-.342a.386.386 0 0 0-.494 0H4.028c.054-.445.116-.912.224-1.425l.002-.002v-.002c.205-1.084.894-1.97 1.764-2.287h.002l.004-.002c.295-.117.863-.191 1.437-.19zm-1.91 1.105a.898.898 0 0 0-.67.348l-.119.154.307.237.119-.155a.525.525 0 0 1 .379-.197.52.52 0 0 1 .377.147l.138.136.272-.275-.137-.137a.895.895 0 0 0-.666-.258zm4.094 0a.9.9 0 0 0-.668.258l-.137.137.273.275.137-.136a.522.522 0 0 1 .377-.147.525.525 0 0 1 .379.197l.119.155.307-.237-.12-.154a.894.894 0 0 0-.667-.348zm4.222.735a.947.947 0 0 0-.707.365l-.117.154.306.237.12-.155a.568.568 0 0 1 .413-.213.571.571 0 0 1 .414.159l.14.136.27-.275-.138-.137a.942.942 0 0 0-.701-.271zm4.374 0a.942.942 0 0 0-.7.271l-.14.137.272.275.139-.136a.571.571 0 0 1 .414-.159.568.568 0 0 1 .414.213l.119.155.306-.237-.117-.154a.947.947 0 0 0-.707-.365zm-12.65.232a.824.824 0 0 0-.815.828c0 .453.365.828.814.828.45 0 .815-.375.815-.828a.824.824 0 0 0-.815-.828zm5.518.285h1.242a4.137 4.137 0 0 0-.263.864v.002c-.05.237-.092.464-.127.685h-.602a16.77 16.77 0 0 0-.236-1.5l-.002-.002c-.003-.016-.009-.032-.012-.049zm-5.519.102a.43.43 0 0 1 .426.441.43.43 0 0 1-.426.442c-.22 0-.4-.171-.422-.397a.298.298 0 0 0 .215.092.31.31 0 0 0 .305-.316.317.317 0 0 0-.129-.258c.01-.001.02-.004.031-.004zm4.014 0c.235 0 .427.193.427.441a.433.433 0 0 1-.427.442.427.427 0 0 1-.422-.405.3.3 0 0 0 .256.145.31.31 0 0 0 .304-.317.314.314 0 0 0-.207-.298c.023-.004.045-.008.069-.008zm4.304.414a.865.865 0 0 0-.856.87c0 .478.382.874.856.874a.868.868 0 0 0 .857-.873.867.867 0 0 0-.857-.871zm4.292 0a.867.867 0 0 0-.814 1.14 1.597 1.597 0 0 0-1.295-.652c-.846 0-1.546.65-1.568 1.463l-1.525.408.066.248 1.477-.394c.004.028.009.06.015.087l-1.418.817.131.222 1.367-.789c.235.552.801.94 1.455.94.66 0 1.233-.397 1.463-.957l1.398.806.13-.222-1.45-.836c.005-.025.008-.053.012-.078l1.511.404.067-.248-1.563-.418a1.438 1.438 0 0 0-.107-.5c.157.186.39.303.648.303a.867.867 0 0 0 .856-.873.865.865 0 0 0-.856-.871zm-10.567.043c.598 0 1.071.444 1.092.992h-.41c.007-.01.016-.02.023-.033a.24.24 0 0 0 .025-.22c-.005-.016-.021-.102-.05-.196a.416.416 0 0 0-.078-.156.282.282 0 0 0-.225-.108.499.499 0 0 1-.129-.031c-.062-.021-.142-.05-.248-.05-.106 0-.188.029-.25.05a.49.49 0 0 1-.127.031.29.29 0 0 0-.225.108.424.424 0 0 0-.08.156c-.029.094-.043.18-.048.195a.242.242 0 0 0 .023.22c.008.014.017.023.025.034h-.41c.02-.548.494-.992 1.092-.992zm6.275.344c.259 0 .47.211.47.484a.477.477 0 0 1-.47.486.472.472 0 0 1-.467-.453.322.322 0 0 0 .246.115c.18 0 .326-.15.326-.338a.34.34 0 0 0-.156-.289c.017-.002.033-.005.05-.005zm4.292 0c.26 0 .469.211.469.484 0 .272-.21.486-.469.486a.477.477 0 0 1-.47-.486c0-.016.002-.031.004-.047a.33.33 0 0 0 .312.24c.18 0 .326-.15.326-.338a.338.338 0 0 0-.256-.332.475.475 0 0 1 .084-.007zm-10.567.24c.021 0 .063.01.125.031.086.03.117.039.186.049.012.041.022.088.033.129a1.475 1.475 0 0 1-.168.138c-.038.028-.064.045-.088.061h-.176c-.024-.016-.052-.033-.09-.06a1.602 1.602 0 0 1-.168-.14l.034-.128c.107-.014.146-.04.185-.049a.504.504 0 0 1 .127-.031zm8.458.25c.661 0 1.184.502 1.184 1.113 0 .156-.035.304-.096.44l-.002-.024-.022-.156a2.443 2.443 0 0 0-.04-.24l-.377.093.044.274a.24.24 0 0 1-.115.074.299.299 0 0 1-.168-.014c-.087-.03-.132-.063-.18-.094.057-.037.13-.084.198-.134.08-.06.16-.123.226-.19a.542.542 0 0 0 .092-.111.245.245 0 0 0 .026-.225c-.008-.019-.022-.112-.053-.21a.444.444 0 0 0-.084-.163.286.286 0 0 0-.23-.107.566.566 0 0 1-.14-.037c-.065-.022-.152-.055-.263-.055-.11 0-.195.032-.262.055a.575.575 0 0 1-.14.037.294.294 0 0 0-.23.107.436.436 0 0 0-.083.162c-.03.1-.045.192-.052.211a.246.246 0 0 0 .025.225.534.534 0 0 0 .09.111c.066.067.146.13.226.19.068.05.138.095.194.132a.57.57 0 0 1-.18.096.305.305 0 0 1-.17.014.237.237 0 0 1-.111-.076c.008-.09.026-.177.04-.272l-.376-.094c-.032.146-.045.286-.063.409a1.052 1.052 0 0 1-.09-.428c0-.611.521-1.113 1.182-1.113zm0 .623c.026 0 .074.01.14.033.066.025.169.052.206.055l.035.156c-.04.04-.112.1-.184.152-.095.07-.14.095-.197.131-.056-.036-.1-.061-.195-.13a1.236 1.236 0 0 1-.184-.157l.035-.152a1.04 1.04 0 0 0 .206-.055.523.523 0 0 1 .138-.033zm-2.22.353a.43.43 0 0 0-.385.272l.656-.176a.416.416 0 0 0-.271-.096zm4.333 0a.414.414 0 0 0-.22.07l.603.16a.426.426 0 0 0-.383-.23zm-4.054.567l-.607.162a.436.436 0 0 0 .125.113zm3.925.002l.407.234a.443.443 0 0 0 .087-.102zm-1.986.234c.067.047.165.108.285.148a.68.68 0 0 0 .389.024.57.57 0 0 0 .232-.121 1.201 1.201 0 0 1-.904.394c-.356 0-.67-.145-.885-.375a.58.58 0 0 0 .207.102c.144.036.28.014.391-.024.12-.04.218-.1.285-.148zm-9.524 1.61v.517h6.214v-.518zm3.619 1.292v.517H15.3v-.517z"/></svg></span>
+        <h3>Podman</h3>
+        <p data-t="plat_podman">Rootless and SELinux-ready for RHEL, Fedora and CentOS Stream.</p>
+        <span class="plat-go"><span data-t="plat_guide">Guide</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </a>
+      <a class="plat-card reveal d2" style="--pc:#0095D5" href="install.html#install">
+        <span class="plat-badge" data-t="plat_oneclick">1-click</span>
+        <span class="plat-logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 10.049v5.114l-10.949 6.324v-5.114L24 10.049zm-24 0v5.114l10.956 6.324v-5.114L0 10.049zm12.004-.605l-4.433 2.559 4.433 2.559 4.429-2.559-4.429-2.559zm10.952-1.207l-9.905-5.723v5.118l5.473 3.164 4.432-2.559zm-12-.605V2.513L1.044 8.236l4.432 2.555 5.48-3.159z"/></svg></span>
+        <h3>TrueNAS</h3>
+        <p data-t="plat_truenas">In the SCALE Community Apps catalog: install from the web UI, no terminal.</p>
+        <span class="plat-go"><span data-t="plat_guide">Guide</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </a>
+      <a class="plat-card reveal" style="--pc:#6c3aed" href="install.html#install">
+        <span class="plat-badge" data-t="plat_oneclick">1-click</span>
+        <span class="plat-logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.853 8.302c2.628-.05 4.698.656 6.303 2.05 1.166 1.01 2.14 2.43 2.895 4.305a7.584 7.584 0 0 0-1.818-.21c-1.345 0-2.552.31-3.558.987-1.127-.687-2.339-1.049-3.623-1.049-1.313 0-2.573.378-3.77 1.087-1.154-.726-2.456-1.087-3.875-1.087-.513 0-1.003.048-1.466.147.678-1.724 1.575-3.054 2.664-4.028 1.557-1.393 3.607-2.15 6.248-2.202zM1.842 17.616c.04-.037.078-.076.112-.119.48-.557 1.233-.91 2.453-.91 1.151 0 2.139.32 3.002.952l.035.025c.469.35 1.108.364 1.592.036 1.032-.698 2.032-1.014 3.017-1.014.967 0 1.906.304 2.836.965l.02.014a1.376 1.376 0 0 0 1.699-.078c.614-.53 1.455-.84 2.625-.84 1.232 0 2.186.344 2.94.98a1.092 1.092 0 0 0 .435.235 1.095 1.095 0 0 0 .806-.087 1.103 1.103 0 0 0 .547-1.267c-.873-3.383-2.3-6.03-4.363-7.82-2.084-1.808-4.712-2.646-7.787-2.588-3.063.06-5.653.955-7.673 2.762-2.003 1.793-3.344 4.39-4.104 7.67a1.1 1.1 0 0 0 1.807 1.083z"/></svg></span>
+        <h3>Umbrel</h3>
+        <p data-t="plat_umbrel">Available in the Umbrel App Store; everything stays on your Umbrel.</p>
+        <span class="plat-go"><span data-t="plat_guide">Guide</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </a>
+      <a class="plat-card reveal d1" style="--pc:#FF8C2F" href="install.html#install">
+        <span class="plat-badge" data-t="plat_oneclick">1-click</span>
+        <span class="plat-logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.406 8.528h1.17v6.926h-1.17zM1.17 15.454H0V8.528h1.17zm4.534.828h1.17v2.645h-1.17zm-2.86-2.969h1.169v4.282h-1.17zm5.703 0h1.17v4.282h-1.17zM22.83 8.528H24v6.926h-1.17zm-4.534-.81h-1.17V5.073h1.17zm2.86 2.95h-1.169V6.406h1.17zm-5.72 0h-1.17V6.406h1.17z"/></svg></span>
+        <h3>Unraid</h3>
+        <p data-t="plat_unraid">A Community Apps template: add it straight from the Unraid Apps tab.</p>
+        <span class="plat-go"><span data-t="plat_guide">Guide</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </a>
+    </div>
+
+    <div class="quick-docker reveal">
+      <div class="code-block"><span class="c"># Pre-built image - Docker</span>
+curl -O https://raw.githubusercontent.com/arpankayastha/my-hub/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/arpankayastha/my-hub/main/.env.example
+cp .env.example .env  <span class="c"># set SESSION_SECRET and DB_ENCRYPTION_KEY</span>
+<span class="h">docker compose up -d</span></div>
+      <p class="quick-note" data-t="quick_note">Then open <code>http://localhost:3000</code>. The first visit walks you through creating your admin account. Prefer a guided setup? The <a href="install.html">step-by-step installer</a> handles HTTPS, SSO and backups for you.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SETUP -->
+<section class="setup">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <h2 class="sec-title" data-t="setup_title">Up and running in minutes</h2>
+    </div>
+    <div class="setup-steps">
+      <div class="setup-step reveal"><div class="num">1</div><h3 data-t="setup_1_t">Start the installer</h3><p data-t="setup_1_d">One command launches a setup wizard in your browser. No editing config files by hand.</p></div>
+      <div class="setup-step reveal d1"><div class="num">2</div><h3 data-t="setup_2_t">Set up your account</h3><p data-t="setup_2_d">Create an admin account and choose your preferences. Takes about two minutes.</p></div>
+      <div class="setup-step reveal d2"><div class="num">3</div><h3 data-t="setup_3_t">Invite your family</h3><p data-t="setup_3_d">Add family members, set roles, and start using My Hub together.</p></div>
+    </div>
+    <div class="reveal" style="text-align:center">
+      <a href="install.html" class="setup-link" data-t="setup_link">Step-by-step installation guide <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="wrap">
+    <div class="cta-box reveal">
+      <h2 data-t="cta_title">Take back control of your <em>family's data.</em></h2>
+      <p data-t="cta_desc">Free. Open source. Runs on your server. No subscriptions, ever.</p>
+      <div class="cta-actions">
+        <a href="install.html" class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span data-t="cta_install">Get started</span></a>
+        <a href="https://github.com/arpankayastha/my-hub" class="btn btn-secondary" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg><span data-t="cta_gh">View on GitHub</span></a>
+      </div>
+      <p class="cta-note" data-t="cta_longevity">MIT-licensed and self-hosted: even if the project stops, nothing phones home and your instance keeps running. The data lives on your server - yours to keep, back up, and move.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="#top" class="nav-logo"><svg viewBox="0 0 160 160" fill="none" aria-hidden="true"><defs><linearGradient id="gf" x1="0" y1="0" x2="160" y2="160" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#6c3aed"/></linearGradient></defs><rect width="160" height="160" rx="36" fill="url(#gf)"/><g fill="white" fill-opacity="0.82"><circle cx="64" cy="72" r="27"/><circle cx="100" cy="78" r="25"/><circle cx="80" cy="106" r="24"/></g></svg>My Hub</a>
+        <p data-t="footer_heart">Built with care for families who value privacy and simplicity.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <h3 data-t="foot_product">Product</h3>
+          <a href="#carousel" data-t="foot_screens">Screenshots</a>
+          <a href="install.html" data-t="foot_install">Install</a>
+          <a href="https://github.com/arpankayastha/my-hub/blob/main/docs/SPEC.md" target="_blank" rel="noopener" data-t="foot_docs">Docs &amp; spec</a>
+        </div>
+        <div class="foot-col">
+          <h3 data-t="foot_project">Project</h3>
+          <a href="https://github.com/arpankayastha/my-hub" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/arpankayastha/my-hub/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" data-t="foot_contrib">Contributing</a>
+          <a href="https://github.com/arpankayastha/my-hub/blob/main/CHANGELOG.md" target="_blank" rel="noopener" data-t="foot_changelog">Changelog</a>
+          <a href="https://github.com/arpankayastha/my-hub/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+        </div>
+        <div class="foot-col">
+          <h3 data-t="foot_legal">Legal</h3>
+          <a href="impressum.html" data-t="foot_impressum">Impressum</a>
+          <a href="datenschutz.html" data-t="foot_privacy">Datenschutz</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span><span id="gh-stars-footer" data-gh-stars>★ 1.1k · </span><b>v1.58.0</b> · <span id="foot-released" data-released="2026-07-30">July 2026</span></span>
+      <span data-t="foot_madewith">Self-hosted · Privacy-first · Open source</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  var T = {
+    en: {
+      nav_gh:'GitHub', nav_install:'Install',
+      hero_badge:'Open source · Privacy-first · No subscriptions',
+      hero_h1_pre:'Your family. Your data.', hero_h1_em:'Your home.',
+      hero_sub:'One private home for everything that keeps your family running, without handing your data to Big Tech.',
+      hero_install:'Install My Hub', hero_demo:'See it in action', tag_nocloud:'No cloud required',
+      chip_tasks:'Tasks done', chip_shop:'Shared list',
+      proof_modules:'modules', proof_langs:'languages', proof_telemetry:'trackers', proof_mit:'MIT licensed',
+      prob_label:'The problem', prob_title:'Sound familiar?',
+      prob_1_t:'Ten different apps', prob_1_d:'Tasks here, shopping there, calendar somewhere else. Nothing talks to anything.',
+      prob_2_t:'Subscriptions, forever', prob_2_d:'Notion, Google One, iCloud. Another invoice every year, no way out.',
+      prob_3_t:'Your data, everywhere', prob_3_d:"Your calendar on Google's servers, your notes on Dropbox. Who actually owns your family's data?",
+      prob_cta:"There's a calmer way.",
+      why_label:'Why My Hub', why_title:'Built for families, not for profit.',
+      why_desc:'It all runs on hardware you own, keeps working without any subscription, and never sends your data off your home network.',
+      p_priv_t:'Privacy first', p_priv_d:'Optional AES-256 database encryption via SQLCipher (enabled in the recommended Docker setup). Zero telemetry. Your data never leaves your server.',
+      p_self_t:'Fully self-hosted', p_self_d:'Runs on a Raspberry Pi, a NAS, or any server. Docker or Podman makes setup a one-liner.',
+      p_open_t:'Open source', p_open_d:'MIT licensed. Inspect, modify, extend, contribute. Built in the open for families who value transparency.',
+      p_build_t:'Zero build step', p_build_d:'Pure ES modules, vanilla JS and plain CSS. What we write is exactly what ships, with nothing to bundle or transpile.',
+      feat_label:'Features', feat_title:'Everything your household needs',
+      feat_desc:'A complete set of tools for families, designed to work together, not scattered across sixteen separate tabs.',
+      f_tasks_k:'Tasks', f_tasks_t:'Everyone knows what needs doing.', f_tasks_d:'Shared tasks with deadlines, priorities, subtasks and recurring schedules, assignable to several family members at once.',
+      f_tasks_l1:'Kanban board with one-tap status changes', f_tasks_l2:'Multi-member assignment with stacked avatars', f_tasks_l3:'Optional read-only Apple Reminders import',
+      f_cal_k:'Calendar', f_cal_t:'One calendar for the whole family.', f_cal_d:'Google Calendar, iCloud, Nextcloud, all in one place. Two-way Google and CalDAV sync, public ICS subscriptions and one-time import, plus built-in public & school holidays.',
+      f_cal_l1:'Two-way Google & CalDAV sync', f_cal_l2:'Recurring events with file attachments', f_cal_l3:'Readable month & agenda views',
+      f_meals_k:'Meals & recipes', f_meals_t:'Dinner sorted before anyone asks.', f_meals_d:'A weekly drag-and-drop planner with repeating meals and ingredient lists that export straight to the shopping list in one click.',
+      f_meals_l1:'Drag-and-drop weekly planner with repeats', f_meals_l2:'Reusable recipes you can scale & duplicate', f_meals_l3:'One-tap export to your shopping list',
+      f_budget_k:'Budget', f_budget_t:'No surprise at the end of the month.', f_budget_d:'Track who spent what, split shared costs automatically, and see exactly where the money goes.',
+      f_budget_l1:'23 currencies, recurring entries, weekly/monthly/yearly statistics, monthly budgets & savings goals', f_budget_l3:'Subscription tracker with renewals, budgets & alerts',
+      f_shop_k:'Shopping', f_shop_t:'The list everyone actually checks.', f_shop_d:'One shared shopping list for the whole family, organized by aisle and updating in real time.',
+      f_shop_l1:'Aisle categories & swipe gestures', f_shop_l2:'Add a whole meal plan in one tap', f_shop_l3:'Touch-safe quick add on mobile',
+      f_health_k:'Health', f_health_t:'Health that stays in the family.', f_health_d:'Vitals, medications, lab results, activity and cycles, tracked per member, private by default, and never leaving your server.',
+      f_health_l1:'Cycle ring with period & fertile-window predictions', f_health_l2:'Medication reminders with refill alerts', f_health_l3:'Per-entry visibility: private or shared',
+      f_rewards_k:'Rewards', f_rewards_t:'Chores that finally pay off.', f_rewards_d:"Give any task a point value; finishing it credits the assigned kid. Points buy real rewards from a catalog you control, with a parent's approval.",
+      f_rewards_l1:'Point values on any task, credited automatically', f_rewards_l2:'Reward catalog with parent-approved redemptions', f_rewards_l3:'Per-member opt-in and a full point ledger',
+      f_split_k:'Split expenses', f_split_t:'Who owes whom, settled automatically.', f_split_d:'Track shared costs across the household, trips and events. My Hub simplifies the debts so everyone settles up with the fewest payments.',
+      f_split_l1:'Groups for household, trips and events', f_split_l2:'Automatic debt simplification', f_split_l3:'Multiple currencies with live conversion',
+      more_label:"And there's more", more_title:'Eight more modules', more_desc:"Each module is independent. Use what fits your family, skip what doesn't.",
+      m_docs_t:'Documents', m_docs_d:'Family files with previews, visibility controls and storage badges. Multi-file upload, folders, sorting and bulk actions. New uploads and calendar attachments can use a local folder, WebDAV, or Google Drive; Paperless-ngx and Papra DMS integration is optional.',
+      m_notes_t:'Notes', m_notes_d:'Colored sticky notes with Markdown. Perfect for recipes, family memos and quick reminders.',
+      m_contacts_t:'Contacts', m_contacts_d:'Shared family directory with CardDAV sync, vCard import/export and multi-account support.',
+      m_bday_t:'Birthdays', m_bday_d:'Birthday tracker with automatic annual calendar events, age display and custom reminders.',
+      m_house_t:'Housekeeping', m_house_d:'Manage household staff: schedules, check-in/out, daily or hourly billing, chores and supplies.',
+      m_health_t:'Health', m_health_d:'Track vitals, medications with reminders, lab results, activity and menstrual cycles per family member, private or shared. Not a medical device.',
+      m_rewards_t:'Rewards', m_rewards_d:'Give tasks point values; finishing them credits the assigned members. Set a household default that prefills new tasks and can be rolled out to existing ones. A reward catalog with parent-approved redemptions, opt-in per member, bonus points and a full point ledger.',
+      m_recipes_t:'Recipes', m_recipes_d:'Create, duplicate and scale reusable recipes. Pre-fill meal slots, send the ingredients to a shopping list, or save any meal as a recipe.',
+      m_rem_t:'Reminders', m_rem_d:'Time-based notifications on tasks and calendar events, with an in-app badge so nothing slips, plus opt-in push notifications that reach you even when the app is closed.',
+      m_backup_t:'Backup & SSO', m_backup_d:'Scheduled backups with pre-restore rollback, optional WebDAV cloud upload (Nextcloud, ownCloud, Hetzner, etc.), plus single sign-on via any OIDC provider.',
+      screens_label:'Preview', screens_title:'Every screen, carefully crafted',
+      screens_desc:'A clean, intuitive interface with tuned touch targets and layouts that adapt to your device and theme.',
+      screens_hint:'Drag, swipe or scroll to explore →',
+      cap_tasks:'Tasks', cap_cal:'Calendar', cap_shop:'Shopping', cap_meals:'Meals', cap_recipes:'Recipes',
+      cap_budget:'Budget', cap_notes:'Notes', cap_contacts:'Contacts', cap_bday:'Birthdays', cap_house:'Housekeeping', cap_documents:'Documents',
+      cap_health:'Health', cap_rewards:'Rewards', cap_split:'Split expenses', cap_subs:'Subscriptions',
+      plat_label:'Install anywhere', plat_title:'Runs on your hardware',
+      plat_desc:"A Docker or Podman container that drops onto any home server or NAS. Or install it in a couple of clicks from your platform's app store.",
+      plat_docker:'Pre-built image, up and running with a single compose command.',
+      plat_podman:'Rootless and SELinux-ready for RHEL, Fedora and CentOS Stream.',
+      plat_truenas:'In the SCALE Community Apps catalog: install from the web UI, no terminal.',
+      plat_umbrel:'Available in the Umbrel App Store; everything stays on your Umbrel.',
+      plat_unraid:'A Community Apps template: add it straight from the Unraid Apps tab.',
+      plat_oneclick:'1-click', plat_guide:'Guide',
+      quick_note:'Then open http://localhost:3000. The first visit walks you through creating your admin account. Prefer a guided setup? The step-by-step installer handles HTTPS, SSO and backups for you.',
+      setup_label:'Setup', setup_title:'Up and running in minutes',
+      setup_1_t:'Start the installer', setup_1_d:'One command launches a setup wizard in your browser. No editing config files by hand.',
+      setup_2_t:'Set up your account', setup_2_d:'Create an admin account and choose your preferences. Takes about two minutes.',
+      setup_3_t:'Invite your family', setup_3_d:'Add family members, set roles, and start using My Hub together.',
+      setup_link:'Step-by-step installation guide',
+      cta_title:"Take back control of your family's data.", cta_desc:'Free. Open source. Runs on your server. No subscriptions, ever.', cta_longevity:'MIT-licensed and self-hosted: even if the project stops, nothing phones home and your instance keeps running. The data lives on your server - yours to keep, back up, and move.',
+      cta_install:'Get started', cta_gh:'View on GitHub',
+      footer_heart:'Built with care for families who value privacy and simplicity.',
+      foot_product:'Product', foot_screens:'Screenshots', foot_install:'Install', foot_docs:'Docs & spec',
+      foot_project:'Project', foot_contrib:'Contributing', foot_changelog:'Changelog',
+      foot_legal:'Legal', foot_impressum:'Imprint', foot_privacy:'Privacy',
+      foot_madewith:'Self-hosted · Privacy-first · Open source'
+    },
+    de: {
+      nav_gh:'GitHub', nav_install:'Installieren',
+      hero_badge:'Open Source · Privacy-First · Keine Abos',
+      hero_h1_pre:'Eure Familie. Eure Daten.', hero_h1_em:'Euer Zuhause.',
+      hero_sub:'Ein privater Ort für alles, was eure Familie zusammenhält, ohne eure Daten der Cloud zu überlassen.',
+      hero_install:'My Hub installieren', hero_demo:'App ansehen', tag_nocloud:'Keine Cloud nötig',
+      chip_tasks:'Erledigt', chip_shop:'Geteilte Liste',
+      proof_modules:'Module', proof_langs:'Sprachen', proof_telemetry:'Tracker', proof_mit:'MIT-lizenziert',
+      prob_label:'Das Problem', prob_title:'Kommt euch das bekannt vor?',
+      prob_1_t:'Zehn verschiedene Apps', prob_1_d:'Aufgaben hier, Einkauf dort, Kalender irgendwo anders. Nichts spricht miteinander.',
+      prob_2_t:'Abos, für immer', prob_2_d:'Notion, Google One, iCloud. Jedes Jahr eine neue Rechnung, kein Ausweg.',
+      prob_3_t:'Eure Daten, überall', prob_3_d:'Euer Kalender auf Googles Servern, eure Notizen auf Dropbox. Wem gehören eure Familiendaten wirklich?',
+      prob_cta:'Es geht auch ruhiger.',
+      why_label:'Warum My Hub', why_title:'Für Familien gebaut, nicht für Profit.',
+      why_desc:'Alles läuft auf Hardware, die euch gehört, funktioniert ganz ohne Abo und schickt eure Daten nie aus eurem Heimnetz.',
+      p_priv_t:'Datenschutz zuerst', p_priv_d:'Optionale AES-256-Datenbankverschlüsselung via SQLCipher (im empfohlenen Docker-Setup aktiviert). Keine Telemetrie. Eure Daten verlassen nie euren Server.',
+      p_self_t:'Vollständig selbstgehostet', p_self_d:'Läuft auf einem Raspberry Pi, NAS oder jedem Server. Docker oder Podman macht das Setup zum Einzeiler.',
+      p_open_t:'Open Source', p_open_d:'MIT-lizenziert. Einsehen, anpassen, erweitern, beitragen. Offen gebaut für Familien, die Transparenz schätzen.',
+      p_build_t:'Kein Build-Schritt', p_build_d:'Pure ES-Module, Vanilla JS und reines CSS. Was wir schreiben, läuft genau so, ganz ohne Bundler oder Transpiler.',
+      feat_label:'Funktionen', feat_title:'Alles, was euer Haushalt braucht',
+      feat_desc:'Ein vollständiges Werkzeugset für Familien, aufeinander abgestimmt statt verstreut auf sechzehn getrennte Tabs.',
+      f_tasks_k:'Aufgaben', f_tasks_t:'Alle wissen, was zu tun ist.', f_tasks_d:'Gemeinsame Aufgaben mit Fristen, Prioritäten, Unteraufgaben und Wiederholungen, mehreren Mitgliedern gleichzeitig zuweisbar.',
+      f_tasks_l1:'Kanban-Board mit Ein-Tipp-Status', f_tasks_l2:'Mehrfachzuweisung mit gestapelten Avataren', f_tasks_l3:'Optionaler schreibgeschützter Apple-Erinnerungen-Import',
+      f_cal_k:'Kalender', f_cal_t:'Ein Kalender für die ganze Familie.', f_cal_d:'Google Calendar, iCloud, Nextcloud, alles an einem Ort. Zwei-Wege-Sync mit Google und CalDAV, öffentliche ICS-Abos und einmaliger Import sowie integrierte Feiertage & Schulferien.',
+      f_cal_l1:'Zwei-Wege-Sync mit Google & CalDAV', f_cal_l2:'Wiederkehrende Termine mit Dateianhängen', f_cal_l3:'Lesbare Monats- & Agenda-Ansichten',
+      f_meals_k:'Mahlzeiten & Rezepte', f_meals_t:'Das Abendessen steht, bevor jemand fragt.', f_meals_d:'Ein wöchentlicher Drag-and-Drop-Planer mit wiederkehrenden Mahlzeiten und Zutatenlisten, die per Klick direkt auf die Einkaufsliste wandern.',
+      f_meals_l1:'Drag-and-Drop-Wochenplaner mit Wiederholungen', f_meals_l2:'Wiederverwendbare Rezepte zum Skalieren & Duplizieren', f_meals_l3:'Ein-Tipp-Export auf die Einkaufsliste',
+      f_budget_k:'Budget', f_budget_t:'Keine böse Überraschung am Monatsende.', f_budget_d:'Verfolgt, wer was ausgegeben hat, teilt gemeinsame Kosten automatisch und seht genau, wohin das Geld fließt.',
+      f_budget_l1:'23 Währungen, wiederkehrende Einträge, Wochen-/Monats-/Jahresstatistik, Monatsbudgets & Sparziele', f_budget_l3:'Abo-Tracker mit Verlängerungen, Budgets & Erinnerungen',
+      f_shop_k:'Einkauf', f_shop_t:'Die Liste, die alle wirklich nutzen.', f_shop_d:'Eine gemeinsame Einkaufsliste für die ganze Familie, nach Gang sortiert und in Echtzeit aktualisiert.',
+      f_shop_l1:'Gang-Kategorien & Wisch-Gesten', f_shop_l2:'Ganzen Mahlzeitenplan per Tipp hinzufügen', f_shop_l3:'Touch-sicheres Schnell-Hinzufügen mobil',
+      f_health_k:'Gesundheit', f_health_t:'Gesundheit, die in der Familie bleibt.', f_health_d:'Vitalwerte, Medikamente, Laborwerte, Aktivität und Zyklen, pro Mitglied erfasst, standardmäßig privat und ohne euren Server zu verlassen.',
+      f_health_l1:'Zyklus-Ring mit Perioden- & fruchtbare-Tage-Prognose', f_health_l2:'Medikamenten-Erinnerungen mit Nachfüll-Warnung', f_health_l3:'Sichtbarkeit pro Eintrag: privat oder geteilt',
+      f_rewards_k:'Belohnungen', f_rewards_t:'Aufgaben, die sich endlich lohnen.', f_rewards_d:'Gib jeder Aufgabe einen Punktwert; wer sie erledigt, bekommt ihn gutgeschrieben. Punkte gegen echte Belohnungen aus einem selbst gepflegten Katalog einlösen, mit Freigabe der Eltern.',
+      f_rewards_l1:'Punktwerte auf jeder Aufgabe, automatisch gutgeschrieben', f_rewards_l2:'Prämienkatalog mit Eltern-Freigabe beim Einlösen', f_rewards_l3:'Opt-in je Mitglied und vollständiges Punktekonto',
+      f_split_k:'Geteilte Kosten', f_split_t:'Wer wem was schuldet - automatisch ausgeglichen.', f_split_d:'Erfasst gemeinsame Kosten für Haushalt, Reisen und Events. My Hub vereinfacht die Schulden, sodass alle mit möglichst wenigen Zahlungen quitt sind.',
+      f_split_l1:'Gruppen für Haushalt, Reisen und Events', f_split_l2:'Automatische Schuldenvereinfachung', f_split_l3:'Mehrere Währungen mit Live-Umrechnung',
+      more_label:'Und da ist noch mehr', more_title:'Acht weitere Module', more_desc:'Jedes Modul ist eigenständig. Nutzt, was zu eurer Familie passt, lasst den Rest weg.',
+      m_docs_t:'Dokumente', m_docs_d:'Familiendateien mit Vorschau, Sichtbarkeitsregeln und Speicher-Badges. Mehrfach-Upload, Ordner, Sortierung und Stapelaktionen. Neue Uploads und Kalenderanh\u00e4nge k\u00f6nnen einen lokalen Ordner, WebDAV oder Google Drive nutzen; Paperless-ngx und Papra als DMS sind optional.',
+      m_notes_t:'Notizen', m_notes_d:'Farbige Haftnotizen mit Markdown. Perfekt für Rezepte, Familien-Memos und schnelle Erinnerungen.',
+      m_contacts_t:'Kontakte', m_contacts_d:'Gemeinsames Familienverzeichnis mit CardDAV-Sync, vCard-Import/-Export und Multi-Account-Support.',
+      m_bday_t:'Geburtstage', m_bday_d:'Geburtstags-Tracker mit automatischen jährlichen Kalendereinträgen, Altersanzeige und Erinnerungen.',
+      m_house_t:'Haushaltshilfe', m_house_d:'Haushaltspersonal verwalten: Pläne, Ein-/Ausstempeln, Tages- oder Stundenabrechnung, Chores und Bedarf.',
+      m_health_t:'Gesundheit', m_health_d:'Vitalwerte, Medikamente mit Erinnerungen, Laborwerte, Aktivität und Menstruationszyklus je Familienmitglied, privat oder geteilt. Kein Medizinprodukt.',
+      m_rewards_t:'Belohnungen', m_rewards_d:'Aufgaben können Punkte tragen; beim Erledigen werden sie den zuständigen Mitgliedern gutgeschrieben. Ein Haushalts-Standard belegt neue Aufgaben vor und lässt sich auf bestehende übertragen. Prämien-Katalog mit Eltern-Freigabe, opt-in je Mitglied, Bonuspunkte und ein vollständiges Punkte-Ledger.',
+      m_recipes_t:'Rezepte', m_recipes_d:'Wiederverwendbare Rezepte erstellen, duplizieren und skalieren. Mahlzeiten vorausfüllen, die Zutaten auf eine Einkaufsliste schicken oder als Rezept speichern.',
+      m_rem_t:'Erinnerungen', m_rem_d:'Zeitbasierte Benachrichtigungen für Aufgaben und Termine, mit In-App-Badge, damit nichts durchrutscht, plus optionale Push-Benachrichtigungen, die dich auch bei geschlossener App erreichen.',
+      m_backup_t:'Backup & SSO', m_backup_d:'Geplante Backups mit Vor-Wiederherstellungs-Rollback, optionalem WebDAV-Cloud-Upload (Nextcloud, ownCloud, Hetzner\xa0usw.) und Single Sign-On \xfcber jeden OIDC-Provider.',
+      screens_label:'Vorschau', screens_title:'Jeder Screen, sorgfältig gestaltet',
+      screens_desc:'Eine klare, intuitive Oberfläche mit optimierten Touch-Zielen und Layouts, die sich an Gerät und Theme anpassen.',
+      screens_hint:'Ziehen, wischen oder scrollen zum Erkunden →',
+      cap_tasks:'Aufgaben', cap_cal:'Kalender', cap_shop:'Einkauf', cap_meals:'Mahlzeiten', cap_recipes:'Rezepte',
+      cap_budget:'Budget', cap_notes:'Notizen', cap_contacts:'Kontakte', cap_bday:'Geburtstage', cap_house:'Haushaltshilfe', cap_documents:'Dokumente',
+      cap_health:'Gesundheit', cap_rewards:'Belohnungen', cap_split:'Geteilte Kosten', cap_subs:'Abonnements',
+      plat_label:'Überall installierbar', plat_title:'Läuft auf eurer Hardware',
+      plat_desc:'Ein Docker- oder Podman-Container, der auf jeden Heimserver oder jedes NAS passt. Oder in wenigen Klicks aus dem App-Store eurer Plattform.',
+      plat_docker:'Fertiges Image, mit einem einzigen compose-Befehl einsatzbereit.',
+      plat_podman:'Rootless und SELinux-fähig für RHEL, Fedora und CentOS Stream.',
+      plat_truenas:'Im SCALE Community Apps Catalog: Installation über die Web-UI, kein Terminal.',
+      plat_umbrel:'Im Umbrel App Store verfügbar; alles bleibt auf eurem Umbrel.',
+      plat_unraid:'Ein Community-Apps-Template: direkt über den Unraid-Apps-Tab hinzufügen.',
+      plat_oneclick:'1 Klick', plat_guide:'Anleitung',
+      quick_note:'Dann http://localhost:3000 öffnen. Beim ersten Aufruf legt ihr euer Admin-Konto an. Lieber geführt? Der schrittweise Installer kümmert sich um HTTPS, SSO und Backups.',
+      setup_label:'Setup', setup_title:'In Minuten einsatzbereit',
+      setup_1_t:'Installer starten', setup_1_d:'Ein Befehl startet den Setup-Assistenten im Browser. Keine Konfigdateien von Hand.',
+      setup_2_t:'Konto einrichten', setup_2_d:'Admin-Konto erstellen und Einstellungen wählen. Dauert etwa zwei Minuten.',
+      setup_3_t:'Familie einladen', setup_3_d:'Familienmitglieder hinzufügen, Rollen vergeben und gemeinsam loslegen.',
+      setup_link:'Schritt-für-Schritt-Installationsanleitung',
+      cta_title:'Holt euch die Kontrolle über eure Familiendaten zurück.', cta_desc:'Kostenlos. Open Source. Läuft auf eurem Server. Keine Abos, nie.', cta_longevity:'MIT-lizenziert und selbstgehostet: Selbst wenn das Projekt endet, funkt nichts nach Hause und eure Instanz läuft weiter. Die Daten liegen auf eurem Server - eure, zum Behalten, Sichern und Umziehen.',
+      cta_install:'Jetzt starten', cta_gh:'Auf GitHub ansehen',
+      footer_heart:'Mit Sorgfalt gebaut für Familien, die Privatsphäre und Einfachheit schätzen.',
+      foot_product:'Produkt', foot_screens:'Screenshots', foot_install:'Installieren', foot_docs:'Doku & Spec',
+      foot_project:'Projekt', foot_contrib:'Mitmachen', foot_changelog:'Changelog',
+      foot_legal:'Rechtliches', foot_impressum:'Impressum', foot_privacy:'Datenschutz',
+      foot_madewith:'Selbstgehostet · Privacy-First · Open Source'
+    }
+  };
+
+  function lsGet(k){ try { return localStorage.getItem('my-hub-'+k) || localStorage.getItem('my-hub-'+k); } catch(e){ return null; } }
+  function lsSet(k,v){ try { localStorage.setItem('my-hub-'+k, v); } catch(e){} }
+  function detectLang(){ var n = (navigator.language || navigator.userLanguage || 'en').toLowerCase(); return n.indexOf('de') === 0 ? 'de' : 'en'; }
+
+  var lang = lsGet('lang') || detectLang();
+  var theme = lsGet('theme');
+
+  function isDark(){ if (theme==='dark') return true; if (theme==='light') return false; return matchMedia('(prefers-color-scheme:dark)').matches; }
+  /* Screenshots vary on two axes: theme (data-light/data-dark hold the English
+     base paths) and locale (localized sets live under screenshots/<lang>/ with
+     identical basenames). A non-English shot falls back to the English one if it
+     is missing, so a partial localized set never leaves a broken image. */
+  function applyShots(){
+    var d = isDark();
+    document.querySelectorAll('.sc').forEach(function(img){
+      var base = img.dataset[d ? 'dark' : 'light'];
+      if (!base) return;
+      if (lang !== 'en') {
+        img.onerror = function(){ img.onerror = null; if (img.getAttribute('src') !== base) img.src = base; };
+        img.src = base.replace('screenshots/', 'screenshots/' + lang + '/');
+      } else {
+        img.onerror = null;
+        img.src = base;
+      }
+    });
+  }
+  function applyTheme(){
+    var d = isDark();
+    if (theme) document.documentElement.setAttribute('data-theme', theme); else document.documentElement.removeAttribute('data-theme');
+    document.getElementById('sunIco').style.display = d ? 'none' : 'block';
+    document.getElementById('moonIco').style.display = d ? 'block' : 'none';
+    applyShots();
+  }
+  function applyLang(){
+    document.documentElement.lang = lang;
+    var s = T[lang];
+    document.querySelectorAll('[data-t]').forEach(function(el){ var k = el.getAttribute('data-t'); if (s[k] !== undefined) el.textContent = s[k]; });
+    document.getElementById('langLbl').textContent = lang === 'en' ? 'DE' : 'EN';
+    var lb = document.getElementById('langBtn');
+    lb.setAttribute('aria-label', lang === 'en' ? 'Auf Deutsch umschalten' : 'Switch to English');
+    lb.setAttribute('title', lang === 'en' ? 'Auf Deutsch umschalten' : 'Switch to English');
+    document.title = lang === 'en' ? 'My Hub - The Self-Hosted Family Planner' : 'My Hub - Der selbstgehostete Familienplaner';
+    var rel = document.getElementById('foot-released');
+    if (rel) { var rp = (rel.getAttribute('data-released') || '').split('-'); if (rp[0]) { rel.textContent = new Date(+rp[0], (+rp[1] || 1) - 1, 1).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US', { year: 'numeric', month: 'long' }); } }
+    applyShots();
+  }
+
+  document.getElementById('themeBtn').onclick = function(){ theme = isDark() ? 'light' : 'dark'; lsSet('theme', theme); applyTheme(); };
+  document.getElementById('langBtn').onclick = function(){ lang = lang === 'en' ? 'de' : 'en'; lsSet('lang', lang); applyLang(); };
+  matchMedia('(prefers-color-scheme:dark)').addEventListener('change', function(){ if (!theme) applyTheme(); });
+
+  document.documentElement.classList.add('js');
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add('vis'); obs.unobserve(e.target); } }); }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(function(el){ obs.observe(el); });
+  } else { document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('vis'); }); }
+
+  /* Sticky mobile Install pill: reveal only after the hero scrolls out of view,
+     so it doesn't duplicate the in-hero Install button on first paint. */
+  (function(){
+    var hero = document.getElementById('top');
+    var pill = document.querySelector('.mobile-cta');
+    if (!pill) return;
+    if (hero && 'IntersectionObserver' in window) {
+      var pObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ pill.classList.toggle('show', !e.isIntersecting); });
+      }, { rootMargin: '-70px 0px 0px 0px' });
+      pObs.observe(hero);
+    } else { pill.classList.add('show'); }
+  })();
+
+  /* Drag-to-scroll carousel */
+  (function(){
+    var t = document.getElementById('track'); if (!t) return;
+    var down=false, startX, scroll;
+    t.addEventListener('pointerdown', function(e){ down=true; startX=e.pageX; scroll=t.scrollLeft; t.style.cursor='grabbing'; });
+    window.addEventListener('pointerup', function(){ down=false; t.style.cursor=''; });
+    t.addEventListener('pointermove', function(e){ if(!down) return; t.scrollLeft = scroll - (e.pageX - startX); });
+  })();
+
+  // GitHub star count is injected at build time into [data-gh-stars] elements
+  // (see scripts/update-gh-stars.mjs). No request to api.github.com is made in
+  // the visitor's browser - no visitor data is transmitted to any third party.
+
+  applyTheme(); applyLang();
+})();
+</script>
+</body>
+</html>

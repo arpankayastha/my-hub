@@ -1,0 +1,167 @@
+name: Umbrel Catalog Publish
+
+# Opens/updates a PR to getumbrel/umbrel-apps bumping My Hub to the released
+# version with a freshly resolved, digest-pinned image. Umbrel has NO auto-bump
+# bot (unlike TrueNAS), so this is what keeps the store entry current.
+#
+# Requirements:
+#   - Secret UMBREL_FORK_TOKEN: a classic PAT with `repo` scope (push to the
+#     <owner>/umbrel-apps fork + open a cross-repo PR to getumbrel/umbrel-apps).
+#   - The fork <owner>/umbrel-apps must exist (created during the initial submission).
+#   - Only acts once My Hub is already in upstream master (after the initial
+#     submission PR is merged); before that it skips to avoid re-submitting.
+#
+# It edits the maintainers' upstream files IN PLACE (version, releaseNotes,
+# image digest) — it never overwrites them with our source, so any review tweaks
+# (port, gallery, category, …) are preserved across updates.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version without leading v (e.g. 0.65.1). Defaults to the latest release."
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: umbrel-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve version
+        id: ver
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ -n "$INPUT_VERSION" ]; then
+            V="$INPUT_VERSION"
+          elif [ -n "$RELEASE_TAG" ]; then
+            V="$RELEASE_TAG"
+          else
+            V="$(gh release view --repo "$REPO" --json tagName -q .tagName)"
+          fi
+          V="${V#v}"
+          # Validate: only a semver-like token may flow into later shell/sed/PR steps.
+          if ! printf '%s' "$V" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([.+-][0-9A-Za-z.]+)?$'; then
+            echo "::error::Refusing to proceed: '$V' is not a valid version string."
+            exit 1
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $V"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve multi-arch image digest (wait for the image to publish)
+        id: digest
+        run: |
+          set -euo pipefail
+          IMG="ghcr.io/${{ github.repository_owner }}/myhub:${{ steps.ver.outputs.version }}"
+          for i in $(seq 1 40); do
+            # `|| true` keeps a not-yet-published image (pipefail makes inspect's
+            # failure propagate) from tripping `set -e` and aborting the retry loop.
+            D="$(docker buildx imagetools inspect "$IMG" --format '{{json .Manifest}}' 2>/dev/null | jq -r '.digest // empty' || true)"
+            if [ -n "$D" ]; then
+              echo "digest=$D" >> "$GITHUB_OUTPUT"
+              echo "✓ $IMG -> $D"
+              exit 0
+            fi
+            echo "waiting for $IMG to appear ($i/40)…"
+            sleep 30
+          done
+          echo "::error::image $IMG not found after ~20 min — did Docker Publish run?"
+          exit 1
+
+      - name: Open / update PR on getumbrel/umbrel-apps
+        env:
+          GH_TOKEN: ${{ secrets.UMBREL_FORK_TOKEN }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          DIGEST: ${{ steps.digest.outputs.digest }}
+          OWNER: ${{ github.repository_owner }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          FORK="$OWNER/umbrel-apps"
+          UPSTREAM="getumbrel/umbrel-apps"
+          BRANCH="my-hub-update"
+
+          git config --global user.name "$OWNER"
+          git config --global user.email "$ACTOR@users.noreply.github.com"
+
+          gh repo fork "$UPSTREAM" --clone=false || true
+
+          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/$FORK.git" fork
+          cd fork
+          git remote add upstream "https://github.com/$UPSTREAM.git"
+          git fetch --depth 1 upstream master
+          git checkout -B "$BRANCH" upstream/master
+
+          # Guard: only update once My Hub is already in upstream master. Before the
+          # initial submission is merged there is nothing to edit — skip.
+          if [ ! -f myhub/umbrel-app.yml ]; then
+            echo "::notice::My Hub is not yet in upstream master (initial submission still pending). Skipping auto-update."
+            exit 0
+          fi
+
+          # Edit the maintainers' files IN PLACE — never overwrite them with our
+          # source, so their port / gallery / category / review tweaks are preserved.
+          sed -i -E "s|^version: .*|version: \"$VERSION\"|" myhub/umbrel-app.yml
+          sed -i -E "s|image: ghcr.io/$OWNER/myhub:[^@[:space:]]+@sha256:[0-9a-f]+|image: ghcr.io/$OWNER/myhub:$VERSION@$DIGEST|" myhub/docker-compose.yml
+          if [ -z "${RELEASE_BODY:-}" ]; then
+            RELEASE_BODY="$(gh release view "v$VERSION" --repo "$OWNER/myhub" --json body -q .body)"
+            export RELEASE_BODY
+          fi
+          # releaseNotes from the GitHub release body (JSON-encoded string is valid YAML)
+          python3 - <<'PY'
+          import json, os, re
+          body = os.environ.get("RELEASE_BODY", "").strip()
+          p = "myhub/umbrel-app.yml"
+          t = open(p).read()
+          t = re.sub(
+            r"^releaseNotes:.*$",
+            lambda _: "releaseNotes: " + json.dumps(body),
+            t,
+            count=1,
+            flags=re.M,
+          )
+          open(p, "w").write(t)
+          PY
+
+          echo "--- updated ---"
+          grep -E '^(version|releaseNotes):' myhub/umbrel-app.yml
+          grep 'image:' myhub/docker-compose.yml
+
+          if git diff --quiet -- myhub/; then
+            echo "Catalog already at v$VERSION — nothing to do."
+            exit 0
+          fi
+
+          git add myhub/
+          git commit -m "myhub: update to v$VERSION"
+          git push --force origin "$BRANCH"
+
+          EXISTING="$(gh pr list --repo "$UPSTREAM" --head "$OWNER:$BRANCH" --state open --json number -q '.[0].number' 2>/dev/null || true)"
+          if [ -z "$EXISTING" ]; then
+            gh pr create --repo "$UPSTREAM" --base master --head "$OWNER:$BRANCH" \
+              --title "myhub: update to v$VERSION" \
+              --body "Automated update of My Hub to v$VERSION (multi-arch image pinned by digest). Source: https://github.com/$OWNER/myhub/releases/tag/v$VERSION"
+          else
+            echo "PR #$EXISTING already open — force-push updated it to v$VERSION."
+            gh pr edit "$EXISTING" --repo "$UPSTREAM" --title "myhub: update to v$VERSION" || true
+          fi

@@ -1,0 +1,5 @@
+# My Hub - self-hosted, private
+# Keine öffentlichen Inhalte zum Indexieren
+
+User-agent: *
+Disallow: /
