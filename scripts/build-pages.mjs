@@ -13,6 +13,21 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const publicDir = resolve(root, 'public');
 const siteDir = resolve(root, 'site');
 
+/** Sync package version and changelog into public/ before copying to site/. */
+function syncPublicAssets() {
+  const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
+  writeFileSync(
+    resolve(publicDir, 'version.js'),
+    `/** App version — synced from package.json during build-pages. */\nexport const APP_VERSION = '${pkg.version}';\n`,
+  );
+  const changelogSrc = resolve(root, 'CHANGELOG.md');
+  if (existsSync(changelogSrc)) {
+    cpSync(changelogSrc, resolve(publicDir, 'changelog.md'));
+  }
+}
+
+syncPublicAssets();
+
 /** e.g. GITHUB_REPOSITORY=arpankayastha/my-hub → /my-hub */
 function resolveBasePath() {
   if (process.env.GITHUB_PAGES_BASE) {
