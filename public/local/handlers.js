@@ -29,8 +29,8 @@ import {
   normalizeModuleOrderInput,
 } from './preferences-helpers.js';
 import { normalizeMobileNavOrder } from '../settings/module-order.js';
-
-const APP_VERSION = '1.1.0';
+import { APP_VERSION } from '../version.js';
+import { loadLocalChangelog, buildChangelogPayload } from './changelog.js';
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
 const VALID_STATUSES = ['open', 'in_progress', 'done', 'archived'];
 const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -319,7 +319,14 @@ export async function handleLocalApi(method, path, body, query = {}) {
   }
 
   if (resource === 'changelog' && m === 'GET') {
-    return { data: [] };
+    try {
+      const data = await loadLocalChangelog(APP_VERSION);
+      return { data };
+    } catch {
+      return {
+        data: buildChangelogPayload([], APP_VERSION),
+      };
+    }
   }
 
   if (resource === 'dashboard' && m === 'GET') {
