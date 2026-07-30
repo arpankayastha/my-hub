@@ -35,6 +35,18 @@ export function viewerId(req) {
   return authId;
 }
 
+function sessionAuthUserId(req) {
+  return Number(req.authUserId || req.session?.userId);
+}
+
+/** Admin switched household profile — scope budget reads to that member even in shared mode. */
+export function isProfileBudgetScope(req) {
+  if (req.authMethod === 'api_token') return false;
+  const ctx = req.session?.contextUserId;
+  if (ctx == null || ctx === '') return false;
+  return Number(ctx) !== sessionAuthUserId(req);
+}
+
 /**
  * Baut das Sichtbarkeits-/Scope-WHERE-Fragment (positionale ?-Binds) für einen
  * Lesepfad. Im shared-Modus leer. `scoped:true` fügt den Mein/Haushalt-Filter
@@ -45,21 +57,24 @@ export function viewerId(req) {
  */
 export function budgetFilter(req, alias, { scoped = true } = {}) {
   const mode = getBudgetMode();
-  if (mode !== 'personal') return { clause: '', params: [] };
+  const profileScope = isProfileBudgetScope(req);
+  if (mode !== 'personal' && !profileScope) return { clause: '', params: [] };
   const me = viewerId(req);
-  let clause = ` AND ${budgetVisibilityWhere(alias, '?', { mode })}`;
+  const filterMode = 'personal';
+  let clause = ` AND ${budgetVisibilityWhere(alias, '?', { mode: filterMode })}`;
   const params = [me];
   if (scoped) {
-    const scope = req.query.scope === 'household' ? 'household' : 'mine';
+    let scope = req.query.scope === 'household' ? 'household' : 'mine';
+    if (profileScope && mode !== 'personal') scope = 'mine';
     clause += ` AND ${budgetScopeWhere(scope, alias, '?')}`;
-    if (scope === 'mine') params.push(me); // household-Fragment hat keinen Bind
+    if (scope === 'mine') params.push(me);
   }
   return { clause, params };
 }
 
 /** Prüft Schreib-Berechtigung im personal-Modus; im shared-Modus immer erlaubt. */
 export function mayEdit(req, row) {
-  if (getBudgetMode() !== 'personal') return true;
+  if (getBudgetMode() !== 'personal' && !isProfileBudgetScope(req)) return true;
   return canEditEntry(row, { id: viewerId(req) });
 }
 

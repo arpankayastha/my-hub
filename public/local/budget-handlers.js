@@ -51,6 +51,10 @@ function canEditEntry(entry, userId) {
   return entryOwnerId(entry) === userId;
 }
 
+function isProfileBudgetScope(effectiveUserId, authUserId) {
+  return Number(effectiveUserId) !== Number(authUserId);
+}
+
 /** Personal mode: visibility gate (private entries only for owner). */
 function entryReadable(entry, userId, budgetMode) {
   if (budgetMode !== 'personal') return true;
@@ -64,17 +68,22 @@ function entryMatchesScope(entry, userId, scope, budgetMode) {
   return entryOwnerId(entry) === userId;
 }
 
-function filterEntriesForView(rows, userId, scope) {
+function filterEntriesForView(rows, effectiveUserId, scope, authUserId) {
   const mode = resolveBudgetMode();
-  if (mode !== 'personal') return rows;
-  const viewScope = scope === 'household' ? 'household' : 'mine';
-  return rows.filter((e) => entryReadable(e, userId, mode) && entryMatchesScope(e, userId, viewScope, mode));
+  const profileScope = isProfileBudgetScope(effectiveUserId, authUserId);
+  if (mode !== 'personal' && !profileScope) return rows;
+  const filterMode = 'personal';
+  let viewScope = scope === 'household' ? 'household' : 'mine';
+  if (profileScope && mode !== 'personal') viewScope = 'mine';
+  return rows.filter((e) =>
+    entryReadable(e, effectiveUserId, filterMode)
+    && entryMatchesScope(e, effectiveUserId, viewScope, filterMode));
 }
 
-function computeSummary(state, month, userId, scope) {
+function computeSummary(state, month, effectiveUserId, scope, authUserId) {
   const { from, to } = monthRange(month);
   let rows = entriesInRange(state, from, to);
-  rows = filterEntriesForView(rows, userId, scope);
+  rows = filterEntriesForView(rows, effectiveUserId, scope, authUserId);
   let income = 0;
   let expenses = 0;
   const byCat = new Map();
@@ -180,11 +189,11 @@ function loansPayload(state, baseCurrency) {
   };
 }
 
-function computePlanProgress(state, month, userId, scope) {
+function computePlanProgress(state, month, effectiveUserId, scope, authUserId) {
   const { from, to } = monthRange(month);
   const planMap = new Map(state.budget_plans.map((p) => [p.category, Number(p.amount) || 0]));
   let spentRows = entriesInRange(state, from, to);
-  spentRows = filterEntriesForView(spentRows, userId, scope);
+  spentRows = filterEntriesForView(spentRows, effectiveUserId, scope, authUserId);
   const spentMap = new Map();
   for (const e of spentRows) {
     const amt = Number(e.amount) || 0;
@@ -209,7 +218,7 @@ function computePlanProgress(state, month, userId, scope) {
   plans.sort((a, b) => b.ratio - a.ratio);
   const totalPlanned = plans.reduce((s, p) => s + p.planned, 0);
   const totalActual = plans.reduce((s, p) => s + p.actual, 0);
-  const summary = computeSummary(state, month, userId, scope);
+  const summary = computeSummary(state, month, effectiveUserId, scope, authUserId);
   const savingsPlanned = planMap.get(BUDGET_SAVINGS_KEY);
   const balance = summary.balance;
   const income = summary.income;
@@ -227,13 +236,13 @@ function computePlanProgress(state, month, userId, scope) {
 }
 
 /** Dashboard widget slice — mirrors server/routes/dashboard.js budget block. */
-export function computeDashboardBudget(state, userId, budgetMode = 'shared') {
+export function computeDashboardBudget(state, effectiveUserId, budgetMode = 'shared', authUserId = effectiveUserId) {
   ensureBudgetState(state);
   const currentMonth = new Date().toISOString().slice(0, 7);
   const { from, to } = monthRange(currentMonth);
   let rows = entriesInRange(state, from, to);
-  if (budgetMode === 'personal') {
-    rows = rows.filter((e) => entryOwnerId(e) === userId);
+  if (budgetMode === 'personal' || isProfileBudgetScope(effectiveUserId, authUserId)) {
+    rows = rows.filter((e) => entryOwnerId(e) === effectiveUserId);
   }
 
   let income = 0;
@@ -768,7 +777,7 @@ async function cloneMonthEntries(state, fromMonth, toMonth, userId) {
 /**
  * @returns {object|null} response body or null if not a budget route
  */
-export async function handleBudgetApi(method, parts, query, body, state, userId, findUser) {
+export async function handleBudgetApi(method, parts, query, body, state, effectiveUserId, findUser, authUserId = effectiveUserId) {
   ensureBudgetState(state);
   const m = method.toUpperCase();
   const sub = parts[1];
@@ -777,7 +786,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
   if (sub === 'summary' && m === 'GET') {
     const month = query.month || new Date().toISOString().slice(0, 7);
     if (!MONTH_RE.test(month)) throw apiError('month muss YYYY-MM sein', 400);
-    return { data: computeSummary(state, month, userId, query.scope) };
+    return { data: computeSummary(state, month, effectiveUserId, query.scope, authUserId) };
   }
 
   if (sub === 'meta' && m === 'GET') {
@@ -802,7 +811,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
         color: body.color || null,
         archived: 0,
         sort_order: state.budget_accounts.length,
-        created_by: userId,
+        created_by: effectiveUserId,
         created_at: nowIso(),
       };
       state.budget_accounts.push(account);
@@ -853,7 +862,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
         interest_mode: body.interest_mode || 'none',
         currency: body.currency || null,
         exchange_rate: Number(body.exchange_rate) || 1,
-        created_by: userId,
+        created_by: effectiveUserId,
         created_at: nowIso(),
       };
       state.budget_loans.push(loan);
@@ -869,7 +878,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
       if (!Number.isFinite(amount) || amount <= 0) throw apiError('Betrag muss größer als 0 sein.', 400);
       const existing = state.budget_plans.find((p) => p.category === planCat);
       if (existing) existing.amount = amount;
-      else state.budget_plans.push({ category: planCat, amount, created_by: userId });
+      else state.budget_plans.push({ category: planCat, amount, created_by: effectiveUserId });
       await saveState();
       return { data: { category: planCat, amount } };
     }
@@ -880,7 +889,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
     }
     if (m === 'GET') {
       const month = MONTH_RE.test(query.month || '') ? query.month : new Date().toISOString().slice(0, 7);
-      return { data: computePlanProgress(state, month, userId, query.scope) };
+      return { data: computePlanProgress(state, month, effectiveUserId, query.scope, authUserId) };
     }
   }
 
@@ -911,7 +920,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
   if (sub === 'clone-month' && m === 'POST') {
     const fromMonth = String(body.from_month || body.from || '').trim();
     const toMonth = String(body.to_month || body.to || query.month || '').trim();
-    const copied = await cloneMonthEntries(state, fromMonth, toMonth, userId);
+    const copied = await cloneMonthEntries(state, fromMonth, toMonth, effectiveUserId);
     return { data: { copied, from_month: fromMonth, to_month: toMonth } };
   }
 
@@ -923,7 +932,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
     await saveState();
     const { from, to } = monthRange(month);
     let rows = entriesInRange(state, from, to);
-    rows = filterEntriesForView(rows, userId, query.scope);
+    rows = filterEntriesForView(rows, effectiveUserId, query.scope, authUserId);
     if (query.category) rows = rows.filter((e) => e.category === query.category);
     if (query.account_id) rows = rows.filter((e) => e.account_id === Number(query.account_id));
     rows = rows.sort((a, b) => (b.date > a.date ? 1 : -1));
@@ -953,8 +962,8 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
       recurrence_virtual: isVirtual,
       recurrence_full_amount: fullAmount,
       visibility: body.visibility || (personal ? 'private' : 'shared'),
-      owner_id: userId,
-      created_by: userId,
+      owner_id: effectiveUserId,
+      created_by: effectiveUserId,
       created_at: nowIso(),
       updated_at: nowIso(),
     };
@@ -966,13 +975,13 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
   const entryId = Number(sub);
   if (Number.isInteger(entryId) && entryId > 0) {
     if (parts[2] === 'series') {
-      if (m === 'PUT') return await updateEntrySeries(state, entryId, body, findUser, userId);
-      if (m === 'DELETE') return await deleteEntrySeries(state, entryId, userId);
+      if (m === 'PUT') return await updateEntrySeries(state, entryId, body, findUser, effectiveUserId);
+      if (m === 'DELETE') return await deleteEntrySeries(state, entryId, effectiveUserId);
     }
 
     const entry = state.budget_entries.find((e) => e.id === entryId);
     if (m === 'PUT' && entry) {
-      if (!canEditEntry(entry, userId)) throw apiError('You cannot modify this entry.', 403);
+      if (!canEditEntry(entry, effectiveUserId)) throw apiError('You cannot modify this entry.', 403);
       Object.assign(entry, {
         title: body.title ?? entry.title,
         amount: body.amount !== undefined ? Number(body.amount) : entry.amount,
@@ -986,7 +995,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
       return { data: enrichEntry(state, entry, findUser) };
     }
     if (m === 'DELETE' && entry) {
-      if (!canEditEntry(entry, userId)) throw apiError('You cannot modify this entry.', 403);
+      if (!canEditEntry(entry, effectiveUserId)) throw apiError('You cannot modify this entry.', 403);
       if (entry.recurrence_parent_id) {
         const month = entry.date.slice(0, 7);
         state.budget_recurrence_skipped.push({ parent_id: entry.recurrence_parent_id, month });

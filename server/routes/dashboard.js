@@ -207,8 +207,10 @@ router.get('/', (req, res) => {
     const from = `${currentMonth}-01`;
     const to = `${currentMonth}-31`;
     // Persönlich/geteilt (#476/#505): im personal-Modus zeigt das Dashboard-Widget
-    // das eigene Budget (owner_id = me), sonst das gesamte Haushaltsbudget.
-    const ownerClause = resolveBudgetMode(d) === 'personal' ? ' AND owner_id = ?' : '';
+    // das eigene Budget (owner_id = me). Bei Profilwechsel (admin → Mitglied)
+    // ebenfalls nur Einträge dieser Person — auch wenn budget_mode noch shared ist.
+    const profileScoped = Number(profileUserId) !== Number(authUserId);
+    const ownerClause = (resolveBudgetMode(d) === 'personal' || profileScoped) ? ' AND owner_id = ?' : '';
     const ownerParams = ownerClause ? [profileUserId] : [];
 
     const totals = d.prepare(`

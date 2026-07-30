@@ -9,7 +9,7 @@ import * as db from '../../db.js';
 import { str, oneOf, date as validateDate, num, rrule, collectErrors, MAX_TITLE, MONTH_RE } from '../../middleware/validate.js';
 import { normalizeBudgetVisibility } from '../../services/budget-visibility.js';
 import {
-  budgetFilter, getBudgetMode, mayEdit,
+  budgetFilter, getBudgetMode, mayEdit, viewerId,
   DATE_RE, thisMonthLocalKey, cents,
   generateRecurringInstances, RECURRENCE_INTERVAL_KEYS, effectiveMonthly,
   validCategoryKeys, defaultCategory, validateSubcategory, validateAccountRef,
@@ -243,7 +243,7 @@ router.post('/', (req, res) => {
 
     // Eigentümerschaft (fix = Ersteller:in) + Sichtbarkeit (#476/#505).
     // Default-Sichtbarkeit hängt vom Haushalts-Modus ab: personal → private.
-    const me = req.authUserId || req.session.userId;
+    const me = viewerId(req);
     const visibility = normalizeBudgetVisibility(
       req.body.visibility,
       getBudgetMode() === 'personal' ? 'private' : 'shared'

@@ -551,7 +551,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
       birthdays: [],
       birthdayCount: state.birthdays?.length ?? 0,
       users: state.users.map(publicUser),
-      budget: computeDashboardBudget(state, effectiveUserId, budgetMode),
+      budget: computeDashboardBudget(state, effectiveUserId, budgetMode, userId),
       rewards: { standings: [], participantCount: 0, pending: 0 },
       health: {
         hasMeds: false,
@@ -1020,7 +1020,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
   }
 
   if (resource === 'budget') {
-    const budgetResult = await handleBudgetApi(m, parts, query, body, state, effectiveUserId, findUser);
+    const budgetResult = await handleBudgetApi(m, parts, query, body, state, effectiveUserId, findUser, userId);
     if (budgetResult !== null) return budgetResult;
     throw apiError('Not found.', 404);
   }
