@@ -2,7 +2,7 @@
  * Local API handlers for budget module (IndexedDB-backed).
  */
 
-import { saveState, nextId, nowIso } from './store.js';
+import { saveState, nowIso } from './store.js';
 import { DEFAULT_BUDGET_CATEGORIES, DEFAULT_BUDGET_SUBCATEGORIES } from './budget-seed.js';
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
@@ -16,10 +16,18 @@ export function ensureBudgetState(state) {
   if (!Array.isArray(state.budget_loans)) state.budget_loans = [];
   if (!Array.isArray(state.budget_loan_payments)) state.budget_loan_payments = [];
   if (!Array.isArray(state.budget_plans)) state.budget_plans = [];
+  if (!Array.isArray(state.budget_recurrence_skipped)) state.budget_recurrence_skipped = [];
   if (!state.budget_categories.length) {
     state.budget_categories = DEFAULT_BUDGET_CATEGORIES.map((c) => ({ ...c }));
     state.budget_subcategories = DEFAULT_BUDGET_SUBCATEGORIES.map((s) => ({ ...s }));
   }
+}
+
+function bumpId(state) {
+  if (!state.nextId) state.nextId = 1;
+  const id = state.nextId;
+  state.nextId += 1;
+  return id;
 }
 
 function monthRange(month) {
@@ -337,10 +345,314 @@ function computeStats(state, range, anchor) {
   };
 }
 
-function apiError(message, status) {
+function apiError(message, status, data = null) {
   const err = new Error(message);
   err.status = status;
+  err.data = data;
   return err;
+}
+
+function slugKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 48) || 'item';
+}
+
+function uniqueCategoryKey(state, name) {
+  let key = slugKey(name);
+  let n = 0;
+  while (state.budget_categories.some((c) => c.key === key)) {
+    n += 1;
+    key = `${slugKey(name)}_${n}`;
+  }
+  return key;
+}
+
+function uniqueSubcategoryKey(state, categoryKey, name) {
+  let key = `${categoryKey}_${slugKey(name)}`;
+  let n = 0;
+  while (state.budget_subcategories.some((s) => s.key === key)) {
+    n += 1;
+    key = `${categoryKey}_${slugKey(name)}_${n}`;
+  }
+  return key;
+}
+
+function categoryInUseCount(state, key) {
+  return state.budget_entries.filter((e) => e.category === key).length;
+}
+
+function subcategoryInUseCount(state, key) {
+  return state.budget_entries.filter((e) => e.subcategory === key).length;
+}
+
+function listCategoriesForManager(state) {
+  const subsByCat = {};
+  for (const sub of state.budget_subcategories) {
+    if (!subsByCat[sub.category_key]) subsByCat[sub.category_key] = [];
+    subsByCat[sub.category_key].push(sub);
+  }
+  return [...state.budget_categories]
+    .sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'expense' ? -1 : 1;
+      return a.sort_order - b.sort_order;
+    })
+    .map((cat) => ({
+      ...cat,
+      subcategories: (subsByCat[cat.key] || []).sort((a, b) => a.sort_order - b.sort_order),
+    }));
+}
+
+function monthsPerInterval(interval) {
+  return interval === 'yearly' ? 12 : interval === 'half_year' ? 6 : 1;
+}
+
+function effectiveMonthly(amount, interval) {
+  return Math.round((Number(amount || 0) / monthsPerInterval(interval)) * 100) / 100;
+}
+
+function generateRecurringInstances(state, month) {
+  if (!Array.isArray(state.budget_recurrence_skipped)) state.budget_recurrence_skipped = [];
+  const [y, m] = month.split('-').map(Number);
+  const monthStart = `${month}-01`;
+  const monthEnd = `${month}-31`;
+
+  const originals = state.budget_entries.filter((e) =>
+    e.is_recurring === 1
+    && !e.recurrence_parent_id
+    && e.date.slice(0, 7) < month,
+  );
+
+  for (const orig of originals) {
+    if (state.budget_recurrence_skipped.some((s) => s.parent_id === orig.id && s.month === month)) {
+      continue;
+    }
+    const existing = state.budget_entries.some((e) =>
+      e.recurrence_parent_id === orig.id
+      && e.date >= monthStart
+      && e.date <= monthEnd,
+    );
+    if (existing) continue;
+
+    const interval = orig.recurrence_interval || 'monthly';
+    if (!orig.recurrence_virtual) {
+      const [oy, om] = orig.date.split('-').map(Number);
+      const monthsDiff = (y - oy) * 12 + (m - om);
+      if (monthsDiff < 1 || monthsDiff % monthsPerInterval(interval) !== 0) continue;
+    }
+
+    const origDay = parseInt(orig.date.split('-')[2], 10);
+    const lastDay = new Date(y, m, 0).getDate();
+    const instanceDay = Math.min(origDay, lastDay);
+    const instanceDate = `${month}-${String(instanceDay).padStart(2, '0')}`;
+
+    state.budget_entries.push({
+      id: bumpId(state),
+      title: orig.title,
+      amount: orig.amount,
+      category: orig.category,
+      subcategory: orig.subcategory || '',
+      date: instanceDate,
+      is_recurring: 0,
+      recurrence_parent_id: orig.id,
+      recurrence_interval: null,
+      recurrence_virtual: 0,
+      recurrence_full_amount: null,
+      account_id: orig.account_id ?? null,
+      visibility: orig.visibility || 'shared',
+      created_by: orig.created_by,
+      created_at: nowIso(),
+      updated_at: nowIso(),
+    });
+  }
+}
+
+async function handleCategoriesRoute(m, tail, body, state) {
+  if (m === 'GET' && tail.length === 0) {
+    return { data: listCategoriesForManager(state), lang: 'de' };
+  }
+
+  if (m === 'POST' && tail.length === 0) {
+    const name = String(body.name || '').trim();
+    const type = body.type === 'income' ? 'income' : 'expense';
+    if (!name) throw apiError('Name is required.', 400);
+    const conflict = state.budget_categories.find(
+      (c) => c.type === type && c.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (conflict) throw apiError('Category already exists.', 409, { reason: 'category_exists' });
+    const maxOrder = state.budget_categories
+      .filter((c) => c.type === type)
+      .reduce((max, c) => Math.max(max, c.sort_order), -1);
+    const cat = {
+      key: uniqueCategoryKey(state, name),
+      name,
+      type,
+      sort_order: maxOrder + 1,
+    };
+    state.budget_categories.push(cat);
+    await saveState();
+    return { data: { ...cat, subcategories: [] } };
+  }
+
+  if (m === 'PATCH' && tail[0] === 'reorder') {
+    const type = body.type === 'income' ? 'income' : 'expense';
+    const order = Array.isArray(body.order) ? body.order.map(String) : [];
+    order.forEach((key, i) => {
+      const cat = state.budget_categories.find((c) => c.key === key && c.type === type);
+      if (cat) cat.sort_order = i;
+    });
+    await saveState();
+    return { data: true };
+  }
+
+  if (tail.length === 1 && m === 'PUT') {
+    const cat = state.budget_categories.find((c) => c.key === tail[0]);
+    if (!cat) throw apiError('Category not found.', 404);
+    const name = String(body.name || '').trim();
+    if (!name) throw apiError('Name is required.', 400);
+    const conflict = state.budget_categories.find(
+      (c) => c.type === cat.type && c.key !== cat.key && c.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (conflict) throw apiError('Category already exists.', 409, { reason: 'category_exists' });
+    cat.name = name;
+    await saveState();
+    const subs = state.budget_subcategories.filter((s) => s.category_key === cat.key);
+    return { data: { ...cat, subcategories: subs } };
+  }
+
+  if (tail.length === 1 && m === 'DELETE') {
+    const cat = state.budget_categories.find((c) => c.key === tail[0]);
+    if (!cat) throw apiError('Category not found.', 404);
+    const inUse = categoryInUseCount(state, cat.key);
+    if (inUse > 0) {
+      throw apiError(`Category is in use by ${inUse} entries.`, 409, { reason: 'category_in_use', count: inUse });
+    }
+    const sameType = state.budget_categories.filter((c) => c.type === cat.type);
+    if (sameType.length <= 1) {
+      throw apiError('Cannot delete the last category.', 409, { reason: 'category_last' });
+    }
+    state.budget_categories = state.budget_categories.filter((c) => c.key !== cat.key);
+    state.budget_subcategories = state.budget_subcategories.filter((s) => s.category_key !== cat.key);
+    await saveState();
+    return { ok: true };
+  }
+
+  if (m === 'POST' && tail.length === 2 && tail[1] === 'subcategories') {
+    const cat = state.budget_categories.find((c) => c.key === tail[0] && c.type === 'expense');
+    if (!cat) throw apiError('Category not found.', 404);
+    const name = String(body.name || '').trim();
+    if (!name) throw apiError('Name is required.', 400);
+    const conflict = state.budget_subcategories.find(
+      (s) => s.category_key === cat.key && s.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (conflict) throw apiError('Subcategory already exists.', 409, { reason: 'subcategory_exists' });
+    const maxOrder = state.budget_subcategories
+      .filter((s) => s.category_key === cat.key)
+      .reduce((max, s) => Math.max(max, s.sort_order), -1);
+    const sub = {
+      key: uniqueSubcategoryKey(state, cat.key, name),
+      category_key: cat.key,
+      name,
+      sort_order: maxOrder + 1,
+    };
+    state.budget_subcategories.push(sub);
+    await saveState();
+    return { data: sub };
+  }
+
+  if (tail.length === 3 && tail[1] === 'subcategories' && m === 'PUT') {
+    const sub = state.budget_subcategories.find((s) => s.category_key === tail[0] && s.key === tail[2]);
+    if (!sub) throw apiError('Subcategory not found.', 404);
+    const name = String(body.name || '').trim();
+    if (!name) throw apiError('Name is required.', 400);
+    const conflict = state.budget_subcategories.find(
+      (s) => s.category_key === tail[0] && s.key !== tail[2] && s.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (conflict) throw apiError('Subcategory already exists.', 409, { reason: 'subcategory_exists' });
+    sub.name = name;
+    await saveState();
+    return { data: sub };
+  }
+
+  if (tail.length === 3 && tail[1] === 'subcategories' && m === 'DELETE') {
+    const sub = state.budget_subcategories.find((s) => s.category_key === tail[0] && s.key === tail[2]);
+    if (!sub) throw apiError('Subcategory not found.', 404);
+    const inUse = subcategoryInUseCount(state, sub.key);
+    if (inUse > 0) {
+      throw apiError(`Subcategory is in use by ${inUse} entries.`, 409, { reason: 'subcategory_in_use', count: inUse });
+    }
+    const siblings = state.budget_subcategories.filter((s) => s.category_key === tail[0]);
+    if (siblings.length <= 1) {
+      throw apiError('Cannot delete the last subcategory.', 409, { reason: 'subcategory_last' });
+    }
+    state.budget_subcategories = state.budget_subcategories.filter((s) => s.key !== sub.key);
+    await saveState();
+    return { ok: true };
+  }
+
+  if (m === 'PATCH' && tail.length === 3 && tail[1] === 'subcategories' && tail[2] === 'reorder') {
+    const categoryKey = tail[0];
+    const order = Array.isArray(body.order) ? body.order.map(String) : [];
+    order.forEach((key, i) => {
+      const sub = state.budget_subcategories.find((s) => s.key === key && s.category_key === categoryKey);
+      if (sub) sub.sort_order = i;
+    });
+    await saveState();
+    return { data: true };
+  }
+
+  throw apiError('Not found.', 404);
+}
+
+async function cloneMonthEntries(state, fromMonth, toMonth, userId) {
+  if (!MONTH_RE.test(fromMonth) || !MONTH_RE.test(toMonth)) {
+    throw apiError('month must be YYYY-MM', 400);
+  }
+  if (fromMonth === toMonth) throw apiError('Source and target month must differ.', 400);
+  const { from, to } = monthRange(fromMonth);
+  const sources = state.budget_entries.filter((e) =>
+    e.date >= from
+    && e.date <= to
+    && !e.recurrence_parent_id
+    && !e.is_recurring,
+  );
+  let copied = 0;
+  const [ty, tm] = toMonth.split('-').map(Number);
+  const lastDay = new Date(ty, tm, 0).getDate();
+  for (const src of sources) {
+    const day = Math.min(parseInt(src.date.slice(8, 10), 10), lastDay);
+    const newDate = `${toMonth}-${String(day).padStart(2, '0')}`;
+    const dup = state.budget_entries.some((e) =>
+      e.date === newDate
+      && e.title === src.title
+      && e.amount === src.amount
+      && e.category === src.category,
+    );
+    if (dup) continue;
+    state.budget_entries.push({
+      id: bumpId(state),
+      title: src.title,
+      amount: src.amount,
+      category: src.category,
+      subcategory: src.subcategory || null,
+      date: newDate,
+      account_id: src.account_id ?? null,
+      is_recurring: 0,
+      recurrence_parent_id: null,
+      recurrence_interval: null,
+      recurrence_virtual: 0,
+      recurrence_full_amount: null,
+      visibility: src.visibility || 'shared',
+      created_by: userId,
+      created_at: nowIso(),
+      updated_at: nowIso(),
+    });
+    copied += 1;
+  }
+  await saveState();
+  return copied;
 }
 
 /**
@@ -370,7 +682,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
       return { data: { accounts, net_worth } };
     }
     if (m === 'POST') {
-      const id = nextId();
+      const id = bumpId(state);
       const account = {
         id,
         name: String(body.name || '').trim(),
@@ -413,7 +725,7 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
       return { data: loansPayload(state, baseCurrency) };
     }
     if (m === 'POST') {
-      const id = nextId();
+      const id = bumpId(state);
       const loan = {
         id,
         title: String(body.title || '').trim(),
@@ -483,13 +795,22 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
   }
 
   if (sub === 'categories') {
-    if (m === 'GET') return { data: loadBudgetMeta(state).categories, lang: 'de' };
+    return await handleCategoriesRoute(m, parts.slice(2), body, state);
+  }
+
+  if (sub === 'clone-month' && m === 'POST') {
+    const fromMonth = String(body.from_month || body.from || '').trim();
+    const toMonth = String(body.to_month || body.to || query.month || '').trim();
+    const copied = await cloneMonthEntries(state, fromMonth, toMonth, userId);
+    return { data: { copied, from_month: fromMonth, to_month: toMonth } };
   }
 
   // GET/POST /budget — entries list or create
   if (!sub && m === 'GET') {
     const month = query.month || new Date().toISOString().slice(0, 7);
     if (!MONTH_RE.test(month)) throw apiError('month muss YYYY-MM sein', 400);
+    generateRecurringInstances(state, month);
+    await saveState();
     const { from, to } = monthRange(month);
     let rows = entriesInRange(state, from, to);
     if (query.category) rows = rows.filter((e) => e.category === query.category);
@@ -499,17 +820,26 @@ export async function handleBudgetApi(method, parts, query, body, state, userId,
   }
 
   if (!sub && m === 'POST') {
-    const id = nextId();
+    const id = bumpId(state);
+    const isRecurring = body.is_recurring ? 1 : 0;
+    const interval = isRecurring ? (body.recurrence_interval || 'monthly') : 'monthly';
+    const isVirtual = isRecurring && body.recurrence_virtual ? 1 : 0;
+    const rawAmount = Number(body.amount);
+    const storeAmount = isVirtual ? effectiveMonthly(rawAmount, interval) : rawAmount;
+    const fullAmount = isVirtual ? rawAmount : null;
     const entry = {
       id,
       title: String(body.title || '').trim(),
-      amount: Number(body.amount),
+      amount: storeAmount,
       category: body.category || 'financial_other',
       subcategory: body.subcategory || null,
       date: body.date || new Date().toISOString().slice(0, 10),
       account_id: body.account_id ? Number(body.account_id) : null,
-      is_recurring: body.is_recurring ? 1 : 0,
-      recurrence_rule: body.recurrence_rule || null,
+      is_recurring: isRecurring,
+      recurrence_parent_id: null,
+      recurrence_interval: isRecurring ? interval : null,
+      recurrence_virtual: isVirtual,
+      recurrence_full_amount: fullAmount,
       visibility: body.visibility || 'shared',
       created_by: userId,
       created_at: nowIso(),

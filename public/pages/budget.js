@@ -29,6 +29,7 @@ import '/components/category-manager.js';
 // aus, damit reines Ausgaben-Tracking nicht als roter Minus-Saldo missverstanden wird.
 // Reine Client-Ansicht (kein Server-Pref), analog zu documents-view/Kalender-Layern.
 const EXPENSES_ONLY_KEY = 'my-hub-budget-expenses-only';
+const HIDE_AMOUNTS_KEY = 'my-hub-budget-hide-amounts';
 
 const SUBCATEGORY_I18N = () => ({
   rent_mortgage:            t('budget.subcatRentMortgage'),
@@ -183,6 +184,7 @@ let state = {
   budgetMode:  'shared',      // 'shared' (Altverhalten) | 'personal' (#476/#505)
   scope:       'mine',        // Ansichts-Filter im personal-Modus: 'mine' | 'household'
   expensesOnly: false,        // Anzeige „Nur Ausgaben" (#504): Einnahmen+Saldo ausblenden
+  hideAmounts: false,         // Beträge maskieren (sensible Daten)
   meta:        { expenseCategories: [], incomeCategories: [], expenseSubcategories: {} },
 };
 let _container = null;
@@ -217,6 +219,7 @@ function tabCaps() {
 // currency-Override für Darlehen in Fremdwährung (#582); ohne Argument gilt
 // unverändert die haushaltweite Budget-Währung.
 function formatAmount(n, currency = state.currency) {
+  if (state.hideAmounts) return '••••';
   return getNumberFormat({ style: 'currency', currency }).format(n);
 }
 
@@ -340,6 +343,7 @@ export async function render(container, { user }) {
     } catch (_) { /* Fallback auf EUR */ }
   }
   state.expensesOnly = localStorage.getItem(EXPENSES_ONLY_KEY) === '1';
+  state.hideAmounts = localStorage.getItem(HIDE_AMOUNTS_KEY) === '1';
 
   setHtml(container, `
     <div class="budget-page">
@@ -590,6 +594,18 @@ function renderBody() {
         <i data-lucide="receipt" class="icon-sm" aria-hidden="true"></i>
         <span>${t('budget.expensesOnly')}</span>
       </button>
+      <button class="budget-expenses-toggle${state.hideAmounts ? ' budget-expenses-toggle--active' : ''}"
+              id="budget-hide-amounts" type="button" role="switch"
+              aria-checked="${state.hideAmounts ? 'true' : 'false'}"
+              title="${t('budget.hideAmountsHint')}">
+        <i data-lucide="eye-off" class="icon-sm" aria-hidden="true"></i>
+        <span>${t('budget.hideAmounts')}</span>
+      </button>
+      <button class="btn btn--secondary btn--sm" id="budget-copy-prev-month" type="button"
+              title="${t('budget.copyFromPrevMonthHint')}">
+        <i data-lucide="copy" class="icon-sm" aria-hidden="true"></i>
+        <span>${t('budget.copyFromPrevMonth')}</span>
+      </button>
     </div>
     <!-- Zusammenfassung -->
     <div class="budget-summary${expensesOnly ? ' budget-summary--expenses-only' : ''}">
@@ -646,6 +662,32 @@ function renderBody() {
     try { localStorage.setItem(EXPENSES_ONLY_KEY, state.expensesOnly ? '1' : '0'); } catch (_) { /* Private-Mode: nur diese Sitzung */ }
     vibrate(10);
     renderBody();
+  });
+  _container.querySelector('#budget-hide-amounts')?.addEventListener('click', () => {
+    state.hideAmounts = !state.hideAmounts;
+    try { localStorage.setItem(HIDE_AMOUNTS_KEY, state.hideAmounts ? '1' : '0'); } catch (_) { /* Private-Mode */ }
+    vibrate(10);
+    renderBody();
+  });
+  _container.querySelector('#budget-copy-prev-month')?.addEventListener('click', async () => {
+    const fromMonth = addMonths(state.month, -1);
+    const btn = _container.querySelector('#budget-copy-prev-month');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await api.post('/budget/clone-month', { from_month: fromMonth, to_month: state.month });
+      const copied = res.data?.copied ?? 0;
+      if (copied > 0) {
+        await loadMonth(state.month);
+        renderBody();
+        window.myHub?.showToast(t('budget.copyFromPrevMonthDone', { count: copied }), 'success');
+      } else {
+        window.myHub?.showToast(t('budget.copyFromPrevMonthEmpty'), 'default');
+      }
+    } catch (err) {
+      window.myHub?.showToast(err?.message || t('budget.loadError'), 'danger');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   });
   _container.querySelector('#budget-manage-categories')?.addEventListener('click', openCategoryManager);
   _container.querySelector('#budget-clear-account-filter')?.addEventListener('click', async () => {
@@ -1622,6 +1664,7 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
             <span>${t('budget.virtualBudgetLabel')}</span>
           </label>
           <p style="color:var(--color-text-secondary);font-size:var(--text-sm);margin-top:var(--space-1)">${t('budget.virtualBudgetHint')}</p>
+          <p class="form-hint" style="margin-top:var(--space-2)">${t('budget.recurringAutoHint')}</p>
         </div>`,
         { open: isEdit && (entry.is_recurring || !!entry.subcategory || entry.account_id != null) })}
     </div>

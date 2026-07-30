@@ -116,7 +116,11 @@ export async function loadState() {
 
 export async function saveState() {
   if (!_state) return;
-  await idbSet(STORE_KEY, _state);
+  try {
+    await idbSet(STORE_KEY, _state);
+  } catch {
+    /* IndexedDB unavailable (tests, restricted environments) */
+  }
 }
 
 export async function resetState(seed) {
