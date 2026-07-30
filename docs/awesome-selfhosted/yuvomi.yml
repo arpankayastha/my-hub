@@ -1,0 +1,14 @@
+name: Yuvomi
+website_url: "https://yuvomi.cloud/"
+source_code_url: "https://github.com/ulsklyc/yuvomi"
+description: "Family planner with shared tasks and a rewards/points system, shopping lists, meal planning, pantry stock with expiry tracking, calendar & contact sync (Google, CalDAV/CardDAV), budgeting, split expenses, notes, housekeeping, and per-member health tracking. PWA with offline support."
+licenses:
+  - MIT
+platforms:
+  - Nodejs
+  - Docker
+tags:
+  - Groupware
+  - Task Management & To-do Lists
+  - Money, Budgeting & Management
+  - Recipe Management
