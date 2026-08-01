@@ -40,6 +40,8 @@ import {
 const VALID_PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
 const VALID_STATUSES = ['open', 'in_progress', 'done', 'archived'];
 const VALID_MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
+const MAX_AVATAR_DATA_LENGTH = 768 * 1024;
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseJson(val, fallback) {
   try {
@@ -100,6 +102,108 @@ function apiError(message, status, data = null) {
   err.status = status;
   err.data = data;
   return err;
+}
+
+function normalizeAvatarData(value) {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  if (typeof value !== 'string') return { error: 'Avatar image must be a data URL string.' };
+  if (value.length > MAX_AVATAR_DATA_LENGTH) return { error: 'Avatar image is too large.' };
+  if (!/^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(value)) {
+    return { error: 'Avatar image must be PNG, JPEG, or WebP.' };
+  }
+  return value;
+}
+
+function validateMemberProfileFields(body) {
+  const errors = [];
+  const values = { phone: undefined, email: undefined, birth_date: undefined };
+  if (body.phone !== undefined) {
+    const phone = String(body.phone || '').trim();
+    if (phone.length > 64) errors.push('Phone number may be at most 64 characters long.');
+    else values.phone = phone || null;
+  }
+  if (body.email !== undefined) {
+    const email = String(body.email || '').trim();
+    if (email.length > 128) errors.push('Email may be at most 128 characters long.');
+    else values.email = email || null;
+  }
+  if (body.birth_date !== undefined) {
+    const raw = body.birth_date;
+    if (raw === null || raw === '') values.birth_date = null;
+    else if (!ISO_DATE_RE.test(String(raw))) errors.push('Birthday date must be YYYY-MM-DD.');
+    else values.birth_date = String(raw);
+  }
+  return { values, errors };
+}
+
+function syncLocalFamilyMemberArtifacts(state, userId, {
+  displayName,
+  phone,
+  email,
+  birthDate,
+  avatarData,
+  actorUserId,
+} = {}) {
+  const user = findUser(userId);
+  if (!user) return;
+  const name = displayName || user.display_name;
+  const photo = avatarData !== undefined ? avatarData : user.avatar_data;
+
+  const contact = state.contacts?.find((c) => Number(c.family_user_id) === Number(userId));
+  if (contact) {
+    contact.name = name;
+    if (phone !== undefined) contact.phone = phone;
+    if (email !== undefined) contact.email = email;
+    if (contact.name !== name) {
+      contact.first_name = null;
+      contact.last_name = null;
+      contact.middle_name = null;
+      contact.name_prefix = null;
+      contact.name_suffix = null;
+    }
+  } else if (state.contacts) {
+    state.contacts.push({
+      id: nextId(),
+      name,
+      category: 'Sonstiges',
+      phone: phone ?? null,
+      email: email ?? null,
+      family_user_id: userId,
+      first_name: null,
+      last_name: null,
+      middle_name: null,
+      name_prefix: null,
+      name_suffix: null,
+      created_at: nowIso(),
+    });
+  }
+
+  const birthday = state.birthdays?.find((b) => Number(b.family_user_id) === Number(userId));
+  if (birthDate === null) {
+    if (birthday && state.birthdays) {
+      const idx = state.birthdays.findIndex((b) => b.id === birthday.id);
+      if (idx !== -1) state.birthdays.splice(idx, 1);
+    }
+    return;
+  }
+  if (birthday) {
+    birthday.name = name;
+    if (birthDate !== undefined) birthday.birth_date = birthDate ?? birthday.birth_date;
+    if (avatarData !== undefined) birthday.photo_data = photo ?? null;
+    birthday.updated_at = nowIso();
+  } else if (birthDate && state.birthdays) {
+    state.birthdays.push({
+      id: nextId(),
+      name,
+      birth_date: birthDate,
+      photo_data: photo ?? null,
+      created_by: actorUserId || userId,
+      family_user_id: userId,
+      created_at: nowIso(),
+      updated_at: nowIso(),
+    });
+  }
 }
 
 function findUser(id) {
@@ -288,6 +392,70 @@ export async function handleLocalApi(method, path, body, query = {}) {
       const user = findUser(userId);
       if (!user) throw apiError('User not found.', 401);
       return authMePayload(user);
+    }
+    if (sub === 'me' && parts[2] === 'profile' && m === 'PATCH') {
+      const userId = requireAuth();
+      const existing = findUser(userId);
+      if (!existing) throw apiError('User not found.', 404);
+
+      const display_name = body.display_name !== undefined
+        ? String(body.display_name || '').trim()
+        : existing.display_name;
+      const avatar_color = body.avatar_color !== undefined
+        ? String(body.avatar_color || '').trim()
+        : existing.avatar_color;
+      const avatar_data = body.avatar_data !== undefined
+        ? normalizeAvatarData(body.avatar_data)
+        : existing.avatar_data;
+      const memberFields = validateMemberProfileFields(body);
+
+      if (!display_name) throw apiError('Display name is required.', 400);
+      if (display_name.length > 128) {
+        throw apiError('Display name may be at most 128 characters long.', 400);
+      }
+      if (avatar_data?.error) throw apiError(avatar_data.error, 400);
+      if (memberFields.errors.length) {
+        throw apiError(memberFields.errors.join(' '), 400);
+      }
+
+      existing.display_name = display_name;
+      existing.avatar_color = avatar_color || '#007AFF';
+      existing.avatar_data = avatar_data ?? null;
+      if (memberFields.values.phone !== undefined) existing.phone = memberFields.values.phone;
+      if (memberFields.values.email !== undefined) existing.email = memberFields.values.email;
+      if (memberFields.values.birth_date !== undefined) existing.birth_date = memberFields.values.birth_date;
+
+      syncLocalFamilyMemberArtifacts(state, userId, {
+        displayName: display_name,
+        phone: memberFields.values.phone,
+        email: memberFields.values.email,
+        birthDate: memberFields.values.birth_date,
+        avatarData: avatar_data ?? null,
+        actorUserId: userId,
+      });
+
+      await saveState();
+      return { user: publicUser(existing) };
+    }
+    if (sub === 'me' && parts[2] === 'password' && m === 'PATCH') {
+      const userId = requireAuth();
+      const existing = findUser(userId);
+      if (!existing) throw apiError('User not found.', 404);
+
+      const current_password = body.current_password;
+      const new_password = body.new_password;
+      if (!current_password || !new_password) {
+        throw apiError('Current and new password are required.', 400);
+      }
+      if (String(new_password).length < 8) {
+        throw apiError('New password must be at least 8 characters long.', 400);
+      }
+      if (!verifyPasswordSimple(current_password, existing.password_hash)) {
+        throw apiError('Current password is incorrect.', 401);
+      }
+      existing.password_hash = hashPasswordSimple(new_password);
+      await saveState();
+      return { ok: true };
     }
     if (sub === 'context' && m === 'POST') {
       const authId = requireAuth();

@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.16] - 2026-08-01
+
+### Fixed
+- Personal → Account → My Profile save on GitHub Pages / local mode (`PATCH /auth/me/profile` and password change were missing from the local API).
+
 ## [1.1.15] - 2026-07-30
 
 ### Fixed
