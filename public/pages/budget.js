@@ -20,6 +20,7 @@ import { toLocalDateKey } from '/utils/date.js';
 import { budgetCategoryLabel } from '/utils/category-labels.js';
 import { englishBudgetSubcategoryLabel } from '/utils/budget-category-defaults.js';
 import { appendCurrencyOptions } from '/settings/currency.js';
+import { wireHorizontalSwipe } from '/utils/horizontal-swipe.js';
 import '/components/category-manager.js';
 
 // --------------------------------------------------------
@@ -192,6 +193,7 @@ let _container = null;
 let _user = null;
 let _tablist = null;   // wireTablist-Handle: erlaubt programmatische Tab-Wechsel (sync)
 let _scopeTablist = null;
+let _monthSwipeDispose = null;
 
 // Fähigkeiten je Untertab — EINE Quelle für Monatsnavigation, Toolbar-„+" und FAB.
 // Vorher lagen diese drei Entscheidungen in getrennten Ausschluss-Listen, was sich
@@ -417,17 +419,24 @@ export async function render(container, { user }) {
 // Navigation
 // --------------------------------------------------------
 
+async function goMonth(delta) {
+  if (!tabCaps().month) return;
+  await loadMonth(addMonths(state.month, delta));
+  renderBody();
+  updateLabel();
+}
+
 function wireNav() {
-  _container.querySelector('#budget-prev').addEventListener('click', async () => {
-    await loadMonth(addMonths(state.month, -1));
-    renderBody();
-    updateLabel();
+  _monthSwipeDispose?.();
+  const body = _container.querySelector('#budget-body');
+  _monthSwipeDispose = wireHorizontalSwipe(body, {
+    onSwipeLeft: () => goMonth(1),
+    onSwipeRight: () => goMonth(-1),
+    isEnabled: () => tabCaps().month,
   });
-  _container.querySelector('#budget-next').addEventListener('click', async () => {
-    await loadMonth(addMonths(state.month, 1));
-    renderBody();
-    updateLabel();
-  });
+
+  _container.querySelector('#budget-prev').addEventListener('click', () => goMonth(-1));
+  _container.querySelector('#budget-next').addEventListener('click', () => goMonth(1));
   _container.querySelector('#budget-today').addEventListener('click', async () => {
     const today = new Date();
     const m = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;

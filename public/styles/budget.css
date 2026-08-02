@@ -37,6 +37,7 @@
 #budget-body {
   padding-inline: var(--page-inline-pad);
   container: budget-page / inline-size;
+  touch-action: pan-y pinch-zoom;
 }
 
 /* Split-Expenses und Abonnements bringen als eigenständige Gast-Routen ihr

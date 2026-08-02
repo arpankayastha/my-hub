@@ -45,6 +45,14 @@ test('TAB_CAPS ist die einzige Quelle für Monatsnavigation und Neu-Aktion', () 
   assert.match(table[0], /'reports':\s*\{ month: false,\s*add: null/);
 });
 
+test('Monatsnavigation per Wischgeste auf dem Monatsinhalt', () => {
+  assert.match(budget, /wireHorizontalSwipe/);
+  assert.match(budget, /onSwipeLeft: \(\) => goMonth\(1\)/);
+  assert.match(budget, /onSwipeRight: \(\) => goMonth\(-1\)/);
+  assert.match(budget, /isEnabled: \(\) => tabCaps\(\)\.month/);
+  assert.match(budgetCss, /#budget-body[\s\S]{0,160}touch-action:\s*pan-y/);
+});
+
 test('Monats-Bedienelemente werden als Block geschaltet, nicht einzeln', () => {
   // Der frühere Bug: prev/next versteckt, Label und "Aktuell" blieben stehen.
   const block = budget.match(/\['#budget-prev', '#budget-next', '#budget-today', '#budget-label'\][\s\S]{0,220}/);
