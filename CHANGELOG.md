@@ -2,6 +2,17 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.19] - 2026-08-04
+
+### Added
+- Global glass surfaces (`app-glass-surfaces.css`) — login card, empty states, and shared monthly hero panels.
+- Budget monthly hero: month title, transaction count, and income-vs-expenses flow bar (no day calendar).
+- Health monthly overview hero: month label, 30-day adherence, due today, and streak above person chips.
+- Liquid glass extended to Settings (module tint + frosted cards).
+
+### Changed
+- Overview, Budget, Health, and Settings use the scoped liquid-glass layer; Plan and Kitchen modules unchanged.
+
 ## [1.1.18] - 2026-08-04
 
 ### Added

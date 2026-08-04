@@ -15,7 +15,7 @@
  *   → bypassCacheUntil (in-memory + Cache API für SW-Restart-Robustheit)
  */
 
-const APP_RELEASE   = '1.1.18';
+const APP_RELEASE   = '1.1.19';
 const SHELL_CACHE   = `my-hub-shell-${APP_RELEASE}`;
 const PAGES_CACHE   = `my-hub-pages-${APP_RELEASE}`;
 const LOCALES_CACHE = `my-hub-locales-${APP_RELEASE}`;
@@ -48,6 +48,7 @@ const APP_SHELL = [
   '/styles/pwa.css',
   '/styles/layout.css',
   '/styles/glass.css',
+  '/styles/app-glass-surfaces.css',
   '/styles/module-liquid-glass.css',
   '/styles/login.css',
   '/styles/reminders.css',

@@ -132,7 +132,7 @@ function updateThemeColorForRoute(route) {
 let activePageStyle = null;
 let activeLiquidGlassStyle = null;
 
-const LIQUID_GLASS_MODULES = new Set(['dashboard', 'budget', 'health']);
+const LIQUID_GLASS_MODULES = new Set(['dashboard', 'budget', 'health', 'settings']);
 const LIQUID_GLASS_HREF = '/styles/module-liquid-glass.css';
 
 function loadLiquidGlassStyle(moduleName) {

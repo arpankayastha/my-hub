@@ -878,6 +878,9 @@
         "expensesOnlyHint": "Nur Ausgaben anzeigen, Einnahmen und Saldo ausblenden",
         "hideAmounts": "Beträge verbergen",
         "hideAmountsHint": "Geldbeträge auf dem Bildschirm maskieren (sensible Daten)",
+        "monthHero": {
+            "transactions": "{{count}} Transaktionen"
+        },
         "copyFromPrevMonth": "Vom Vormonat kopieren",
         "copyFromPrevMonthHint": "Einmalige Einträge vom Vormonat in diesen Monat kopieren (wiederkehrende erscheinen automatisch)",
         "copyFromPrevMonthDone": "{count} Einträge vom Vormonat kopiert",
@@ -2988,6 +2991,14 @@
             "loadError": "Übersicht konnte nicht geladen werden",
             "loadErrorDesc": "Bitte versuche es erneut.",
             "retry": "Erneut versuchen",
+            "monthHero": {
+                "label": "Monatsübersicht",
+                "subtitle": "Deine Gesundheit im Überblick diesen Monat",
+                "adherence": "{{days}}-Tage-Treue",
+                "dueToday": "Heute fällig",
+                "streak": "Tage in Folge",
+                "noAdherence": "—"
+            },
             "dueToday": {
                 "title": "Heute fällig"
             },

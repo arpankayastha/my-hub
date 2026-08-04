@@ -595,6 +595,12 @@ function renderBody() {
 
   setHtml(body, `
     <div class="budget-tab-panel budget-tab-panel--budget">
+    <section class="budget-month-hero">
+      <div class="budget-month-hero__head">
+        <h2 class="budget-month-hero__title">${esc(formatMonthLabel(state.month))}</h2>
+        <p class="budget-month-hero__meta">${t('budget.monthHero.transactions', { count: state.entries.length })}</p>
+      </div>
+      ${renderMonthFlowBar(s, expensesOnly)}
     <!-- Anzeige-Umschalter: nur Ausgaben vs. volle Zusammenfassung -->
     <div class="budget-summary-bar">
       <button class="budget-expenses-toggle${expensesOnly ? ' budget-expenses-toggle--active' : ''}"
@@ -616,6 +622,7 @@ function renderBody() {
     <div class="budget-summary${expensesOnly ? ' budget-summary--expenses-only' : ''}">
       ${expensesOnly ? expensesCard : incomeCard + expensesCard + balanceCard}
     </div>
+    </section>
 
     <!-- Kategorie-Balken -->
     ${s.byCategory.length ? `
@@ -1476,6 +1483,28 @@ function renderLoanCard(loan) {
  * @param {number} prev      Vormonatswert
  * @param {string} prevLabel Kurzname des Vormonats (z.B. "Mär")
  */
+function renderMonthFlowBar(s, expensesOnly) {
+  if (expensesOnly) return '';
+  const income = Math.max(0, s.income);
+  const expenses = Math.abs(s.expenses);
+  const total = income + expenses;
+  if (total < 0.005) return '';
+  const incomePct = (income / total) * 100;
+  const expensePct = (expenses / total) * 100;
+  return `
+    <div class="budget-month-flow">
+      <div class="budget-month-flow__bar" role="img"
+           aria-label="${esc(t('budget.income'))} ${esc(formatAmount(income))}, ${esc(t('budget.expenses'))} ${esc(formatAmount(expenses))}">
+        <div class="budget-month-flow__income" style="width: ${incomePct.toFixed(1)}%"></div>
+        <div class="budget-month-flow__expenses" style="width: ${expensePct.toFixed(1)}%"></div>
+      </div>
+      <div class="budget-month-flow__legend">
+        <span class="budget-month-flow__legend-item budget-month-flow__legend-item--income">${t('budget.income')} ${formatAmount(income)}</span>
+        <span class="budget-month-flow__legend-item budget-month-flow__legend-item--expenses">${t('budget.expenses')} ${formatAmount(expenses)}</span>
+      </div>
+    </div>`;
+}
+
 function renderTrend(current, prev, prevLabel) {
   const delta = current - prev;
   if (Math.abs(delta) < 0.005) {
