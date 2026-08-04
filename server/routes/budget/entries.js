@@ -466,7 +466,8 @@ router.put('/:id/series', (req, res) => {
 
 /**
  * DELETE /api/v1/budget/:id/series
- * Löscht das Serien-Original und alle zugehörigen Instanzen.
+ * Beendet die Serie ab dem aktuellen Monat: künftige Instanzen werden entfernt,
+ * vergangene Monate bleiben als Historie erhalten.
  * Response: 204 No Content
  */
 router.delete('/:id/series', (req, res) => {
@@ -479,9 +480,22 @@ router.delete('/:id/series', (req, res) => {
     const parentId = entry.recurrence_parent_id ?? (entry.is_recurring ? entry.id : null);
     if (!parentId) return res.status(400).json({ error: 'Not a recurring entry.', code: 400 });
 
+    const parent = db.get().prepare('SELECT * FROM budget_entries WHERE id = ?').get(parentId);
+    if (!parent) return res.status(404).json({ error: 'Series parent not found', code: 404 });
+
+    const cutoff = new Date().toISOString().slice(0, 7) + '-01';
+
     db.get().transaction(() => {
-      db.get().prepare('DELETE FROM budget_entries WHERE recurrence_parent_id = ?').run(parentId);
-      db.get().prepare('DELETE FROM budget_entries WHERE id = ?').run(parentId);
+      db.get().prepare(`
+        DELETE FROM budget_entries WHERE recurrence_parent_id = ? AND date >= ?
+      `).run(parentId, cutoff);
+      if (parent.date >= cutoff) {
+        db.get().prepare('DELETE FROM budget_entries WHERE id = ?').run(parentId);
+      } else {
+        db.get().prepare(`
+          UPDATE budget_entries SET is_recurring = 0, recurrence_rule = NULL WHERE id = ?
+        `).run(parentId);
+      }
     })();
 
     res.status(204).end();

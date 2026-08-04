@@ -14,7 +14,7 @@
  *            Skip-Markierung bei Instanz-Löschung)
  *          - PUT /:id/series (404, not-recurring-400, Parent-Update, Sichtbarkeits-
  *            Propagation auf ALLE Instanzen, Löschung künftiger Instanzen, 403)
- *          - DELETE /:id/series (404, not-recurring-400, Parent + Instanzen weg, 403)
+ *          - DELETE /:id/series (404, not-recurring-400, Serie beendet + künftige Instanzen weg, 403)
  *
  *        Systemuhr: PUT /:id/series löscht Instanzen ab dem AKTUELLEN Monat
  *        (new Date()). Statt die Uhr zu fixieren werden Extremdaten genutzt:
@@ -414,15 +414,17 @@ test('DELETE /:id/series: Nicht-Serie → 400', async () => {
   assert.equal(r.status, 400);
 });
 
-test('DELETE /:id/series: löscht Original und alle Instanzen', async () => {
-  const parent = insertEntry({ title: 'kill', amount: -20, category: 'food', date: '2036-02-01', is_recurring: 1 });
-  const i1 = insertEntry({ title: 'kill', amount: -20, category: 'food', date: '2036-03-15', recurrence_parent_id: parent });
-  const i2 = insertEntry({ title: 'kill', amount: -20, category: 'food', date: '2036-04-15', recurrence_parent_id: parent });
+test('DELETE /:id/series: beendet Serie und löscht nur künftige Instanzen', async () => {
+  const parent = insertEntry({ title: 'kill', amount: -20, category: 'food', date: '2000-01-01', is_recurring: 1 });
+  const past = insertEntry({ title: 'kill', amount: -20, category: 'food', date: '2000-02-15', recurrence_parent_id: parent });
+  const future = insertEntry({ title: 'kill', amount: -20, category: 'food', date: '2099-12-15', recurrence_parent_id: parent });
   const r = await call('DELETE', `/${parent}/series`);
   assert.equal(r.status, 204);
-  for (const id of [parent, i1, i2]) {
-    assert.equal(db.prepare('SELECT 1 FROM budget_entries WHERE id = ?').get(id), undefined, `Eintrag ${id} weg`);
-  }
+  const row = db.prepare('SELECT is_recurring FROM budget_entries WHERE id = ?').get(parent);
+  assert.ok(row, 'Parent bleibt');
+  assert.equal(row.is_recurring, 0);
+  assert.ok(db.prepare('SELECT 1 FROM budget_entries WHERE id = ?').get(past), 'Vergangenheits-Instanz bleibt');
+  assert.equal(db.prepare('SELECT 1 FROM budget_entries WHERE id = ?').get(future), undefined, '2099er-Instanz weg');
 });
 
 test('DELETE /:id/series: fremder Nutzer im personal-Modus → 403 (kein Bypass)', async () => {

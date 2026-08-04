@@ -2642,7 +2642,13 @@ async function applyRecurringToMonth() {
 async function deleteEntrySeries(id) {
   const entry = state.entries.find((e) => e.id === id);
   const parentId = entry?.recurrence_parent_id ?? (entry?.is_recurring ? entry.id : id);
-  state.entries = state.entries.filter((e) => e.id !== parentId && e.recurrence_parent_id !== parentId);
+  const cutoff = new Date().toISOString().slice(0, 7) + '-01';
+  const parentEntry = state.entries.find((e) => e.id === parentId);
+  state.entries = state.entries.filter((e) => {
+    if (e.recurrence_parent_id === parentId && e.date >= cutoff) return false;
+    if (e.id === parentId) return parentEntry && parentEntry.date < cutoff;
+    return true;
+  });
   renderBody();
   vibrate([30, 50, 30]);
 

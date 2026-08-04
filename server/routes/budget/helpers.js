@@ -263,7 +263,7 @@ const latestInstanceMonthStmt = (database) => database.prepare(`
  * @param {string} month  YYYY-MM
  * @param {{ planning?: boolean }} [options]
  */
-export function generateRecurringInstances(database, month, { planning = false } = {}) {
+export function generateRecurringInstances(database, month, { planning = false, nowMonth = thisMonthLocalKey() } = {}) {
   const [y, m] = month.split('-').map(Number);
   const monthStart = `${month}-01`;
   const monthEnd   = `${month}-31`;
@@ -289,7 +289,7 @@ export function generateRecurringInstances(database, month, { planning = false }
     const latestYm = latestInstanceMonthStmt(database).get(orig.id)?.ym || null;
     const shouldCreate = planning
       ? shouldPlanMaterializeRecurring(orig, month)
-      : shouldAutoMaterializeRecurring(orig, month, latestYm);
+      : shouldAutoMaterializeRecurring(orig, month, latestYm, nowMonth);
     if (!shouldCreate) continue;
 
     const origDay = parseInt(orig.date.split('-')[2], 10);
