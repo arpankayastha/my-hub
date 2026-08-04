@@ -206,7 +206,9 @@
         "savingsGoal": "Sparziel",
         "heroSubtitle": "Dein Haushalt im Überblick — tippe auf eine Karte unten oder passe Widgets an.",
         "financialSnapshotTitle": "Monatsbudget im Überblick",
-        "financialSnapshotEmpty": "Budget-Einträge hinzufügen für die Monatsübersicht"
+        "financialSnapshotEmpty": "Budget-Einträge hinzufügen für die Monatsübersicht",
+        "cashflowHeroTitle": "Monatlicher Cashflow",
+        "cashflowProjectedEnd": "Prognose Monatsende"
     },
     "tasks": {
         "manageCategories": "Kategorien verwalten",
@@ -1193,7 +1195,8 @@
         "statsPointLabel": "{{period}}: Einnahmen {{income}}, Ausgaben {{expenses}}",
         "monthCalendarTitle": "Monatskalender",
         "monthCalendarClear": "Alle Tage anzeigen",
-        "dayFilterLabel": "Anzeige: {{date}}"
+        "dayFilterLabel": "Anzeige: {{date}}",
+        "monthCalendarProjectedEnd": "Prognose Monatsende"
     },
     "settings": {
         "healthCycleEnableLabel": "Zyklus-Tab anzeigen",

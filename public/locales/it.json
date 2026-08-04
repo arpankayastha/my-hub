@@ -194,7 +194,9 @@
         "savingsGoal": "Obiettivo di risparmio",
         "heroSubtitle": "La tua casa in sintesi — tocca una scheda qui sotto o personalizza i widget.",
         "financialSnapshotTitle": "Panoramica budget del mese",
-        "financialSnapshotEmpty": "Aggiungi voci per vedere il riepilogo mensile"
+        "financialSnapshotEmpty": "Aggiungi voci per vedere il riepilogo mensile",
+        "cashflowHeroTitle": "Flusso mensile",
+        "cashflowProjectedEnd": "Fine mese prevista"
     },
     "tasks": {
         "manageCategories": "Gestisci categorie",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: entrate {{income}}, uscite {{expenses}}",
         "monthCalendarTitle": "Calendario del mese",
         "monthCalendarClear": "Tutti i giorni",
-        "dayFilterLabel": "Visualizzazione {{date}}"
+        "dayFilterLabel": "Visualizzazione {{date}}",
+        "monthCalendarProjectedEnd": "Fine mese prevista"
     },
     "settings": {
         "healthCycleEnableLabel": "Mostra la scheda ciclo",

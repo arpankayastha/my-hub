@@ -194,7 +194,9 @@
         "savingsGoal": "Meta de poupança",
         "heroSubtitle": "Sua casa em resumo — toque um cartão abaixo ou personalize os widgets.",
         "financialSnapshotTitle": "Resumo do orçamento mensal",
-        "financialSnapshotEmpty": "Adicione entradas para ver o resumo mensual"
+        "financialSnapshotEmpty": "Adicione entradas para ver o resumo mensual",
+        "cashflowHeroTitle": "Fluxo mensal",
+        "cashflowProjectedEnd": "Fim do mês previsto"
     },
     "tasks": {
         "manageCategories": "Gerir categorias",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: receitas {{income}}, despesas {{expenses}}",
         "monthCalendarTitle": "Calendário do mês",
         "monthCalendarClear": "Todos os dias",
-        "dayFilterLabel": "Mostrando {{date}}"
+        "dayFilterLabel": "Mostrando {{date}}",
+        "monthCalendarProjectedEnd": "Fim do mês previsto"
     },
     "settings": {
         "healthCycleEnableLabel": "Mostrar a aba de ciclo",

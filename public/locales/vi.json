@@ -194,7 +194,9 @@
         "savingsGoal": "Mục tiêu tiết kiệm",
         "heroSubtitle": "Gia đình trong một nhìn — chạm thẻ bên dưới hoặc tùy chỉnh widget.",
         "financialSnapshotTitle": "Tóm tắt ngân sách tháng",
-        "financialSnapshotEmpty": "Thêm mục để xem tóm tắt tháng"
+        "financialSnapshotEmpty": "Thêm mục để xem tóm tắt tháng",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "Quản lý danh mục",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: thu nhập {{income}}, chi tiêu {{expenses}}",
         "monthCalendarTitle": "Lịch tháng",
         "monthCalendarClear": "Tất cả ngày",
-        "dayFilterLabel": "Hiển thị {{date}}"
+        "dayFilterLabel": "Hiển thị {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "Hiện tab chu kỳ",

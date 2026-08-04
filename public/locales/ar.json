@@ -194,7 +194,9 @@
         "savingsGoal": "هدف الادخار",
         "heroSubtitle": "منزلك في لمحة — انقر على بطاقة أدناه أو خصّص الأدوات.",
         "financialSnapshotTitle": "لمحة الميزانية الشهرية",
-        "financialSnapshotEmpty": "أضف إدخالات لرؤية اللمحة الشهرية"
+        "financialSnapshotEmpty": "أضف إدخالات لرؤية اللمحة الشهرية",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "إدارة الفئات",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: الدخل {{income}}، المصروفات {{expenses}}",
         "monthCalendarTitle": "تقويم الشهر",
         "monthCalendarClear": "كل الأيام",
-        "dayFilterLabel": "عرض {{date}}"
+        "dayFilterLabel": "عرض {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "إظهار علامة تبويب الدورة",

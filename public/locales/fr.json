@@ -194,7 +194,9 @@
         "savingsGoal": "Objectif d’épargne",
         "heroSubtitle": "Votre foyer en un coup d'œil — touchez une carte ci-dessous ou personnalisez les widgets.",
         "financialSnapshotTitle": "Aperçu budgétaire du mois",
-        "financialSnapshotEmpty": "Ajoutez des entrées pour voir l'aperçu mensuel"
+        "financialSnapshotEmpty": "Ajoutez des entrées pour voir l'aperçu mensuel",
+        "cashflowHeroTitle": "Flux mensuel",
+        "cashflowProjectedEnd": "Fin de mois projetée"
     },
     "tasks": {
         "manageCategories": "Gérer les catégories",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}} : revenus {{income}}, dépenses {{expenses}}",
         "monthCalendarTitle": "Calendrier du mois",
         "monthCalendarClear": "Tous les jours",
-        "dayFilterLabel": "Affichage : {{date}}"
+        "dayFilterLabel": "Affichage : {{date}}",
+        "monthCalendarProjectedEnd": "Fin de mois projetée"
     },
     "settings": {
         "healthCycleEnableLabel": "Afficher l’onglet cycle",

@@ -206,7 +206,9 @@
         "savingsGoal": "저축 목표",
         "heroSubtitle": "가정 한눈에 — 아래 카드를 탭하거나 위젯을 설정하세요.",
         "financialSnapshotTitle": "월간 예산 스냅샷",
-        "financialSnapshotEmpty": "월간 개요를 보려면 예산 항목 추가"
+        "financialSnapshotEmpty": "월간 개요를 보려면 예산 항목 추가",
+        "cashflowHeroTitle": "월간 현금 흐름",
+        "cashflowProjectedEnd": "월말 예상"
     },
     "tasks": {
         "manageCategories": "카테고리 관리",
@@ -1186,7 +1188,8 @@
         "statsPointLabel": "{{period}}: 수입 {{income}}, 지출 {{expenses}}",
         "monthCalendarTitle": "월간 달력",
         "monthCalendarClear": "전체 날짜",
-        "dayFilterLabel": "표시: {{date}}"
+        "dayFilterLabel": "표시: {{date}}",
+        "monthCalendarProjectedEnd": "월말 예상"
     },
     "settings": {
         "healthCycleEnableLabel": "주기 탭 표시",

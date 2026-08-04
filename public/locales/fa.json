@@ -206,7 +206,9 @@
         "savingsGoal": "هدف پس‌انداز",
         "heroSubtitle": "خانه‌تان در یک نگاه — روی کارت پایین بزنید یا ویجت‌ها را سفارشی کنید.",
         "financialSnapshotTitle": "خلاصه بودجه ماهانه",
-        "financialSnapshotEmpty": "برای نمایش خلاصه ماهانه ورودی اضافه کنید"
+        "financialSnapshotEmpty": "برای نمایش خلاصه ماهانه ورودی اضافه کنید",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "مدیریت دسته‌ها",
@@ -1186,7 +1188,8 @@
         "statsPointLabel": "{{period}}: درآمد {{income}}، هزینه {{expenses}}",
         "monthCalendarTitle": "تقویم ماه",
         "monthCalendarClear": "همه روزها",
-        "dayFilterLabel": "نمایش {{date}}"
+        "dayFilterLabel": "نمایش {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "نمایش برگهٔ چرخه",

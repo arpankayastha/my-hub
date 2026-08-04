@@ -194,7 +194,9 @@
         "savingsGoal": "储蓄目标",
         "heroSubtitle": "家庭一览 — 点击下方卡片或自定义小组件。",
         "financialSnapshotTitle": "月度预算概览",
-        "financialSnapshotEmpty": "添加预算条目以查看月度概览"
+        "financialSnapshotEmpty": "添加预算条目以查看月度概览",
+        "cashflowHeroTitle": "月度现金流",
+        "cashflowProjectedEnd": "预计月末"
     },
     "tasks": {
         "manageCategories": "管理类别",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}：收入 {{income}}，支出 {{expenses}}",
         "monthCalendarTitle": "月历",
         "monthCalendarClear": "显示全部日期",
-        "dayFilterLabel": "显示 {{date}}"
+        "dayFilterLabel": "显示 {{date}}",
+        "monthCalendarProjectedEnd": "预计月末"
     },
     "settings": {
         "healthCycleEnableLabel": "显示周期标签页",

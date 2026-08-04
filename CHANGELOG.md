@@ -2,6 +2,13 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.21] - 2026-08-04
+
+### Added (Phase 3 — liquid glass UX)
+- **Budget:** Forecast-style projected balances on future calendar days, trajectory chart, month-end projection.
+- **Health:** widget-style overview layout (wide tiles for due today and vitals).
+- **Overview:** combined cash-flow hero with flow bar, trajectory chart, and projected month-end.
+
 ## [1.1.20] - 2026-08-04
 
 ### Added (Phase 2 — liquid glass UX)

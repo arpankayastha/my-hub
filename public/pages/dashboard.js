@@ -19,7 +19,7 @@ import {
   dashboardProfileToolMarkup,
   wireDashboardProfileTool,
 } from '/components/profile-switcher.js';
-import { profileDisplayName } from '/utils/profile-context.js';
+import { renderBalanceTrajectorySvg } from '/utils/budget-month-calendar.js';
 
 // Hält den AbortController des aktuellen FAB-Listeners - wird bei jedem render() erneuert.
 let _fabController = null;
@@ -1178,40 +1178,65 @@ function renderTodayCockpit(data, cfg = []) {
 }
 
 
-function renderFinancialSnapshotStrip(budget, currency) {
-  if (window.myHub?.isModuleDisabled('budget')) return '';
+function computeDashboardCashflow(budget) {
+  const balance = budget?.balance || 0;
   const income = budget?.income || 0;
   const expenses = budget?.expenses || 0;
-  const balance = budget?.balance || 0;
-  const hasData = (budget?.entryCount || 0) > 0;
-  const balanceTone = balance >= 0 ? 'positive' : 'negative';
+  const now = new Date();
+  const day = now.getDate();
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const remaining = Math.max(0, last - day);
+  const dailyNet = day > 0 ? balance / day : 0;
+  const projectedEnd = balance + dailyNet * remaining;
+  const totalFlow = income + expenses;
+  const incomePct = totalFlow > 0 ? Math.round((income / totalFlow) * 100) : 50;
+  const values = [];
+  for (let d = 1; d <= last; d++) {
+    if (d <= day) values.push(day > 0 ? balance * (d / day) : 0);
+    else values.push(balance + dailyNet * (d - day));
+  }
+  return { balance, income, expenses, projectedEnd, incomePct, values, day, last, forecastable: day < last };
+}
 
+function renderCashflowHero(budget, currency) {
+  if (window.myHub?.isModuleDisabled('budget')) return '';
+
+  const hasData = (budget?.entryCount || 0) > 0;
   if (!hasData) {
     return `
-      <a class="dashboard-financial-snapshot dashboard-financial-snapshot--empty" href="/budget" data-route="/budget">
-        <i data-lucide="wallet" class="dashboard-financial-snapshot__icon" aria-hidden="true"></i>
-        <span class="dashboard-financial-snapshot__empty-text">${esc(t('dashboard.financialSnapshotEmpty'))}</span>
+      <a class="dashboard-cashflow-hero dashboard-cashflow-hero--empty" href="/budget" data-route="/budget">
+        <i data-lucide="wallet" class="dashboard-cashflow-hero__icon" aria-hidden="true"></i>
+        <span>${esc(t('dashboard.financialSnapshotEmpty'))}</span>
       </a>`;
   }
 
+  const cf = computeDashboardCashflow(budget);
+  const balanceTone = cf.balance >= 0 ? 'positive' : 'negative';
+  const projectedTone = cf.projectedEnd >= 0 ? 'positive' : 'negative';
+  const trajectory = renderBalanceTrajectorySvg(cf.values, {
+    forecastFromIndex: cf.forecastable ? cf.day - 1 : -1,
+  });
+
   return `
-    <a class="dashboard-financial-snapshot" href="/budget" data-route="/budget"
-       aria-label="${esc(t('dashboard.financialSnapshotTitle'))}">
-      <div class="dashboard-financial-snapshot__item">
-        <span class="dashboard-financial-snapshot__label">${esc(t('dashboard.monthlyBalance'))}</span>
-        <strong class="dashboard-financial-snapshot__value dashboard-financial-snapshot__value--${balanceTone}">${formatCurrency(balance, currency)}</strong>
+    <a class="dashboard-cashflow-hero" href="/budget" data-route="/budget"
+       aria-label="${esc(t('dashboard.cashflowHeroTitle'))}">
+      <div class="dashboard-cashflow-hero__main">
+        <div class="dashboard-cashflow-hero__balance-block">
+          <span class="dashboard-cashflow-hero__label">${esc(t('dashboard.monthlyBalance'))}</span>
+          <strong class="dashboard-cashflow-hero__balance dashboard-cashflow-hero__balance--${balanceTone}">${formatCurrency(cf.balance, currency)}</strong>
+          ${cf.forecastable ? `<span class="dashboard-cashflow-hero__projected dashboard-cashflow-hero__projected--${projectedTone}">${esc(t('dashboard.cashflowProjectedEnd'))}: ${formatCurrency(cf.projectedEnd, currency)}</span>` : ''}
+        </div>
+        <div class="dashboard-cashflow-hero__flow-bar" aria-hidden="true">
+          <span class="dashboard-cashflow-hero__flow-in" style="--flow-pct:${cf.incomePct}%"></span>
+          <span class="dashboard-cashflow-hero__flow-out" style="--flow-pct:${100 - cf.incomePct}%"></span>
+        </div>
+        <div class="dashboard-cashflow-hero__flow-legend">
+          <span><strong>${formatCurrency(cf.income, currency)}</strong> ${esc(t('dashboard.monthlyIncome'))}</span>
+          <span><strong>${formatCurrency(cf.expenses, currency)}</strong> ${esc(t('dashboard.monthlyExpenses'))}</span>
+        </div>
       </div>
-      <div class="dashboard-financial-snapshot__item dashboard-financial-snapshot__item--flow">
-        <span class="dashboard-financial-snapshot__flow dashboard-financial-snapshot__flow--income">
-          <span class="dashboard-financial-snapshot__label">${esc(t('dashboard.monthlyIncome'))}</span>
-          <strong>${formatCurrency(income, currency)}</strong>
-        </span>
-        <span class="dashboard-financial-snapshot__flow dashboard-financial-snapshot__flow--expense">
-          <span class="dashboard-financial-snapshot__label">${esc(t('dashboard.monthlyExpenses'))}</span>
-          <strong>${formatCurrency(expenses, currency)}</strong>
-        </span>
-      </div>
-      <i data-lucide="chevron-right" class="dashboard-financial-snapshot__chevron" aria-hidden="true"></i>
+      ${trajectory ? `<div class="dashboard-cashflow-hero__chart">${trajectory}</div>` : ''}
+      <i data-lucide="chevron-right" class="dashboard-cashflow-hero__chevron" aria-hidden="true"></i>
     </a>`;
 }
 
@@ -1225,7 +1250,7 @@ function renderDashboardOverview(user, editing = false, { budget, currency } = {
           <span class="dashboard-overview__date">${dateLabel}</span>
           <h2 class="dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(profileDisplayName(user))}</h2>
           <p class="dashboard-overview__subtitle">${esc(t('dashboard.heroSubtitle'))}</p>
-          ${!editing ? renderFinancialSnapshotStrip(budget, currency) : ''}
+          ${!editing ? renderCashflowHero(budget, currency) : ''}
         </div>
         <div class="dashboard-overview__tools">
           ${editing ? `

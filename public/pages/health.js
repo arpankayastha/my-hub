@@ -3066,18 +3066,30 @@ function renderOverviewShell() {
       ${personChipsMarkup(overview.members, overview.personId, overview.meId)}
     </div>
     ${readOnlyBannerMarkup(overview.members, overview.personId, isOwnOverviewView())}
-    <div class="health-overview__grid">
-      ${overviewCard('calendar-check', 'health.overview.dueToday.title', overviewDueMarkup())}
-      ${overviewCard('trending-up', 'health.overview.adherence.title', overviewAdherenceMarkup())}
-      ${overviewCard('activity', 'health.overview.vitals.title', overviewVitalsMarkup())}
-      ${isOwnOverviewView() ? overviewCard('plus-circle', 'health.overview.quick.title', quickCaptureMarkup()) : ''}
-      ${overviewCard('bell', 'health.overview.reminders.title', overviewUpcomingMarkup())}
-      ${overviewCard('download', 'health.export.title', overviewExportMarkup())}
+    <div class="health-overview__widgets">
+      ${overviewWidget('calendar-check', 'health.overview.dueToday.title', overviewDueMarkup(), 'wide')}
+      ${overviewWidget('trending-up', 'health.overview.adherence.title', overviewAdherenceMarkup())}
+      ${overviewWidget('activity', 'health.overview.vitals.title', overviewVitalsMarkup(), 'wide')}
+      ${isOwnOverviewView() ? overviewWidget('plus-circle', 'health.overview.quick.title', quickCaptureMarkup()) : ''}
+      ${overviewWidget('bell', 'health.overview.reminders.title', overviewUpcomingMarkup())}
+      ${overviewWidget('download', 'health.export.title', overviewExportMarkup())}
     </div>
     ${disclaimerMarkup()}
   `);
   if (window.lucide) window.lucide.createIcons({ el: overview.root });
   wireOverview();
+}
+
+function overviewWidget(icon, titleKey, body, size = 'default') {
+  const wide = size === 'wide' ? ' health-widget--wide' : '';
+  return `
+    <section class="health-widget${wide}">
+      <header class="health-widget__head">
+        <i data-lucide="${esc(icon)}" class="health-widget__icon" aria-hidden="true"></i>
+        <h3 class="health-widget__title u-toolbar-title">${esc(t(titleKey))}</h3>
+      </header>
+      <div class="health-widget__body">${body}</div>
+    </section>`;
 }
 
 function overviewCard(icon, titleKey, body) {

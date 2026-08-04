@@ -194,7 +194,9 @@
         "savingsGoal": "Sparmål",
         "heroSubtitle": "Ditt hem i korthet — tryck på en kort nedan eller anpassa widgetar.",
         "financialSnapshotTitle": "Månadsbudgetöversikt",
-        "financialSnapshotEmpty": "Lägg till poster för månadsöversikten"
+        "financialSnapshotEmpty": "Lägg till poster för månadsöversikten",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "Hantera kategorier",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: inkomster {{income}}, utgifter {{expenses}}",
         "monthCalendarTitle": "Månadskalender",
         "monthCalendarClear": "Alla dagar",
-        "dayFilterLabel": "Visar {{date}}"
+        "dayFilterLabel": "Visar {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "Visa cykelfliken",

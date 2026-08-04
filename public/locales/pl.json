@@ -206,7 +206,9 @@
         "savingsGoal": "Cel oszczędności",
         "heroSubtitle": "Twój dom w pigułce — dotknij karty poniżej lub dostosuj widżety.",
         "financialSnapshotTitle": "Miesięczny podgląd budżetu",
-        "financialSnapshotEmpty": "Dodaj wpisy, aby zobaczyć miesięczny podgląd"
+        "financialSnapshotEmpty": "Dodaj wpisy, aby zobaczyć miesięczny podgląd",
+        "cashflowHeroTitle": "Miesięczny przepływ",
+        "cashflowProjectedEnd": "Prognoza na koniec miesiąca"
     },
     "tasks": {
         "manageCategories": "Zarządzaj kategoriami",
@@ -1186,7 +1188,8 @@
         "statsPointLabel": "{{period}}: przychody {{income}}, wydatki {{expenses}}",
         "monthCalendarTitle": "Kalendarz miesiąca",
         "monthCalendarClear": "Wszystkie dni",
-        "dayFilterLabel": "Widok: {{date}}"
+        "dayFilterLabel": "Widok: {{date}}",
+        "monthCalendarProjectedEnd": "Prognoza na koniec miesiąca"
     },
     "settings": {
         "healthCycleEnableLabel": "Pokaż kartę cyklu",

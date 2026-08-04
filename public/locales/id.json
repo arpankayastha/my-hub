@@ -206,7 +206,9 @@
         "savingsGoal": "Target tabungan",
         "heroSubtitle": "Rumah tangga dalam sekejap — ketuk kartu di bawah atau sesuaikan widget.",
         "financialSnapshotTitle": "Ringkasan anggaran bulanan",
-        "financialSnapshotEmpty": "Tambahkan entri untuk ringkasan bulanan"
+        "financialSnapshotEmpty": "Tambahkan entri untuk ringkasan bulanan",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "Kelola kategori",
@@ -1186,7 +1188,8 @@
         "statsPointLabel": "{{period}}: pemasukan {{income}}, pengeluaran {{expenses}}",
         "monthCalendarTitle": "Kalender bulan",
         "monthCalendarClear": "Semua hari",
-        "dayFilterLabel": "Menampilkan {{date}}"
+        "dayFilterLabel": "Menampilkan {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "Tampilkan tab siklus",

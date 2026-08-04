@@ -194,7 +194,9 @@
         "savingsGoal": "貯蓄目標",
         "heroSubtitle": "家庭の概要 — 下のカードをタップするかウィジェットをカスタマイズ。",
         "financialSnapshotTitle": "月間予算スナップショット",
-        "financialSnapshotEmpty": "月間概要を見るには予算を追加"
+        "financialSnapshotEmpty": "月間概要を見るには予算を追加",
+        "cashflowHeroTitle": "月間キャッシュフロー",
+        "cashflowProjectedEnd": "月末予測"
     },
     "tasks": {
         "manageCategories": "カテゴリーを管理",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: 収入 {{income}}、支出 {{expenses}}",
         "monthCalendarTitle": "月間カレンダー",
         "monthCalendarClear": "全日表示",
-        "dayFilterLabel": "表示: {{date}}"
+        "dayFilterLabel": "表示: {{date}}",
+        "monthCalendarProjectedEnd": "月末予測"
     },
     "settings": {
         "healthCycleEnableLabel": "周期タブを表示",

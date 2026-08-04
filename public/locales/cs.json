@@ -194,7 +194,9 @@
         "savingsGoal": "Cíl úspor",
         "heroSubtitle": "Váš domov na jednom místě — klepněte na kartu níže nebo upravte widgety.",
         "financialSnapshotTitle": "Měsíční rozpočtový přehled",
-        "financialSnapshotEmpty": "Přidejte položky pro měsíční přehled"
+        "financialSnapshotEmpty": "Přidejte položky pro měsíční přehled",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "Spravovat kategorie",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: příjmy {{income}}, výdaje {{expenses}}",
         "monthCalendarTitle": "Měsíční kalendář",
         "monthCalendarClear": "Všechny dny",
-        "dayFilterLabel": "Zobrazeno {{date}}"
+        "dayFilterLabel": "Zobrazeno {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "Zobrazit kartu cyklu",

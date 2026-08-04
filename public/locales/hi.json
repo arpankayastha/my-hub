@@ -194,7 +194,9 @@
         "savingsGoal": "बचत लक्ष्य",
         "heroSubtitle": "आपका घर एक नज़र में — नीचे कार्ड टैप करें या विजेट कस्टमाइज़ करें।",
         "financialSnapshotTitle": "मासिक बजट स्नैपशॉट",
-        "financialSnapshotEmpty": "मासिक स्नैपशॉट के लिए बजट प्रविष्टियाँ जोड़ें"
+        "financialSnapshotEmpty": "मासिक स्नैपशॉट के लिए बजट प्रविष्टियाँ जोड़ें",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "श्रेणियाँ प्रबंधित करें",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: आय {{income}}, व्यय {{expenses}}",
         "monthCalendarTitle": "माह कैलेंडर",
         "monthCalendarClear": "सभी दिन",
-        "dayFilterLabel": "दिखाया गया {{date}}"
+        "dayFilterLabel": "दिखाया गया {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "चक्र टैब दिखाएँ",

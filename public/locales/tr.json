@@ -194,7 +194,9 @@
         "savingsGoal": "Tasarruf hedefi",
         "heroSubtitle": "Eviniz bir bakışta — aşağıdaki karta dokunun veya widget'ları özelleştirin.",
         "financialSnapshotTitle": "Aylık bütçe özeti",
-        "financialSnapshotEmpty": "Aylık özeti görmek için bütçe girişleri ekleyin"
+        "financialSnapshotEmpty": "Aylık özeti görmek için bütçe girişleri ekleyin",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "Kategorileri yönet",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: gelir {{income}}, gider {{expenses}}",
         "monthCalendarTitle": "Ay takvimi",
         "monthCalendarClear": "Tüm günler",
-        "dayFilterLabel": "Gösterilen {{date}}"
+        "dayFilterLabel": "Gösterilen {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "Döngü sekmesini göster",

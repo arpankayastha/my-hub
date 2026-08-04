@@ -194,7 +194,9 @@
         "savingsGoal": "Ціль заощаджень",
         "heroSubtitle": "Ваш дім одним поглядом — торкніться картки нижче або налаштуйте віджети.",
         "financialSnapshotTitle": "Знімок місячного бюджету",
-        "financialSnapshotEmpty": "Додайте записи для місячного огляду"
+        "financialSnapshotEmpty": "Додайте записи для місячного огляду",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "Керування категоріями",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: доходи {{income}}, витрати {{expenses}}",
         "monthCalendarTitle": "Календар місяця",
         "monthCalendarClear": "Усі дні",
-        "dayFilterLabel": "Показано {{date}}"
+        "dayFilterLabel": "Показано {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "Показати вкладку циклу",

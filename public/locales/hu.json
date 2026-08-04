@@ -194,7 +194,9 @@
         "savingsGoal": "Megtakarítási cél",
         "heroSubtitle": "A családod egy pillantásban — érintsd meg egy kártyát alul vagy állítsd be a widgeteket.",
         "financialSnapshotTitle": "Havi költségvetés áttekintés",
-        "financialSnapshotEmpty": "Adjon hozzá tételeket a havi áttekintéshez"
+        "financialSnapshotEmpty": "Adjon hozzá tételeket a havi áttekintéshez",
+        "cashflowHeroTitle": "Monthly cash flow",
+        "cashflowProjectedEnd": "Projected month-end"
     },
     "tasks": {
         "manageCategories": "Kategóriák kezelése",
@@ -1174,7 +1176,8 @@
         "statsPointLabel": "{{period}}: bevétel {{income}}, kiadás {{expenses}}",
         "monthCalendarTitle": "Havi naptár",
         "monthCalendarClear": "Minden nap",
-        "dayFilterLabel": "Megjelenítve: {{date}}"
+        "dayFilterLabel": "Megjelenítve: {{date}}",
+        "monthCalendarProjectedEnd": "Projected month-end"
     },
     "settings": {
         "healthCycleEnableLabel": "Ciklus fül megjelenítése",
