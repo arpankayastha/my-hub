@@ -70,6 +70,7 @@ export function emptyState() {
     pantry_items: [],
     pantry_locations: [],
     budget_entries: [],
+    budget_recurrence_skipped: [],
     budget_categories: [],
     budget_subcategories: [],
     budget_accounts: [],

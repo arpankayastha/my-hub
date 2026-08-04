@@ -324,7 +324,7 @@
 }
 
 @media (max-width: 480px) {
-  .month-hero__stats {
+  .health-month-hero .month-hero__stats {
     grid-template-columns: 1fr;
   }
 }

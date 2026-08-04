@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.29] - 2026-08-04
+
+### Changed
+- Budget month summary (income / expenses / balance): compact three-column row on mobile instead of stacked full-width tiles.
+
 ## [1.1.28] - 2026-08-04
 
 ### Fixed
