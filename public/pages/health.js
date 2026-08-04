@@ -274,6 +274,22 @@ function refreshHealthFab() {
   updateHealthFab(normalizeHealthPath(fromAppUrl(window.location.pathname)));
 }
 
+function mountHealthProfileTool(container) {
+  const bar = container.querySelector('.health-tabs-bar');
+  if (!bar) return;
+  let slot = bar.querySelector('.sub-tabs-bar__tools');
+  if (!slot) {
+    slot = document.createElement('div');
+    slot.className = 'sub-tabs-bar__tools';
+    bar.appendChild(slot);
+  }
+  slot.innerHTML = dashboardProfileToolMarkup(_sessionUser);
+  if (window.lucide) window.lucide.createIcons({ el: slot });
+  wireDashboardProfileTool(container, _sessionUser, (merged) => {
+    window.myHub?.applyProfileContext?.(merged);
+  });
+}
+
 export async function render(container, ctx = {}) {
   _container = container;
   syncHealthPersonIds(ctx.user ?? null);
@@ -284,11 +300,6 @@ export async function render(container, ctx = {}) {
   container.replaceChildren();
   container.insertAdjacentHTML('beforeend', `
     <div class="health-page">
-      <div class="health-page__chrome">
-        <div class="health-page__profile-tools">
-          ${dashboardProfileToolMarkup(_sessionUser)}
-        </div>
-      </div>
       <h1 class="sr-only">${esc(t('nav.health'))}</h1>
       ${panels.map((panel) => panelMarkup(panel, activeRoute)).join('')}
     </div>
@@ -300,9 +311,7 @@ export async function render(container, ctx = {}) {
   if (window.lucide) window.lucide.createIcons({ el: container });
   showPanel(activeRoute);
   renderHealthTabsBar(container, activeRoute, { cycleEnabled });
-  wireDashboardProfileTool(container, _sessionUser, (merged) => {
-    window.myHub?.applyProfileContext?.(merged);
-  });
+  mountHealthProfileTool(container);
   updateHealthFab(activeRoute);
   maybeMountOverview(activeRoute);
   maybeMountVitals(activeRoute);
@@ -323,6 +332,7 @@ export async function update({ path, user } = {}) {
   showPanel(activeRoute);
   _container.querySelector('.sub-tabs-bar')?.remove();
   renderHealthTabsBar(_container, activeRoute, { cycleEnabled });
+  mountHealthProfileTool(_container);
   updateHealthFab(activeRoute);
   maybeMountOverview(activeRoute);
   maybeMountVitals(activeRoute);

@@ -21,6 +21,10 @@ import { budgetCategoryLabel } from '/utils/category-labels.js';
 import { englishBudgetSubcategoryLabel } from '/utils/budget-category-defaults.js';
 import { appendCurrencyOptions } from '/settings/currency.js';
 import { wireHorizontalSwipe } from '/utils/horizontal-swipe.js';
+import {
+  dashboardProfileToolMarkup,
+  wireDashboardProfileTool,
+} from '/components/profile-switcher.js';
 import '/components/category-manager.js';
 
 // --------------------------------------------------------
@@ -374,6 +378,9 @@ export async function render(container, { user }) {
           }).join('')}
         </div>` : ''}
         <div class="page-toolbar__actions">
+          <div class="page-toolbar__profile-tools">
+            ${dashboardProfileToolMarkup(user)}
+          </div>
           <div class="budget-tabs" role="tablist" aria-label="${t('budget.tabsLabel')}">
             ${[
               ...(user?.access_scope === 'split_guest' ? [] : [
@@ -405,6 +412,10 @@ export async function render(container, { user }) {
   `);
 
   if (window.lucide) lucide.createIcons({ el: container });
+
+  wireDashboardProfileTool(container, user, (merged) => {
+    window.myHub?.applyProfileContext?.(merged);
+  });
 
   if (user?.access_scope !== 'split_guest') {
     // Konten einmalig beim Mount laden (Salden sind monatsunabhängig; kein

@@ -1043,6 +1043,105 @@ html.fab-anim-done .page-fab {
   margin-left: auto;
 }
 
+.page-toolbar__profile-tools {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Profile switcher compact icon (Overview, Budget, Health toolbars). */
+.dashboard-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-lg);
+  height: var(--target-lg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  flex: 0 0 auto;
+  transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.dashboard-icon-btn:hover,
+.dashboard-icon-btn:focus-visible {
+  color: var(--color-text-primary);
+  border-color: color-mix(in srgb, var(--module-accent) 42%, var(--color-border));
+  background: var(--color-surface-hover);
+}
+
+.dashboard-icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.dashboard-icon-btn--profile-active {
+  color: var(--color-text-primary);
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+}
+
+.profile-picker__hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+.profile-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.profile-picker__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--target-lg);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  text-align: left;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.profile-picker__item:hover,
+.profile-picker__item:focus-visible {
+  border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
+  background: var(--color-surface-hover);
+}
+
+.profile-picker__item.is-active {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-elevated));
+}
+
+.profile-picker__dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.profile-picker__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-base);
+  font-weight: 500;
+}
+
+.profile-picker__check {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--color-accent);
+}
+
 /* Center-Slot des Canonical Page Head: wachsende Mitte (Suche, Datums-Nav).
  * flex:1 schiebt die Aktionen via deren margin-left:auto an den Rand. Auf
  * schmalen Viewports darf der Kopf umbrechen — der Center-Slot nimmt dann

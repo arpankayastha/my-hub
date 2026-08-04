@@ -1923,6 +1923,58 @@ svg.weather-forecast__icon {
   flex-shrink: 0;
 }
 
+.dashboard-hero__glance-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  list-style: none;
+}
+
+.dashboard-hero__glance {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  min-height: var(--target-lg);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-subtle);
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.dashboard-hero__glance:hover {
+  background: color-mix(in srgb, var(--module-accent) 10%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--module-accent) 35%, var(--color-border-subtle));
+}
+
+.dashboard-hero__glance i {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+
+.dashboard-hero__glance-label {
+  color: var(--color-text-secondary);
+}
+
+.dashboard-hero__glance-value {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.dashboard-hero__glance-value--positive {
+  color: var(--color-success);
+}
+
+.dashboard-hero__glance-value--negative {
+  color: var(--color-danger);
+}
+
 .dashboard-widgets {
   margin-top: var(--space-6);
 }
@@ -2040,97 +2092,6 @@ svg.weather-forecast__icon {
   gap: var(--space-2);
   min-width: 0;
   flex: 0 0 auto;
-}
-
-.dashboard-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--target-lg);
-  height: var(--target-lg);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  flex: 0 0 auto;
-  transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
-}
-
-.dashboard-icon-btn:hover,
-.dashboard-icon-btn:focus-visible {
-  color: var(--color-text-primary);
-  border-color: color-mix(in srgb, var(--module-accent) 42%, var(--color-border));
-  background: var(--color-surface-hover);
-}
-
-.dashboard-icon-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
-.dashboard-icon-btn--profile-active {
-  color: var(--color-text-primary);
-  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
-}
-
-.profile-picker__hint {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.45;
-}
-
-.profile-picker {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.profile-picker__item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-elevated);
-  color: var(--color-text-primary);
-  text-align: left;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
-}
-
-.profile-picker__item:hover,
-.profile-picker__item:focus-visible {
-  border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
-  background: var(--color-surface-hover);
-}
-
-.profile-picker__item.is-active {
-  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-elevated));
-}
-
-.profile-picker__dot {
-  flex: 0 0 auto;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.profile-picker__name {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: var(--text-base);
-  font-weight: 500;
-}
-
-.profile-picker__check {
-  flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
-  color: var(--color-accent);
 }
 
 /* Einmaliger Erststart-Hinweis: sanfter Akzent-Puls, der zeigt, wo Widgets
