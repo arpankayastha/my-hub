@@ -96,15 +96,17 @@
 /* Aktion, keine Selektion: bewusst Outline-Grammatik statt getönter Pille, damit
  * „Aktuell" neben der aktiven Tab-Pille nicht wie eine zweite Auswahl aussieht. */
 .budget-nav__today {
-  min-height: var(--target-lg);
-  font-size: var(--text-sm);
+  min-height: 28px;
+  height: 28px;
+  font-size: var(--text-xs);
+  line-height: 1;
   color: var(--module-accent, var(--color-accent));
   font-weight: var(--font-weight-medium);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
   background: transparent;
   cursor: pointer;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-subtle);
   white-space: nowrap;
 }
 

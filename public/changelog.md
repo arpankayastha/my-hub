@@ -2,6 +2,16 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.21] - 2026-08-04
+
+### Added
+- Overview page redesign: hero badge, subtitle, and labeled widget section.
+- Health profile tool (same household switcher as Overview) — person chip pills removed from all Health tabs.
+
+### Changed
+- Dark mode uses true black surfaces for a deeper OLED-style UI.
+- Budget “Current” month button is smaller (compact chip).
+
 ## [1.1.20] - 2026-08-04
 
 ### Added

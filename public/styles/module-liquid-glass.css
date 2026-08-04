@@ -116,6 +116,39 @@ html[data-lg-module="health"] .health-overview__card-head {
  * OVERVIEW (Dashboard)
  * ================================================================ */
 
+html[data-lg-module="dashboard"] .dashboard-overview.dashboard-hero {
+  margin-bottom: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+html[data-lg-module="dashboard"] .dashboard-masthead {
+  padding: var(--space-6);
+  border-radius: var(--radius-glass-card);
+  background:
+    radial-gradient(140% 120% at 100% 0%,
+      color-mix(in srgb, var(--module-accent) 18%, transparent),
+      transparent 55%),
+    var(--glass-bg-card);
+}
+
+html[data-lg-module="dashboard"] .today-cockpit__grid {
+  gap: var(--space-3);
+}
+
+html[data-lg-module="dashboard"] .today-cockpit-card {
+  border-radius: var(--radius-glass-inner);
+  border: 1px solid var(--glass-border-subtle);
+  background: color-mix(in srgb, var(--glass-bg-card) 88%, transparent);
+  box-shadow: var(--glass-shadow-sm);
+}
+
+html[data-lg-module="dashboard"] .dashboard-widgets__head {
+  border-bottom-color: var(--glass-border-subtle);
+}
+
 html[data-lg-module="dashboard"] .dashboard-overview {
   margin-bottom: var(--space-5);
   padding: var(--space-5);

@@ -106,6 +106,8 @@
     },
     "dashboard": {
         "title": "Übersicht",
+        "heroSubtitle": "Dein Haushalt im Überblick",
+        "widgetsTitle": "Module",
         "greetingMorning": "Guten Morgen, {{name}}",
         "greetingDay": "Guten Tag, {{name}}",
         "greetingEvening": "Guten Abend, {{name}}",

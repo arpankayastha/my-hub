@@ -1182,13 +1182,14 @@ function renderDashboardOverview(user, editing = false) {
   const dateLabel = formatDate(new Date());
 
   return `
-    <section class="dashboard-overview">
-      <div class="dashboard-overview__header${editing ? ' dashboard-overview__header--editing' : ''}">
-        <div class="dashboard-overview__heading">
-          <span class="dashboard-overview__date">${dateLabel}</span>
-          <h2 class="dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(profileDisplayName(user))}</h2>
+    <section class="dashboard-overview dashboard-hero">
+      <div class="dashboard-hero__row${editing ? ' dashboard-overview__header--editing' : ''}">
+        <div class="dashboard-hero__content">
+          <div class="dashboard-hero__badge">${esc(dateLabel)}</div>
+          <h2 class="dashboard-hero__title dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(profileDisplayName(user))}</h2>
+          <p class="dashboard-hero__subtitle">${esc(t('dashboard.heroSubtitle'))}</p>
         </div>
-        <div class="dashboard-overview__tools">
+        <div class="dashboard-overview__tools dashboard-hero__tools">
           ${editing ? `
           <div class="dashboard-customize-toolbar" role="toolbar" aria-label="${t('dashboard.customizeTitle')}">
             <button class="btn btn--ghost" id="dashboard-customize-reset">
@@ -1349,9 +1350,16 @@ function renderDashboardLayout(cfg, data, weather, currency, { editing = false, 
   // (kein dense-Umpacken); der Autor-Default darf dicht packen.
   const preserveOrder = (editing || isUserOrderedConfig(cfg)) ? ' dashboard__grid--preserve-order' : '';
   const grid = `<div class="dashboard__grid ${editing ? 'dashboard__grid--editing' : ''}${preserveOrder}" id="dashboard-widget-grid">${gridInner}</div>`;
+  const widgetsSection = `
+    <section class="dashboard-widgets" aria-labelledby="dashboard-widgets-title">
+      <header class="dashboard-widgets__head">
+        <h2 id="dashboard-widgets-title" class="dashboard-widgets__title">${esc(t('dashboard.widgetsTitle'))}</h2>
+      </header>
+      ${grid}
+    </section>`;
   // Im Bearbeiten-Modus folgt die Wieder-Einblenden-Leiste dem Grid, damit
   // ausgeblendete Widgets nicht in einer Sackgasse verschwinden.
-  return editing ? `${grid}${renderHiddenWidgetsTray(cfg)}` : grid;
+  return editing ? `${widgetsSection}${renderHiddenWidgetsTray(cfg)}` : widgetsSection;
 }
 
 function renderDashboardSkeleton() {
@@ -2090,8 +2098,6 @@ export async function render(container, { user }) {
     if (titleEl) {
       titleEl.replaceChildren();
       titleEl.insertAdjacentHTML('afterbegin', greeting(profileDisplayName(user)));
-      // Gradient-Periode mit-resyncen: sonst aktualisieren sich über Mittag/18 Uhr
-      // die Worte, aber der Tageszeit-Gradient bliebe auf dem alten Fenster stehen.
       titleEl.classList.remove(
         'dashboard-overview__title--morning',
         'dashboard-overview__title--day',
@@ -2099,8 +2105,8 @@ export async function render(container, { user }) {
       );
       titleEl.classList.add(`dashboard-overview__title--${greetingPeriod()}`);
     }
-    const dateEl  = container.querySelector('.dashboard-overview__date');
-    if (dateEl)  dateEl.textContent = formatDate(new Date());
+    const badgeEl = container.querySelector('.dashboard-hero__badge');
+    if (badgeEl) badgeEl.textContent = formatDate(new Date());
   }, { signal: _fabController.signal });
 
   // 30-Minuten Auto-Refresh für Wetter (inkl. optionaler Standort-Aktualisierung)

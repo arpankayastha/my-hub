@@ -11,9 +11,13 @@
  *        /components/modal.js, /utils/health-vitals.js, /utils/health-tabs.js
  */
 
-import { api, auth } from '/api.js';
+import { api } from '/api.js';
 import { fromAppUrl } from '/app-path.js';
 import { effectiveUserId } from '/utils/profile-context.js';
+import {
+  dashboardProfileToolMarkup,
+  wireDashboardProfileTool,
+} from '/components/profile-switcher.js';
 import { t, formatDate, formatTime, getLocale, getNumberFormat } from '/i18n.js';
 import { esc } from '/utils/html.js';
 import { wireScrollFade, scheduleUndoableDelete } from '/utils/ux.js';
@@ -60,17 +64,16 @@ function effectiveMeId() {
   return effectiveUserId(_sessionUser) ?? _sessionUser?.id ?? null;
 }
 
-async function syncPersonContext(personId) {
-  if (!_sessionUser || _sessionUser.role !== 'admin') return;
-  const selfId = Number(_sessionUser.id);
-  const target = Number(personId);
-  if (target === effectiveMeId()) return;
-  try {
-    const res = await auth.switchContext(target);
-    _sessionUser = { ...res.user, acting_as: res.acting_as ?? null };
-    window.dispatchEvent(new CustomEvent('profile:context-changed', { detail: _sessionUser }));
-  } catch (err) {
-    console.error('[Health] profile context sync failed:', err);
+function syncHealthPersonIds(user) {
+  if (!user?.id) return;
+  _sessionUser = user;
+  const authId = Number(user.id);
+  const viewId = effectiveUserId(user) ?? authId;
+  for (const state of [vitals, meds, labs, activity, cycle, overview]) {
+    state.meId = authId;
+    state.personId = viewId;
+    state.loaded = false;
+    state.root = null;
   }
 }
 
@@ -273,32 +276,7 @@ function refreshHealthFab() {
 
 export async function render(container, ctx = {}) {
   _container = container;
-  _sessionUser = ctx.user ?? null;
-  const meId = effectiveMeId();
-  vitals.meId = meId;
-  vitals.personId = meId;
-  vitals.root = null;
-  vitals.loaded = false;
-  meds.meId = meId;
-  meds.personId = meId;
-  meds.root = null;
-  meds.loaded = false;
-  labs.meId = meId;
-  labs.personId = meId;
-  labs.root = null;
-  labs.loaded = false;
-  activity.meId = meId;
-  activity.personId = meId;
-  activity.root = null;
-  activity.loaded = false;
-  cycle.meId = meId;
-  cycle.personId = meId;
-  cycle.root = null;
-  cycle.loaded = false;
-  overview.meId = meId;
-  overview.personId = meId;
-  overview.root = null;
-  overview.loaded = false;
+  syncHealthPersonIds(ctx.user ?? null);
   await loadHealthPrefs();
   const activeRoute = normalizeHealthPath(fromAppUrl(window.location.pathname));
   const panels = PANELS().filter((panel) => cycleEnabled || panel.route !== '/health/cycle');
@@ -306,6 +284,11 @@ export async function render(container, ctx = {}) {
   container.replaceChildren();
   container.insertAdjacentHTML('beforeend', `
     <div class="health-page">
+      <div class="health-page__chrome">
+        <div class="health-page__profile-tools">
+          ${dashboardProfileToolMarkup(_sessionUser)}
+        </div>
+      </div>
       <h1 class="sr-only">${esc(t('nav.health'))}</h1>
       ${panels.map((panel) => panelMarkup(panel, activeRoute)).join('')}
     </div>
@@ -317,6 +300,9 @@ export async function render(container, ctx = {}) {
   if (window.lucide) window.lucide.createIcons({ el: container });
   showPanel(activeRoute);
   renderHealthTabsBar(container, activeRoute, { cycleEnabled });
+  wireDashboardProfileTool(container, _sessionUser, (merged) => {
+    window.myHub?.applyProfileContext?.(merged);
+  });
   updateHealthFab(activeRoute);
   maybeMountOverview(activeRoute);
   maybeMountVitals(activeRoute);
@@ -331,7 +317,7 @@ export async function render(container, ctx = {}) {
 // + Panel-Sync) aus — kein Full-Reload. Rückgabe false erzwingt volles Rendern.
 export async function update({ path, user } = {}) {
   if (!_container?.isConnected) return false;
-  if (user?.id) { vitals.meId = user.id; meds.meId = user.id; labs.meId = user.id; activity.meId = user.id; cycle.meId = user.id; overview.meId = user.id; }
+  if (user?.id) syncHealthPersonIds(user);
   const activeRoute = normalizeHealthPath(path || fromAppUrl(window.location.pathname));
 
   showPanel(activeRoute);
@@ -415,9 +401,6 @@ function renderVitalsShell() {
   }
 
   vitals.root.insertAdjacentHTML('beforeend', `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.vitals.personsLabel'))}">
-      ${personChipsMarkup(vitals.members, vitals.personId, vitals.meId)}
-    </div>
     ${readOnlyBannerMarkup(vitals.members, vitals.personId, isOwnView())}
     <div class="health-vitals__toolbar">
       <div class="health-vitals__ranges" role="tablist" aria-label="${esc(t('health.vitals.chartTitle'))}">
@@ -436,25 +419,7 @@ function renderVitalsShell() {
   renderDetail();
 }
 
-// Geteilter Personen-Umschalter (Vitalwerte + Medikamente): identisches Markup,
-// die aktive Person und „Ich"-Markierung kommen je Tab per Argument.
-function personChipsMarkup(members, activeId, meId) {
-  return (members || []).map((m) => {
-    const active = m.id === activeId;
-    const label = m.id === meId
-      ? `${m.display_name} · ${t('health.vitals.you')}`
-      : m.display_name;
-    return `
-      <button type="button" class="health-person-chip${active ? ' is-active' : ''}"
-        data-person-id="${esc(m.id)}" role="tab" aria-selected="${active}">
-        <span class="health-person-chip__dot" aria-hidden="true"
-          style="background:${esc(m.avatar_color) || 'var(--module-health)'}"></span>
-        <span class="health-person-chip__name">${esc(label)}</span>
-      </button>`;
-  }).join('');
-}
-
-// Nur-Lesen-Hinweis beim Betrachten der Daten einer anderen Person. Das bloße
+// Geteilter Nur-Lesen-Hinweis beim Betrachten der Daten einer anderen Person. Das bloße
 // Fehlen der Bearbeiten-Buttons ist leicht zu übersehen — der Banner macht den
 // View-Only-Zustand explizit. Gibt '' für die eigene Ansicht zurück.
 function readOnlyBannerMarkup(members, personId, own) {
@@ -533,14 +498,6 @@ function wireTablistKeys(root) {
 
 function wireVitals() {
   wireTablistKeys(vitals.root);
-  vitals.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === vitals.personId) return;
-      vitals.personId = id;
-      syncPersonContext(id);
-      switchPerson();
-    }));
 
   vitals.root.querySelectorAll('.health-vitals__range').forEach((btn) =>
     btn.addEventListener('click', () => {
@@ -1169,9 +1126,6 @@ function renderMedsShell() {
   }
 
   meds.root.insertAdjacentHTML('beforeend', `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.meds.personsLabel'))}">
-      ${personChipsMarkup(meds.members, meds.personId, meds.meId)}
-    </div>
     ${readOnlyBannerMarkup(meds.members, meds.personId, isOwnMedsView())}
     <div class="health-meds__toolbar">
       <h3 class="health-meds__section-title u-toolbar-title">${esc(t('health.meds.dueToday.title'))}</h3>
@@ -1337,15 +1291,6 @@ function medCardMarkup(med) {
 
 function wireMeds() {
   wireTablistKeys(meds.root);
-  meds.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === meds.personId) return;
-      meds.personId = id;
-      syncPersonContext(id);
-      switchMedsPerson();
-    }));
-
 
   meds.root.querySelectorAll('[data-med-edit]').forEach((card) =>
     card.addEventListener('click', () => {
@@ -1798,9 +1743,6 @@ function renderLabsShell() {
   }
 
   labs.root.insertAdjacentHTML('beforeend', `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.labs.personsLabel'))}">
-      ${personChipsMarkup(labs.members, labs.personId, labs.meId)}
-    </div>
     ${readOnlyBannerMarkup(labs.members, labs.personId, isOwnLabsView())}
     <div class="health-labs__toolbar">
       <h3 class="health-labs__section-title u-toolbar-title">${esc(t('health.labs.reportsTitle'))}</h3>
@@ -2045,15 +1987,6 @@ const FLAG_DOT_COLORS = {
 
 function wireLabs() {
   wireTablistKeys(labs.root);
-  labs.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === labs.personId) return;
-      labs.personId = id;
-      syncPersonContext(id);
-      switchLabsPerson();
-    }));
-
 
   labs.root.querySelectorAll('.health-lab-card').forEach((card) =>
     card.addEventListener('click', () => {
@@ -2493,9 +2426,6 @@ function renderActivityShell() {
   // Leer-Meldung im Log entfallen (Audit A2-09/A2-21).
 
   activity.root.insertAdjacentHTML('beforeend', `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.activity.personsLabel'))}">
-      ${personChipsMarkup(activity.members, activity.personId, activity.meId)}
-    </div>
     ${readOnlyBannerMarkup(activity.members, activity.personId, isOwnActivityView())}
     <div class="health-activity__toolbar">
       <div class="health-activity__stepper">
@@ -2627,14 +2557,6 @@ function activityRowMarkup(row, own) {
 
 function wireActivity() {
   wireTablistKeys(activity.root);
-  activity.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === activity.personId) return;
-      activity.personId = id;
-      syncPersonContext(id);
-      switchActivityPerson();
-    }));
 
   activity.root.querySelectorAll('[data-step]').forEach((btn) =>
     btn.addEventListener('click', () => {
@@ -2937,17 +2859,6 @@ function overviewFindLog(dose) {
   ) || null;
 }
 
-async function switchOverviewPerson() {
-  try {
-    await loadOverview();
-    overview.error = false;
-  } catch (err) {
-    console.error('[Health] overview load error:', err);
-    overview.error = true;
-  }
-  renderOverviewShell();
-}
-
 async function reloadOverview() {
   try {
     await loadOverview();
@@ -3029,9 +2940,6 @@ function renderOverviewShell() {
 
   overview.root.insertAdjacentHTML('beforeend', `
     ${overviewMonthHeroMarkup()}
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.overview.personsLabel'))}">
-      ${personChipsMarkup(overview.members, overview.personId, overview.meId)}
-    </div>
     ${readOnlyBannerMarkup(overview.members, overview.personId, isOwnOverviewView())}
     <div class="health-overview__grid">
       ${overviewCard('calendar-check', 'health.overview.dueToday.title', overviewDueMarkup())}
@@ -3315,14 +3223,6 @@ function rerenderExportButtons() {
 
 function wireOverview() {
   wireTablistKeys(overview.root);
-  overview.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === overview.personId) return;
-      overview.personId = id;
-      syncPersonContext(id);
-      switchOverviewPerson();
-    }));
 
   overview.root.querySelectorAll('[data-ov-dose-take]').forEach((btn) =>
     btn.addEventListener('click', () => handleOverviewDose(btn, 'take')));
@@ -3503,11 +3403,7 @@ function renderCycleShell() {
   const own = isOwnCycleView();
   const prediction = predictCycle(cycle.periods, cycleSettings());
 
-  const persons = `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.cycle.personsLabel'))}">
-      ${personChipsMarkup(cycle.members, cycle.personId, cycle.meId)}
-    </div>
-    ${readOnlyBannerMarkup(cycle.members, cycle.personId, own)}`;
+  const persons = readOnlyBannerMarkup(cycle.members, cycle.personId, own);
 
   // Schwangerschafts-Modus: Vorhersagen sind pausiert — statt Ring/Prognose wird
   // der Schwangerschafts-Status gezeigt. Logging, Kalender (ohne Projektion) und
@@ -3899,14 +3795,6 @@ function cycleFooterMarkup(own) {
 
 function wireCycle() {
   wireTablistKeys(cycle.root);
-  cycle.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === cycle.personId) return;
-      cycle.personId = id;
-      syncPersonContext(id);
-      switchCyclePerson();
-    }));
 
   cycle.root.querySelectorAll('[data-cycle-month]').forEach((btn) =>
     btn.addEventListener('click', () => { stepCycleMonth(Number(btn.dataset.cycleMonth)); renderCycleShell(); }));

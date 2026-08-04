@@ -97,6 +97,8 @@
     },
     "dashboard": {
         "title": "Overview",
+        "heroSubtitle": "Your household at a glance",
+        "widgetsTitle": "Modules",
         "greetingMorning": "Good morning, {{name}}",
         "greetingDay": "Good afternoon, {{name}}",
         "greetingEvening": "Good evening, {{name}}",
