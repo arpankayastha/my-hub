@@ -18,6 +18,27 @@
   margin: 0 auto;
 }
 
+.settings-shell-header__title {
+  margin: 0;
+}
+
+.settings-shell-header__version,
+.settings-shell__version {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.settings-shell-header__version {
+  margin-top: var(--space-0h);
+}
+
+.settings-shell__version {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: var(--space-px) solid var(--color-border-subtle);
+}
+
 .settings-page--leaf .settings-shell-header {
   display: none;
 }

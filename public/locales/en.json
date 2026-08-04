@@ -1222,6 +1222,7 @@
         "rewardsDefaultPointsRebased": "{{count}} tasks updated.",
         "rewardsDefaultPointsRebased_one": "{{count}} task updated.",
         "title": "Settings",
+        "appVersion": "Version {{version}}",
         "tabGeneral": "General",
         "tabMeals": "Meals",
         "tabBudget": "Budget",

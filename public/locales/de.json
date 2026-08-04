@@ -1231,6 +1231,7 @@
         "rewardsDefaultPointsRebased": "{{count}} Aufgaben aktualisiert.",
         "rewardsDefaultPointsRebased_one": "{{count}} Aufgabe aktualisiert.",
         "title": "Einstellungen",
+        "appVersion": "Version {{version}}",
         "navigationLabel": "Einstellungsnavigation",
         "searchLabel": "Einstellungen durchsuchen",
         "searchResults": "{{count}} Einstellungen gefunden",

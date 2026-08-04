@@ -934,15 +934,6 @@ function buildMoreSheetBody() {
     },
   }));
   system.appendChild(moreActionEl({
-    labelKey: 'nav.changelog',
-    icon: 'history',
-    className: 'more-item--changelog',
-    onClick: () => {
-      if (window._closeMoreSheet) window._closeMoreSheet({ restoreFocus: false });
-      showChangelogModal();
-    },
-  }));
-  system.appendChild(moreActionEl({
     labelKey: 'settings.logout',
     icon: 'log-out',
     className: 'more-item--logout',
@@ -1273,15 +1264,9 @@ async function renderAppShell(container) {
       className: 'nav-item--help',
       onClick: () => showHelpModal(),
     }),
-    sidebarActionEl({
-      labelKey: 'nav.changelog',
-      icon: 'history',
-      className: 'nav-item--changelog',
-      onClick: () => showChangelogModal(),
-    }),
     // Abmelden als terminale Aktion: bricht in eine eigene, volle Zeile unter
-    // Hilfe/Änderungen (CSS: flex-wrap + border-top). Monochrom wie die
-    // Geschwister — Danger-Rot erscheint erst im Confirm.
+    // Hilfe (CSS: flex-wrap + border-top). Monochrom wie die Geschwister —
+    // Danger-Rot erscheint erst im Confirm.
     sidebarActionEl({
       labelKey: 'settings.logout',
       icon: 'log-out',
@@ -1617,139 +1602,6 @@ function showHelpModal() {
   overlay.appendChild(panel);
   document.body.appendChild(overlay);
   if (window.lucide) window.lucide.createIcons({ el: panel });
-}
-
-function versionText(value) {
-  return String(value || '').trim() || t('changelog.unknownVersion');
-}
-
-function versionKey(value) {
-  return String(value || '').trim().replace(/^v/i, '').toLowerCase();
-}
-
-function renderChangelogStatus(panel, message, tone = 'muted') {
-  const status = panel.querySelector('#changelog-status');
-  if (!status) return;
-  status.hidden = false;
-  status.className = `changelog-status changelog-status--${tone}`;
-  status.textContent = message;
-}
-
-function appendReleaseSection(parent, section) {
-  const block = document.createElement('section');
-  block.className = 'changelog-section';
-
-  const title = document.createElement('h4');
-  title.className = 'changelog-section__title';
-  title.textContent = section.title || t('changelog.changes');
-  block.appendChild(title);
-
-  const list = document.createElement('ul');
-  list.className = 'changelog-section__list';
-  for (const item of Array.isArray(section.items) ? section.items : []) {
-    const li = document.createElement('li');
-    li.textContent = String(item || '');
-    list.appendChild(li);
-  }
-  block.appendChild(list);
-  parent.appendChild(block);
-}
-
-function appendReleaseCard(parent, release, currentVersion) {
-  const isCurrent = Boolean(versionKey(release.version))
-    && versionKey(release.version) === versionKey(currentVersion);
-  const card = document.createElement('article');
-  card.className = `changelog-release${isCurrent ? ' changelog-release--current' : ''}`;
-
-  const header = document.createElement('div');
-  header.className = 'changelog-release__header';
-  const title = document.createElement('h3');
-  title.className = 'changelog-release__version';
-  title.textContent = versionText(release.version);
-  header.appendChild(title);
-
-  if (isCurrent) {
-    const badge = document.createElement('span');
-    badge.className = 'changelog-release__badge';
-    badge.textContent = t('changelog.currentBadge');
-    header.appendChild(badge);
-  }
-  card.appendChild(header);
-
-  const sections = Array.isArray(release.sections) ? release.sections : [];
-  if (sections.length) {
-    for (const section of sections) appendReleaseSection(card, section);
-  } else {
-    const empty = document.createElement('p');
-    empty.className = 'changelog-release__empty';
-    empty.textContent = t('changelog.noReleaseNotes');
-    card.appendChild(empty);
-  }
-  parent.appendChild(card);
-}
-
-function renderChangelog(panel, payload) {
-  const data = payload?.data ?? {};
-  const currentVersion = data.current_version;
-  const latestVersion = data.latest_version;
-  const releases = Array.isArray(data.releases) ? data.releases : [];
-
-  panel.querySelector('#changelog-current-version').textContent = versionText(currentVersion);
-  panel.querySelector('#changelog-latest-version').textContent = versionText(latestVersion);
-
-  const note = panel.querySelector('#changelog-version-note');
-  note.textContent = data.current_in_releases
-    ? t('changelog.currentFound')
-    : t('changelog.currentMissing');
-  note.classList.toggle('changelog-version-note--warning', !data.current_in_releases);
-
-  const status = panel.querySelector('#changelog-status');
-  if (status) status.hidden = true;
-
-  const list = panel.querySelector('#changelog-list');
-  list.replaceChildren();
-  if (!releases.length) {
-    renderChangelogStatus(panel, t('changelog.empty'), 'muted');
-    return;
-  }
-
-  const fragment = document.createDocumentFragment();
-  for (const release of releases) appendReleaseCard(fragment, release, currentVersion);
-  list.appendChild(fragment);
-}
-
-function showChangelogModal() {
-  openModal({
-    title: t('changelog.title'),
-    size: 'xl',
-    content: `
-      <div class="changelog-modal">
-        <div class="changelog-summary" aria-live="polite">
-          <div class="changelog-summary__item">
-            <span>${esc(t('changelog.currentVersion'))}</span>
-            <strong id="changelog-current-version">${esc(t('changelog.loadingShort'))}</strong>
-          </div>
-          <div class="changelog-summary__item">
-            <span>${esc(t('changelog.latestVersion'))}</span>
-            <strong id="changelog-latest-version">${esc(t('changelog.loadingShort'))}</strong>
-          </div>
-        </div>
-        <p class="changelog-version-note" id="changelog-version-note"></p>
-        <div class="changelog-status changelog-status--muted" id="changelog-status" role="status">
-          ${esc(t('changelog.loading'))}
-        </div>
-        <div class="changelog-list" id="changelog-list"></div>
-      </div>
-    `,
-    onSave(panel) {
-      api.get('/changelog')
-        .then((payload) => renderChangelog(panel, payload))
-        .catch(() => {
-          panel.querySelector('#changelog-list')?.replaceChildren();
-          renderChangelogStatus(panel, t('changelog.loadError'), 'error');
-        });
-    },
-  });
 }
 
 function loadReminderStyles() {
