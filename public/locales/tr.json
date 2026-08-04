@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} ödenmemiş",
         "widgetError": "Yüklenemedi",
         "savingsGoal": "Tasarruf hedefi",
-        "heroSubtitle": "Eviniz bir bakışta — aşağıdaki karta dokunun veya widget'ları özelleştirin."
+        "heroSubtitle": "Eviniz bir bakışta — aşağıdaki karta dokunun veya widget'ları özelleştirin.",
+        "financialSnapshotTitle": "Aylık bütçe özeti",
+        "financialSnapshotEmpty": "Aylık özeti görmek için bütçe girişleri ekleyin"
     },
     "tasks": {
         "manageCategories": "Kategorileri yönet",

@@ -2,6 +2,16 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.20] - 2026-08-04
+
+### Added (Phase 2 — liquid glass UX)
+- **Budget:** running month-to-date balance on each day in the month calendar.
+- **Health:** adherence and vital trend sparklines on the overview hero and cards.
+- **Overview:** financial snapshot strip in the hero (balance, income, expenses → Budget).
+
+### Planned
+- **Phase 3:** full Forecast-style budget calendar; health widget dashboard; combined overview hero with cash-flow feel.
+
 ## [1.1.19] - 2026-08-04
 
 ### Added (Phase 1 — liquid glass UX)

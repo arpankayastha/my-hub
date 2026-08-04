@@ -1178,7 +1178,44 @@ function renderTodayCockpit(data, cfg = []) {
 }
 
 
-function renderDashboardOverview(user, editing = false) {
+function renderFinancialSnapshotStrip(budget, currency) {
+  if (window.myHub?.isModuleDisabled('budget')) return '';
+  const income = budget?.income || 0;
+  const expenses = budget?.expenses || 0;
+  const balance = budget?.balance || 0;
+  const hasData = (budget?.entryCount || 0) > 0;
+  const balanceTone = balance >= 0 ? 'positive' : 'negative';
+
+  if (!hasData) {
+    return `
+      <a class="dashboard-financial-snapshot dashboard-financial-snapshot--empty" href="/budget" data-route="/budget">
+        <i data-lucide="wallet" class="dashboard-financial-snapshot__icon" aria-hidden="true"></i>
+        <span class="dashboard-financial-snapshot__empty-text">${esc(t('dashboard.financialSnapshotEmpty'))}</span>
+      </a>`;
+  }
+
+  return `
+    <a class="dashboard-financial-snapshot" href="/budget" data-route="/budget"
+       aria-label="${esc(t('dashboard.financialSnapshotTitle'))}">
+      <div class="dashboard-financial-snapshot__item">
+        <span class="dashboard-financial-snapshot__label">${esc(t('dashboard.monthlyBalance'))}</span>
+        <strong class="dashboard-financial-snapshot__value dashboard-financial-snapshot__value--${balanceTone}">${formatCurrency(balance, currency)}</strong>
+      </div>
+      <div class="dashboard-financial-snapshot__item dashboard-financial-snapshot__item--flow">
+        <span class="dashboard-financial-snapshot__flow dashboard-financial-snapshot__flow--income">
+          <span class="dashboard-financial-snapshot__label">${esc(t('dashboard.monthlyIncome'))}</span>
+          <strong>${formatCurrency(income, currency)}</strong>
+        </span>
+        <span class="dashboard-financial-snapshot__flow dashboard-financial-snapshot__flow--expense">
+          <span class="dashboard-financial-snapshot__label">${esc(t('dashboard.monthlyExpenses'))}</span>
+          <strong>${formatCurrency(expenses, currency)}</strong>
+        </span>
+      </div>
+      <i data-lucide="chevron-right" class="dashboard-financial-snapshot__chevron" aria-hidden="true"></i>
+    </a>`;
+}
+
+function renderDashboardOverview(user, editing = false, { budget, currency } = {}) {
   const dateLabel = formatDate(new Date());
 
   return `
@@ -1188,6 +1225,7 @@ function renderDashboardOverview(user, editing = false) {
           <span class="dashboard-overview__date">${dateLabel}</span>
           <h2 class="dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(profileDisplayName(user))}</h2>
           <p class="dashboard-overview__subtitle">${esc(t('dashboard.heroSubtitle'))}</p>
+          ${!editing ? renderFinancialSnapshotStrip(budget, currency) : ''}
         </div>
         <div class="dashboard-overview__tools">
           ${editing ? `
@@ -2023,7 +2061,7 @@ export async function render(container, { user }) {
     if (!shell) return;
     if (loadFailed) {
       setHtml(shell, `
-        ${renderDashboardOverview(user, false)}
+        ${renderDashboardOverview(user, false, { budget: data.budget, currency })}
         ${renderDashboardError(loadErrorStatus)}
       `);
       if (window.lucide) window.lucide.createIcons({ el: shell });
@@ -2040,7 +2078,7 @@ export async function render(container, { user }) {
     const mastheadSlim = cockpitHtml ? '' : ' dashboard-masthead--slim';
     setHtml(shell, `
       <section class="dashboard-masthead dashboard-masthead--${greetingPeriod()}${mastheadSlim}">
-        ${renderDashboardOverview(user, isCustomizing)}
+        ${renderDashboardOverview(user, isCustomizing, { budget: data.budget, currency })}
         ${cockpitHtml}
       </section>
       ${renderDashboardLayout(cfg, data, weather, currency, { editing: isCustomizing, visibleMealTypes })}

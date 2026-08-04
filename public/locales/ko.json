@@ -204,7 +204,9 @@
         "housekeepingUnpaid": "{{amount}} 미결제",
         "widgetError": "불러올 수 없습니다",
         "savingsGoal": "저축 목표",
-        "heroSubtitle": "가정 한눈에 — 아래 카드를 탭하거나 위젯을 설정하세요."
+        "heroSubtitle": "가정 한눈에 — 아래 카드를 탭하거나 위젯을 설정하세요.",
+        "financialSnapshotTitle": "월간 예산 스냅샷",
+        "financialSnapshotEmpty": "월간 개요를 보려면 예산 항목 추가"
     },
     "tasks": {
         "manageCategories": "카테고리 관리",

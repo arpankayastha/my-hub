@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} da pagare",
         "widgetError": "Impossibile caricare",
         "savingsGoal": "Obiettivo di risparmio",
-        "heroSubtitle": "La tua casa in sintesi — tocca una scheda qui sotto o personalizza i widget."
+        "heroSubtitle": "La tua casa in sintesi — tocca una scheda qui sotto o personalizza i widget.",
+        "financialSnapshotTitle": "Panoramica budget del mese",
+        "financialSnapshotEmpty": "Aggiungi voci per vedere il riepilogo mensile"
     },
     "tasks": {
         "manageCategories": "Gestisci categorie",

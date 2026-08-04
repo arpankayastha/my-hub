@@ -204,7 +204,9 @@
         "housekeepingUnpaid": "{{amount}} offen",
         "widgetError": "Konnte nicht geladen werden",
         "savingsGoal": "Sparziel",
-        "heroSubtitle": "Dein Haushalt im Überblick — tippe auf eine Karte unten oder passe Widgets an."
+        "heroSubtitle": "Dein Haushalt im Überblick — tippe auf eine Karte unten oder passe Widgets an.",
+        "financialSnapshotTitle": "Monatsbudget im Überblick",
+        "financialSnapshotEmpty": "Budget-Einträge hinzufügen für die Monatsübersicht"
     },
     "tasks": {
         "manageCategories": "Kategorien verwalten",

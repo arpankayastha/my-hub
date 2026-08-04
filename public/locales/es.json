@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} pendiente",
         "widgetError": "No se pudo cargar",
         "savingsGoal": "Objetivo de ahorro",
-        "heroSubtitle": "Tu hogar de un vistazo — toca una tarjeta abajo o personaliza los widgets."
+        "heroSubtitle": "Tu hogar de un vistazo — toca una tarjeta abajo o personaliza los widgets.",
+        "financialSnapshotTitle": "Resumen presupuesto del mes",
+        "financialSnapshotEmpty": "Añade entradas para ver el resumen mensual"
     },
     "tasks": {
         "manageCategories": "Gestionar categorías",

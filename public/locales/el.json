@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} οφειλόμενα",
         "widgetError": "Δεν ήταν δυνατή η φόρτωση",
         "savingsGoal": "Στόχος αποταμίευσης",
-        "heroSubtitle": "Το νοικοκυριό σας με μια ματιά — πατήστε μια κάρτα παρακάτω ή προσαρμόστε widgets."
+        "heroSubtitle": "Το νοικοκυριό σας με μια ματιά — πατήστε μια κάρτα παρακάτω ή προσαρμόστε widgets.",
+        "financialSnapshotTitle": "Μηνιαίο προϋπολογισμό",
+        "financialSnapshotEmpty": "Προσθέστε καταχωρήσεις για τον μηνιαίο προϋπολογισμό"
     },
     "tasks": {
         "manageCategories": "Διαχείριση κατηγοριών",

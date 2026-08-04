@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} مستحقة",
         "widgetError": "تعذّر التحميل",
         "savingsGoal": "هدف الادخار",
-        "heroSubtitle": "منزلك في لمحة — انقر على بطاقة أدناه أو خصّص الأدوات."
+        "heroSubtitle": "منزلك في لمحة — انقر على بطاقة أدناه أو خصّص الأدوات.",
+        "financialSnapshotTitle": "لمحة الميزانية الشهرية",
+        "financialSnapshotEmpty": "أضف إدخالات لرؤية اللمحة الشهرية"
     },
     "tasks": {
         "manageCategories": "إدارة الفئات",

@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} к оплате",
         "widgetError": "Не удалось загрузить",
         "savingsGoal": "Цель накоплений",
-        "heroSubtitle": "Ваш дом одним взглядом — нажмите на карточку ниже или настройте виджеты."
+        "heroSubtitle": "Ваш дом одним взглядом — нажмите на карточку ниже или настройте виджеты.",
+        "financialSnapshotTitle": "Снимок месячного бюджета",
+        "financialSnapshotEmpty": "Добавьте записи для месячного обзора"
     },
     "tasks": {
         "manageCategories": "Управление категориями",

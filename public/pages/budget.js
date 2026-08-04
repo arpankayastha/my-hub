@@ -21,7 +21,7 @@ import { budgetCategoryLabel } from '/utils/category-labels.js';
 import { englishBudgetSubcategoryLabel } from '/utils/budget-category-defaults.js';
 import { appendCurrencyOptions } from '/settings/currency.js';
 import { wireHorizontalSwipe } from '/utils/horizontal-swipe.js';
-import { aggregateEntriesByDay, renderMonthCalendarHtml } from '/utils/budget-month-calendar.js';
+import { aggregateEntriesByDay, computeRunningBalanceByDay, renderMonthCalendarHtml } from '/utils/budget-month-calendar.js';
 import '/components/category-manager.js';
 
 // --------------------------------------------------------
@@ -798,12 +798,15 @@ function entriesForList() {
 function renderMonthCalendarSection() {
   const today = toLocalDateKey(new Date());
   const dayTotals = aggregateEntriesByDay(state.entries);
+  const runningBalanceByDay = computeRunningBalanceByDay(state.entries, state.month);
   return renderMonthCalendarHtml(state.month, dayTotals, {
     selectedDay: state.dayFilter,
     today,
     title: t('budget.monthCalendarTitle'),
     clearLabel: t('budget.monthCalendarClear'),
     locale: getLocale(),
+    runningBalanceByDay,
+    formatBalance: (n) => formatAmount(n),
   });
 }
 

@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "Còn nợ {{amount}}",
         "widgetError": "Không thể tải",
         "savingsGoal": "Mục tiêu tiết kiệm",
-        "heroSubtitle": "Gia đình trong một nhìn — chạm thẻ bên dưới hoặc tùy chỉnh widget."
+        "heroSubtitle": "Gia đình trong một nhìn — chạm thẻ bên dưới hoặc tùy chỉnh widget.",
+        "financialSnapshotTitle": "Tóm tắt ngân sách tháng",
+        "financialSnapshotEmpty": "Thêm mục để xem tóm tắt tháng"
     },
     "tasks": {
         "manageCategories": "Quản lý danh mục",

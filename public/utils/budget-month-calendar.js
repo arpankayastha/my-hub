@@ -26,7 +26,37 @@ export function aggregateEntriesByDay(entries) {
   return map;
 }
 
-function weekdayLabels(locale = 'en') {
+/**
+ * Cumulative month-to-date balance per calendar day (end-of-day).
+ * @param {Array<{ date?: string, amount?: number }>} entries
+ * @param {string} ym YYYY-MM
+ * @returns {Record<string, number>}
+ */
+export function computeRunningBalanceByDay(entries, ym) {
+  const dayTotals = aggregateEntriesByDay(entries);
+  const [y, m] = ym.split('-').map(Number);
+  if (!y || !m) return {};
+  const lastDate = new Date(y, m, 0).getDate();
+  const map = {};
+  let running = 0;
+  for (let day = 1; day <= lastDate; day++) {
+    const dateKey = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    running += dayTotals[dateKey]?.net || 0;
+    map[dateKey] = running;
+  }
+  return map;
+}
+
+function formatShortBalance(amount, formatBalance) {
+  if (!formatBalance) return '';
+  const full = formatBalance(amount);
+  if (full.length <= 8) return full;
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? '−' : '';
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 10_000) return `${sign}${Math.round(abs / 1_000)}k`;
+  return full;
+}
   const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
   const monday = new Date(2024, 0, 1); // Monday
   return Array.from({ length: 7 }, (_, i) => {
@@ -39,7 +69,7 @@ function weekdayLabels(locale = 'en') {
 /**
  * @param {string} ym YYYY-MM
  * @param {Record<string, DayTotals>} dayTotals
- * @param {{ selectedDay?: string|null, today?: string, title?: string, clearLabel?: string, locale?: string }} opts
+ * @param {{ selectedDay?: string|null, today?: string, title?: string, clearLabel?: string, locale?: string, runningBalanceByDay?: Record<string, number>, formatBalance?: (n: number) => string }} opts
  */
 export function renderMonthCalendarHtml(ym, dayTotals, opts = {}) {
   const [y, m] = ym.split('-').map(Number);
@@ -75,14 +105,22 @@ export function renderMonthCalendarHtml(ym, dayTotals, opts = {}) {
       hasActivity ? `budget-month-calendar__day--${tone}` : '',
     ].filter(Boolean).join(' ');
 
+    const ariaBalance = opts.runningBalanceByDay?.[dateKey];
+    const balanceHtml = opts.formatBalance && ariaBalance !== undefined
+      ? `<span class="budget-month-calendar__balance budget-month-calendar__balance--${ariaBalance >= 0 ? 'pos' : 'neg'}" aria-hidden="true">${esc(formatShortBalance(ariaBalance, opts.formatBalance))}</span>`
+      : '';
+
     const aria = hasActivity
-      ? `${day}, ${totals.count} entries`
-      : String(day);
+      ? `${day}, ${totals.count} entries, balance ${opts.formatBalance ? opts.formatBalance(ariaBalance ?? 0) : ariaBalance}`
+      : (opts.formatBalance && ariaBalance !== undefined
+        ? `${day}, balance ${opts.formatBalance(ariaBalance)}`
+        : String(day));
 
     cells.push(`
       <button type="button" class="${classes}" data-budget-day="${esc(dateKey)}"
         aria-label="${esc(aria)}" aria-pressed="${isSelected ? 'true' : 'false'}">
         <span class="budget-month-calendar__day-num">${day}</span>
+        ${balanceHtml}
         ${hasActivity ? `<span class="budget-month-calendar__dot" aria-hidden="true"></span>` : ''}
       </button>`);
   }

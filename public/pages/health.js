@@ -2854,6 +2854,7 @@ const overview = {
 
 // Fenster für Adherence-Quote und Streak-Rückschau (Tage).
 const OVERVIEW_ADHERENCE_DAYS = 30;
+const OVERVIEW_SPARKLINE_DAYS = 14;
 // Default-Zeitraum für den CSV-Export (Tage rückwärts ab heute).
 const OVERVIEW_EXPORT_DAYS = 90;
 // Exportierbare Bereiche: Route-Segment + Locale-Key des Buttons + Icon.
@@ -2959,6 +2960,53 @@ async function reloadOverview() {
   renderOverviewShell();
 }
 
+function overviewSparkline(values, className = 'health-overview__spark') {
+  const withVal = values
+    .map((v, i) => ({ v, i }))
+    .filter((o) => o.v !== null && o.v !== undefined && Number.isFinite(o.v));
+  if (withVal.length < 2) return '';
+  const W = 100;
+  const H = 28;
+  const PAD = 3;
+  const vals = withVal.map((o) => o.v);
+  let min = Math.min(...vals);
+  let max = Math.max(...vals);
+  if (min === max) { min -= 1; max += 1; }
+  const n = withVal.length;
+  const x = (idx) => PAD + (idx * (W - 2 * PAD)) / (n - 1);
+  const y = (v) => H - PAD - ((v - min) / (max - min)) * (H - 2 * PAD);
+  const pts = withVal.map((o, idx) => `${x(idx).toFixed(1)},${y(o.v).toFixed(1)}`).join(' ');
+  const lastX = x(n - 1).toFixed(1);
+  const lastY = y(withVal[n - 1].v).toFixed(1);
+  return `<svg class="${className}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <polyline points="${pts}" fill="none" stroke="var(--module-accent)" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+      <circle cx="${lastX}" cy="${lastY}" r="2" fill="var(--module-accent)" vector-effect="non-scaling-stroke" />
+    </svg>`;
+}
+
+function overviewAdherenceSparklinePoints() {
+  const today = toLocalDateKey(new Date());
+  const from = addLocalDays(today, -(OVERVIEW_SPARKLINE_DAYS - 1));
+  const schedules = overviewAllSchedules();
+  const points = [];
+  for (let i = 0; i < OVERVIEW_SPARKLINE_DAYS; i++) {
+    const day = addLocalDays(from, i);
+    const planned = computeDueDoses(schedules, { from: day, to: day }).length;
+    if (!planned) {
+      points.push(null);
+      continue;
+    }
+    const logs = overviewAllLogs().filter((l) => {
+      const k = String(l.scheduled_at || l.taken_at || l.created_at || '').slice(0, 10);
+      return k === day;
+    });
+    const a = computeAdherence(logs, planned);
+    points.push(a.rate != null ? a.rate * 100 : null);
+  }
+  return points;
+}
+
 function overviewHeroMarkup() {
   const today = toLocalDateKey(new Date());
   const due = computeDueDoses(overviewAllSchedules(), { from: today, to: today }).length;
@@ -2972,6 +3020,7 @@ function overviewHeroMarkup() {
   const a = computeAdherence(logs, planned);
   const streak = computeAdherenceStreak(schedules, overviewAllLogs(), { today });
   const pct = a.rate != null && a.taken > 0 ? `${Math.round(a.rate * 100)}%` : '—';
+  const adherenceSpark = overviewSparkline(overviewAdherenceSparklinePoints(), 'health-overview-hero__spark');
 
   return `
     <section class="health-overview-hero" aria-label="${esc(t('health.overview.heroTitle'))}">
@@ -2982,6 +3031,7 @@ function overviewHeroMarkup() {
       <div class="health-overview-hero__stat">
         <span class="health-overview-hero__value">${esc(pct)}</span>
         <span class="health-overview-hero__label">${esc(t('health.overview.heroAdherence'))}</span>
+        ${adherenceSpark}
       </div>
       <div class="health-overview-hero__stat">
         <span class="health-overview-hero__value">${esc(fmtNum(streak))}</span>
@@ -3161,6 +3211,7 @@ function overviewAdherenceMarkup() {
         <span class="health-overview__stat-value">${esc(fmtNum(pct))}%</span>
         <span class="health-overview__stat-label">${esc(t('health.overview.adherence.period', { days: OVERVIEW_ADHERENCE_DAYS }))}</span>
         <div class="health-adherence__bar"><span style="width:${pct}%"></span></div>
+        ${overviewSparkline(overviewAdherenceSparklinePoints())}
       </div>
       ${streakStat}
     </div>`;
@@ -3205,6 +3256,7 @@ function overviewVitalCardMarkup(metric, series) {
         <span class="health-metric-card__label">${esc(label)}</span>
       </span>
       <span class="health-metric-card__body">${valueHtml}</span>
+      ${latest ? sparklineMarkup(series.points, 'value_num') : ''}
       ${metaHtml}
     </button>`;
 }

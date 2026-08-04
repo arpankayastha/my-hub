@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} k úhradě",
         "widgetError": "Nepodařilo se načíst",
         "savingsGoal": "Cíl úspor",
-        "heroSubtitle": "Váš domov na jednom místě — klepněte na kartu níže nebo upravte widgety."
+        "heroSubtitle": "Váš domov na jednom místě — klepněte na kartu níže nebo upravte widgety.",
+        "financialSnapshotTitle": "Měsíční rozpočtový přehled",
+        "financialSnapshotEmpty": "Přidejte položky pro měsíční přehled"
     },
     "tasks": {
         "manageCategories": "Spravovat kategorie",

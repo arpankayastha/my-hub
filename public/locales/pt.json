@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} em aberto",
         "widgetError": "Não foi possível carregar",
         "savingsGoal": "Meta de poupança",
-        "heroSubtitle": "Sua casa em resumo — toque um cartão abaixo ou personalize os widgets."
+        "heroSubtitle": "Sua casa em resumo — toque um cartão abaixo ou personalize os widgets.",
+        "financialSnapshotTitle": "Resumo do orçamento mensal",
+        "financialSnapshotEmpty": "Adicione entradas para ver o resumo mensual"
     },
     "tasks": {
         "manageCategories": "Gerir categorias",

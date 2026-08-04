@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} 未払い",
         "widgetError": "読み込めませんでした",
         "savingsGoal": "貯蓄目標",
-        "heroSubtitle": "家庭の概要 — 下のカードをタップするかウィジェットをカスタマイズ。"
+        "heroSubtitle": "家庭の概要 — 下のカードをタップするかウィジェットをカスタマイズ。",
+        "financialSnapshotTitle": "月間予算スナップショット",
+        "financialSnapshotEmpty": "月間概要を見るには予算を追加"
     },
     "tasks": {
         "manageCategories": "カテゴリーを管理",

@@ -204,7 +204,9 @@
         "housekeepingUnpaid": "{{amount}} do zapłaty",
         "widgetError": "Nie udało się załadować",
         "savingsGoal": "Cel oszczędności",
-        "heroSubtitle": "Twój dom w pigułce — dotknij karty poniżej lub dostosuj widżety."
+        "heroSubtitle": "Twój dom w pigułce — dotknij karty poniżej lub dostosuj widżety.",
+        "financialSnapshotTitle": "Miesięczny podgląd budżetu",
+        "financialSnapshotEmpty": "Dodaj wpisy, aby zobaczyć miesięczny podgląd"
     },
     "tasks": {
         "manageCategories": "Zarządzaj kategoriami",

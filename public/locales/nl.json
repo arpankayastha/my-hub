@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} openstaand",
         "widgetError": "Kon niet worden geladen",
         "savingsGoal": "Spaardoel",
-        "heroSubtitle": "Je huishouden in één oogopslag — tik op een kaart hieronder of pas widgets aan."
+        "heroSubtitle": "Je huishouden in één oogopslag — tik op een kaart hieronder of pas widgets aan.",
+        "financialSnapshotTitle": "Maandbudgetoverzicht",
+        "financialSnapshotEmpty": "Voeg budgetposten toe voor het maandoverzicht"
     },
     "tasks": {
         "manageCategories": "Categorieën beheren",

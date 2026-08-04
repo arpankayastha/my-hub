@@ -204,7 +204,9 @@
         "housekeepingUnpaid": "{{amount}} پرداخت‌نشده",
         "widgetError": "بارگذاری نشد",
         "savingsGoal": "هدف پس‌انداز",
-        "heroSubtitle": "خانه‌تان در یک نگاه — روی کارت پایین بزنید یا ویجت‌ها را سفارشی کنید."
+        "heroSubtitle": "خانه‌تان در یک نگاه — روی کارت پایین بزنید یا ویجت‌ها را سفارشی کنید.",
+        "financialSnapshotTitle": "خلاصه بودجه ماهانه",
+        "financialSnapshotEmpty": "برای نمایش خلاصه ماهانه ورودی اضافه کنید"
     },
     "tasks": {
         "manageCategories": "مدیریت دسته‌ها",

@@ -204,7 +204,9 @@
         "housekeepingUnpaid": "{{amount}} belum dibayar",
         "widgetError": "Tidak dapat dimuat",
         "savingsGoal": "Target tabungan",
-        "heroSubtitle": "Rumah tangga dalam sekejap — ketuk kartu di bawah atau sesuaikan widget."
+        "heroSubtitle": "Rumah tangga dalam sekejap — ketuk kartu di bawah atau sesuaikan widget.",
+        "financialSnapshotTitle": "Ringkasan anggaran bulanan",
+        "financialSnapshotEmpty": "Tambahkan entri untuk ringkasan bulanan"
     },
     "tasks": {
         "manageCategories": "Kelola kategori",

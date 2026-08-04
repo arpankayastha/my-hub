@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} 待付",
         "widgetError": "无法加载",
         "savingsGoal": "储蓄目标",
-        "heroSubtitle": "家庭一览 — 点击下方卡片或自定义小组件。"
+        "heroSubtitle": "家庭一览 — 点击下方卡片或自定义小组件。",
+        "financialSnapshotTitle": "月度预算概览",
+        "financialSnapshotEmpty": "添加预算条目以查看月度概览"
     },
     "tasks": {
         "manageCategories": "管理类别",

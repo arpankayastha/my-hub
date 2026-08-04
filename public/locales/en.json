@@ -106,6 +106,8 @@
         "todayMeals": "Today's meals",
         "todayTitle": "Today at a glance",
         "heroSubtitle": "Your household at a glance — tap a card below or customize widgets.",
+        "financialSnapshotTitle": "Monthly budget snapshot",
+        "financialSnapshotEmpty": "Add budget entries to see your monthly snapshot",
         "todayTask": "Task",
         "todayEvent": "Event",
         "todayShopping": "Shopping",

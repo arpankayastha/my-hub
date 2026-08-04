@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} obetalt",
         "widgetError": "Kunde inte laddas",
         "savingsGoal": "Sparmål",
-        "heroSubtitle": "Ditt hem i korthet — tryck på en kort nedan eller anpassa widgetar."
+        "heroSubtitle": "Ditt hem i korthet — tryck på en kort nedan eller anpassa widgetar.",
+        "financialSnapshotTitle": "Månadsbudgetöversikt",
+        "financialSnapshotEmpty": "Lägg till poster för månadsöversikten"
     },
     "tasks": {
         "manageCategories": "Hantera kategorier",

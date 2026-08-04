@@ -192,7 +192,9 @@
         "housekeepingUnpaid": "{{amount}} à payer",
         "widgetError": "Impossible à charger",
         "savingsGoal": "Objectif d’épargne",
-        "heroSubtitle": "Votre foyer en un coup d'œil — touchez une carte ci-dessous ou personnalisez les widgets."
+        "heroSubtitle": "Votre foyer en un coup d'œil — touchez une carte ci-dessous ou personnalisez les widgets.",
+        "financialSnapshotTitle": "Aperçu budgétaire du mois",
+        "financialSnapshotEmpty": "Ajoutez des entrées pour voir l'aperçu mensuel"
     },
     "tasks": {
         "manageCategories": "Gérer les catégories",

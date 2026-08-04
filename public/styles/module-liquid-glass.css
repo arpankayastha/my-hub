@@ -462,6 +462,134 @@ html[data-lg-module="health"] .health-overview-hero__label {
   letter-spacing: 0.05em;
 }
 
+html[data-lg-module="health"] .health-overview-hero__spark {
+  width: 100%;
+  max-width: 5rem;
+  height: 1.25rem;
+  margin-top: var(--space-1);
+  opacity: 0.85;
+}
+
+/* --- Phase 2: Overview financial snapshot --- */
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-glass-inner);
+  background: var(--glass-bg-card);
+  box-shadow: var(--glass-shadow-sm), inset 0 1px 0 color-mix(in srgb, white calc(var(--lg-specular) * 70%), transparent);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot:hover {
+  box-shadow: var(--glass-shadow-md);
+  transform: translateY(-1px);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot--empty {
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0h);
+  min-width: 0;
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__item--flow {
+  flex: 1;
+  flex-direction: row;
+  gap: var(--space-4);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__value {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__value--positive {
+  color: var(--color-success);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__value--negative {
+  color: var(--color-danger);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0h);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__flow--income strong {
+  color: var(--color-success);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__flow--expense strong {
+  color: var(--color-danger);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__chevron {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-text-tertiary);
+}
+
+html[data-lg-module="dashboard"] .dashboard-financial-snapshot__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--module-accent);
+}
+
+/* --- Phase 2: Budget calendar running balance --- */
+html[data-lg-module="budget"] .budget-month-calendar__balance {
+  font-size: 0.5625rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-lg-module="budget"] .budget-month-calendar__balance--pos {
+  color: var(--color-success);
+}
+
+html[data-lg-module="budget"] .budget-month-calendar__balance--neg {
+  color: var(--color-danger);
+}
+
+/* --- Phase 2: Health overview sparklines --- */
+html[data-lg-module="health"] .health-overview__spark {
+  display: block;
+  width: 100%;
+  height: 1.75rem;
+  margin-top: var(--space-2);
+  opacity: 0.9;
+}
+
+html[data-lg-module="health"] .health-overview__vitals-grid .health-metric-card__spark {
+  display: block;
+  width: 100%;
+  height: 1.5rem;
+  margin-top: var(--space-1);
+}
+
 /* ================================================================
  * Accessibility
  * ================================================================ */
