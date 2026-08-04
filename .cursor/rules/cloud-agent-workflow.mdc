@@ -8,4 +8,22 @@ alwaysApply: true
 - **Do not add unit tests** unless the user explicitly asks for them.
 - **Merge PRs to `main`** after work is done — mark drafts ready, resolve conflicts, merge (do not leave PRs open by default).
 - **Verify build only**: run `GITHUB_PAGES_BASE=/my-hub node scripts/build-pages.mjs` — do not run the full test suite unless asked.
-- Skip version/changelog churn when the user only wants a quick fix unless they expect a release bump.
+
+## Version and changelog (required on every change)
+
+**Always bump `package.json` version and update `CHANGELOG.md`** when merging work to `main`. The PWA compares `/api/v1/version` (from `package.json`) with the cached version in localStorage; `scripts/build-pages.mjs` syncs version into `public/version.js` and copies `CHANGELOG.md` → `public/changelog.md` for the local changelog API. Skipping a bump delays SW refresh signals and hides release notes.
+
+### Severity → semver bump
+
+| Change type | Bump | Examples |
+|-------------|------|----------|
+| Bug fix, regression fix, small UI/copy tweak | **Patch** `x.y.Z` | Wrong filter, icon alignment, typo |
+| New feature, notable UX change, new module surface | **Minor** `x.Y.z` | New page, new widget, new API consumers |
+| Breaking change, migration required | **Major** `X.y.z` | Removed route, schema break |
+
+When several PRs land in one agent session without intermediate bumps, combine them under a single new version with grouped Added/Changed/Fixed sections.
+
+### Changelog format
+
+- Edit root `CHANGELOG.md` (keep-a-changelog: `## [version] - YYYY-MM-DD`, `### Added|Changed|Fixed|Removed`).
+- Do not hand-edit `public/changelog.md` or `public/version.js` — run `GITHUB_PAGES_BASE=/my-hub node scripts/build-pages.mjs` to sync them before commit.
