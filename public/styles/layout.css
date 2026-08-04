@@ -147,7 +147,7 @@
    * Banner schiebt den Inhalt hinunter - echte Layout-Höhe, per transform nicht
    * animierbar. Selten (nur bei Offline-Wechsel); reduced-motion schaltet sie ab. */
   transition: padding-top var(--duration-md) ease;
-  background-color: var(--color-bg);
+  /* Translucent by default — see glass.css; fully transparent on data-lg-module routes */
 }
 
 /* #main-content wird nach jeder Navigation programmatisch fokussiert, damit

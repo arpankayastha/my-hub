@@ -2,6 +2,15 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.20] - 2026-08-04
+
+### Added
+- Liquid glass Phase 4: living backdrop visible through flagship pages, module-tinted drifting blobs on all routes, unified card hover lift, and staggered page-enter motion.
+- Dashboard overview panel, Budget summary grid, and Health card grid layout refresh on glass routes.
+
+### Fixed
+- Dark-theme glass looked flat because `module-liquid-glass.css` suppressed blob opacity and `.app-content` painted an opaque layer over the backdrop.
+
 ## [1.1.19] - 2026-08-04
 
 ### Added
