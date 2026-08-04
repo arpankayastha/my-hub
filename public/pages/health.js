@@ -446,7 +446,14 @@ function readOnlyBannerMarkup(members, personId, own) {
 // Medizinischer Disclaimer (kein Diagnose-Anspruch). Übersicht-Fuß + Erfassungs-
 // Modals, die Werte interpretieren. `modal` unterdrückt den oberen Abstand.
 function disclaimerMarkup(modal = false) {
-  return `<p class="health-disclaimer${modal ? ' health-disclaimer--modal' : ''}">${esc(t('health.disclaimer'))}</p>`;
+  if (modal) {
+    return `
+      <details class="health-disclaimer-details">
+        <summary class="health-disclaimer-details__summary">${esc(t('health.disclaimerSummary'))}</summary>
+        <p class="health-disclaimer health-disclaimer--modal">${esc(t('health.disclaimer'))}</p>
+      </details>`;
+  }
+  return `<p class="health-disclaimer">${esc(t('health.disclaimer'))}</p>`;
 }
 
 // Screenreader-Alternative zu den nativen SVG-Charts: eine visuell versteckte

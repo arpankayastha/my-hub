@@ -326,6 +326,21 @@ export function openModal({ title, content, onSave, onDelete, onClose, size = 'm
     panel.appendChild(bodyFooter);
   }
 
+  // Health/Budget-Formulare nutzen oft .modal-actions im scrollenden Body —
+  // dieselbe Anhebung wie .modal-panel__footer, damit Speichern mobil sichtbar bleibt.
+  const bodyActions = [...panel.querySelectorAll('.modal-panel__body .modal-actions')].pop();
+  if (bodyActions) {
+    bodyActions.classList.add('modal-panel__footer', 'modal-panel__footer--plain', 'modal-panel__footer--actions');
+    const ownerForm = bodyActions.closest('form') ?? panel.querySelector('.modal-panel__body form');
+    if (ownerForm) {
+      if (!ownerForm.id) ownerForm.id = `modal-form-${++_modalFormSeq}`;
+      bodyActions.querySelectorAll('button, input, select, textarea').forEach((el) => {
+        if (!el.hasAttribute('form')) el.setAttribute('form', ownerForm.id);
+      });
+    }
+    panel.appendChild(bodyActions);
+  }
+
   trapFocus(panel);
 
   // Snapshot für Dirty-Check (kurzer Delay: Felder könnten noch per JS befüllt werden)

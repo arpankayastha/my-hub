@@ -3345,6 +3345,7 @@
             "medsLogs": "Dose log",
             "hint": "Downloads the selected date range as a CSV file."
         },
+        "disclaimerSummary": "Medical notice",
         "disclaimer": "For personal record-keeping only. Not a substitute for professional medical advice, diagnosis or treatment.",
         "readOnlyBanner": "You are viewing {{name}}’s data — read-only.",
         "cycle": {

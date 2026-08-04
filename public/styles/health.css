@@ -1502,6 +1502,26 @@ button.health-med-card:hover {
   padding-top: 0;
 }
 
+.health-disclaimer-details {
+  margin: 0;
+}
+
+.health-disclaimer-details__summary {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  list-style: none;
+  padding: var(--space-1) 0;
+}
+
+.health-disclaimer-details__summary::-webkit-details-marker {
+  display: none;
+}
+
+.health-disclaimer-details[open] .health-disclaimer {
+  margin-top: var(--space-1);
+}
+
 /* Chart-Feinschliff: dezente Gitternetzlinien + Labor-Referenzband. */
 .health-chart__grid {
   stroke: var(--color-border);

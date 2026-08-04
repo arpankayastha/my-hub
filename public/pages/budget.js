@@ -1609,12 +1609,13 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
     `<option value="${a.id}" ${isEdit && entry.account_id === a.id ? 'selected' : ''}>${esc(a.name)}</option>`
   ).join('');
   const accountField = hasAccounts ? `
-        <div class="form-group">
+        <div class="form-field">
           <label class="form-label" for="bm-account">${t('budget.accountLabel')}</label>
           <select class="form-input" id="bm-account">${accountOpts}</select>
         </div>` : '';
 
   const content = `
+    <div class="form-stack modal-entry-form">
     <div class="amount-type-toggle ${isEdit ? 'amount-type-toggle--entry-only' : ''}">
       <button class="amount-type-btn amount-type-btn--expenses ${isExpense ? 'amount-type-btn--active' : ''}"
               id="type-expense" type="button">${t('budget.typeExpense')}</button>
@@ -1624,35 +1625,39 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
               id="type-loan" type="button">${t('budget.typeLoan')}</button>` : ''}
     </div>
 
-    <div class="form-group js-entry-field">
-      <label class="form-label" for="bm-title">${t('budget.titleLabel')}<span class="required-marker" aria-hidden="true"> *</span></label>
-      <input type="text" class="form-input" id="bm-title"
-             placeholder="${t('budget.titlePlaceholder')}" value="${esc(isEdit ? entry.title : '')}">
-    </div>
-
-    <div class="form-group js-entry-field">
-      <label class="form-label" for="bm-amount">${t('budget.amountLabel')}<span class="required-marker" aria-hidden="true"> *</span></label>
-      <input type="number" class="form-input" id="bm-amount"
-             placeholder="${t('budget.amountPlaceholder')}" step="1" min="1"
-             inputmode="numeric" value="${absAmount}">
-    </div>
-
-    <div class="form-group js-entry-field">
-      <div class="budget-field-header">
-        <label class="form-label" for="bm-category">${t('budget.categoryLabel')}</label>
-        <button class="btn btn--secondary budget-inline-add" type="button" id="bm-add-category">${t('budget.addCategory')}</button>
+    <div class="modal-grid modal-grid--2 js-entry-field">
+      <div class="form-field">
+        <label class="form-label" for="bm-title">${t('budget.titleLabel')}<span class="required-marker" aria-hidden="true"> *</span></label>
+        <input type="text" class="form-input" id="bm-title"
+               placeholder="${t('budget.titlePlaceholder')}" value="${esc(isEdit ? entry.title : '')}">
       </div>
-      <select class="form-input" id="bm-category">${catOpts}</select>
+      <div class="form-field">
+        <label class="form-label" for="bm-amount">${t('budget.amountLabel')}<span class="required-marker" aria-hidden="true"> *</span></label>
+        <input type="number" class="form-input" id="bm-amount"
+               placeholder="${t('budget.amountPlaceholder')}" step="1" min="1"
+               inputmode="numeric" value="${absAmount}">
+      </div>
     </div>
 
-    <div class="form-group js-entry-field">
+    <div class="form-field js-entry-field">
+      <label class="form-label" for="bm-category">${t('budget.categoryLabel')}</label>
+      <div class="modal-field-row">
+        <select class="form-input" id="bm-category">${catOpts}</select>
+        <button class="btn btn--secondary btn--icon budget-inline-add" type="button" id="bm-add-category"
+                aria-label="${t('budget.addCategory')}" title="${t('budget.addCategory')}">
+          <i data-lucide="plus" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-field js-entry-field">
       <label class="form-label" for="bm-date">${t('budget.dateLabel')}</label>
       <my-hub-datepicker type="date" id="bm-date"
              value="${isEdit ? entry.date : defaultDate}"></my-hub-datepicker>
     </div>
 
     ${state.budgetMode === 'personal' ? `
-    <div class="form-group js-entry-field">
+    <div class="form-field js-entry-field">
       <label class="toggle">
         <input type="checkbox" id="bm-shared" ${isEdit && entry.visibility === 'shared' ? 'checked' : ''}>
         <span class="toggle__track"></span>
@@ -1664,15 +1669,18 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
     <div class="js-entry-field">
       ${advancedSection(`
         ${accountField}
-        <div class="form-group" id="bm-subcategory-group" ${isExpense ? '' : 'hidden'}>
-          <div class="budget-field-header">
-            <label class="form-label" for="bm-subcategory">${t('budget.subcategoryLabel')}</label>
-            <button class="btn btn--secondary budget-inline-add" type="button" id="bm-add-subcategory">${t('budget.addSubcategory')}</button>
+        <div class="form-field" id="bm-subcategory-group" ${isExpense ? '' : 'hidden'}>
+          <label class="form-label" for="bm-subcategory">${t('budget.subcategoryLabel')}</label>
+          <div class="modal-field-row">
+            <select class="form-input" id="bm-subcategory">${subcatOpts}</select>
+            <button class="btn btn--secondary btn--icon budget-inline-add" type="button" id="bm-add-subcategory"
+                    aria-label="${t('budget.addSubcategory')}" title="${t('budget.addSubcategory')}">
+              <i data-lucide="plus" aria-hidden="true"></i>
+            </button>
           </div>
-          <select class="form-input" id="bm-subcategory">${subcatOpts}</select>
         </div>
 
-        <div class="form-group">
+        <div class="form-field">
           <label class="toggle">
             <input type="checkbox" id="bm-recurring" ${isEdit && entry.is_recurring ? 'checked' : ''}>
             <span class="toggle__track"></span>
@@ -1680,26 +1688,26 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
           </label>
         </div>
 
-        <div class="form-group" id="bm-recurrence-options" ${isEdit && entry.is_recurring ? '' : 'hidden'}>
+        <div class="form-field" id="bm-recurrence-options" ${isEdit && entry.is_recurring ? '' : 'hidden'}>
           <label class="form-label" for="bm-interval">${t('budget.recurringIntervalLabel')}</label>
           <select class="form-input" id="bm-interval">
             ${intervalOption('monthly', 'budget.intervalMonthly')}
             ${intervalOption('half_year', 'budget.intervalHalfYear')}
             ${intervalOption('yearly', 'budget.intervalYearly')}
           </select>
-          <label class="toggle" style="margin-top:var(--space-3)">
+          <label class="toggle" style="margin-top:var(--space-2)">
             <input type="checkbox" id="bm-virtual" ${isEdit && entry.recurrence_virtual ? 'checked' : ''}>
             <span class="toggle__track"></span>
             <span>${t('budget.virtualBudgetLabel')}</span>
           </label>
-          <p style="color:var(--color-text-secondary);font-size:var(--text-sm);margin-top:var(--space-1)">${t('budget.virtualBudgetHint')}</p>
-          <p class="form-hint" style="margin-top:var(--space-2)">${t('budget.recurringAutoHint')}</p>
+          <p class="form-hint">${t('budget.virtualBudgetHint')}</p>
+          <p class="form-hint">${t('budget.recurringAutoHint')}</p>
         </div>`,
         { open: isEdit && (entry.is_recurring || !!entry.subcategory || entry.account_id != null) })}
     </div>
 
     <div id="bm-loan-fields" hidden>
-      <div class="form-group">
+      <div class="form-field">
         <label class="form-label" for="lm-borrower">${t('budget.loanBorrowerLabel')}</label>
         <input type="text" class="form-input" id="lm-borrower"
                placeholder="${t('budget.loanBorrowerPlaceholder')}">
@@ -1725,17 +1733,18 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
         <label class="form-label" for="lm-start">${t('budget.loanStartMonthLabel')}</label>
         <input type="month" class="form-input" id="lm-start" value="${defaultDate.slice(0, 7)}">
       </div>
-      <div class="form-group">
+      <div class="form-field">
         <label class="form-label" for="lm-notes">${t('budget.loanNotesLabel')}</label>
-        <textarea class="form-input" id="lm-notes" rows="3"></textarea>
+        <textarea class="form-input" id="lm-notes" rows="2"></textarea>
       </div>
+    </div>
     </div>
 
     <div class="modal-panel__footer modal-panel__footer--plain">
       ${isEdit ? `<button class="btn btn--danger btn--icon" id="bm-delete" aria-label="${t('budget.deleteLabel')}">
         <i data-lucide="trash-2" class="icon-md" aria-hidden="true"></i>
       </button>` : '<div></div>'}
-      <div style="display:flex;gap:var(--space-3)">
+      <div class="modal-actions">
         <button class="btn btn--secondary" id="bm-cancel">${t('common.cancel')}</button>
         <button class="btn btn--primary" id="bm-save">${isEdit ? t('common.save') : t('common.add')}</button>
       </div>

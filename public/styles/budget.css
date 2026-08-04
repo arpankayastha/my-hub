@@ -1259,12 +1259,16 @@
   padding: var(--space-0h);
 }
 
+.modal-entry-form .amount-type-toggle {
+  margin-bottom: 0;
+}
+
 .amount-type-toggle--entry-only {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .amount-type-btn {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-2);
   border-radius: var(--radius-xs);
   border: none;
   font-size: var(--text-sm);
@@ -1273,7 +1277,7 @@
   background: none;
   color: var(--color-text-secondary);
   transition: all var(--transition-fast);
-  min-height: var(--target-lg);
+  min-height: var(--target-base);
 }
 
 .amount-type-btn--income.amount-type-btn--active {
