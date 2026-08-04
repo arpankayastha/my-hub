@@ -1,6 +1,7 @@
 /**
  * Shared recurring-budget rules (browser + server).
- * Auto-fill: only the single next month after the latest instance.
+ * Auto-fill: only the single next month after the latest instance, and never
+ * beyond the current calendar month (future browsing uses apply-recurring).
  * Planning copy: any due month on demand via apply-recurring.
  */
 
@@ -49,9 +50,10 @@ export function isRecurringDueInMonth(parentStartYm, targetYm, interval, virtual
 }
 
 /** Lazy auto-materialize: only the immediate next month in the chain. */
-export function shouldAutoMaterializeRecurring(entry, requestMonth, latestInstanceYm) {
+export function shouldAutoMaterializeRecurring(entry, requestMonth, latestInstanceYm, nowMonth) {
   const parentStartYm = entry.date.slice(0, 7);
   if (monthsBetweenYm(parentStartYm, requestMonth) < 1) return false;
+  if (nowMonth && monthsBetweenYm(nowMonth, requestMonth) > 0) return false;
   const anchor = recurringAnchorMonth(parentStartYm, latestInstanceYm);
   const next = nextRecurringMonth(anchor, entry.recurrence_interval || 'monthly', entry.recurrence_virtual);
   return requestMonth === next;

@@ -550,9 +550,17 @@ async function deleteEntrySeries(state, entryId, userId) {
   const parent = resolveSeriesParent(state, entry);
   if (!parent) throw apiError('Not a recurring entry.', 400);
 
-  state.budget_entries = state.budget_entries.filter((e) =>
-    e.id !== parent.id && e.recurrence_parent_id !== parent.id,
-  );
+  const cutoff = new Date().toISOString().slice(0, 7) + '-01';
+  state.budget_entries = state.budget_entries.filter((e) => {
+    if (e.recurrence_parent_id === parent.id && e.date >= cutoff) return false;
+    if (e.id === parent.id) return parent.date < cutoff;
+    return true;
+  });
+  if (parent.date < cutoff) {
+    parent.is_recurring = 0;
+    parent.recurrence_rule = null;
+    parent.updated_at = nowIso();
+  }
   await saveState();
   return { ok: true };
 }
@@ -594,7 +602,7 @@ function pushRecurringInstance(state, orig, month) {
   });
 }
 
-function generateRecurringInstances(state, month, { planning = false } = {}) {
+function generateRecurringInstances(state, month, { planning = false, nowMonth = new Date().toISOString().slice(0, 7) } = {}) {
   if (!Array.isArray(state.budget_recurrence_skipped)) state.budget_recurrence_skipped = [];
   const monthStart = `${month}-01`;
   const monthEnd = `${month}-31`;
@@ -619,7 +627,7 @@ function generateRecurringInstances(state, month, { planning = false } = {}) {
     const latestYm = latestInstanceMonth(state, orig.id);
     const shouldCreate = planning
       ? shouldPlanMaterializeRecurring(orig, month)
-      : shouldAutoMaterializeRecurring(orig, month, latestYm);
+      : shouldAutoMaterializeRecurring(orig, month, latestYm, nowMonth);
     if (!shouldCreate) continue;
 
     pushRecurringInstance(state, orig, month);
