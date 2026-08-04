@@ -3534,7 +3534,7 @@ function renderCycleShell() {
       ${cycleRingMarkup(prediction)}
       <div class="cycle-hero__side">
         ${cycleStatsMarkup(prediction)}
-        ${prediction.trackFertility ? `<p class="health-disclaimer">${esc(t('health.cycle.fertilityDisclaimer'))}</p>` : ''}
+        ${prediction.trackFertility ? `<p class="health-disclaimer health-disclaimer--cycle">${esc(t('health.cycle.fertilityDisclaimer'))}</p>` : ''}
       </div>
     </div>
     ${own ? cycleTodayActionsMarkup() : ''}
@@ -3633,7 +3633,8 @@ function cycleRingMarkup(prediction) {
         <span class="cycle-ring__phase">${esc(phaseLabel)}</span>
         <span class="cycle-ring__day">${esc(t('health.cycle.ring.cycleDay', { day: prediction.cycleDay }))} · ${esc(t('health.cycle.ring.of', { total: prediction.avgCycle }))}</span>
         <span class="cycle-ring__started">${esc(t('health.cycle.status.periodStarted', { date: formatDate(prediction.lastStart) }))}</span>
-        <span class="cycle-ring__status">${esc(`${t('health.cycle.status.nextPeriod')}: ${formatDate(prediction.nextStart)} (${cycleCountdownText(prediction)})`)}</span>
+        <span class="cycle-ring__status">${esc(`${t('health.cycle.status.nextPeriod')}: ${formatDate(prediction.nextStart)}`)}</span>
+        <span class="cycle-ring__status-sub">${esc(cycleCountdownText(prediction))}</span>
       </div>
     </div>
     ${cycleTimelineMarkup(prediction)}

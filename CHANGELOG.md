@@ -2,6 +2,12 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.33] - 2026-08-04
+
+### Fixed
+- Budget Statistics tab scrolls again (expense shares and full report reachable on mobile).
+- Health Cycle page: cleaner hero card, readable stat tiles, split ring labels, and improved mobile layout for today actions and calendar legend.
+
 ## [1.1.32] - 2026-08-04
 
 ### Fixed
