@@ -6,10 +6,10 @@ All notable changes to **My Hub** (this personal fork).
 
 ### Fixed
 - Budget CSV export: category and subcategory columns use the app language (income categories no longer show German keys like `Erwerbseinkommen`).
-
-## [1.1.30] - 2026-08-04
 - Health vitals: saving measurements works again in local/PWA mode (normalized IndexedDB `nextId`, validated POST body, reliable datetime read from the datepicker).
 - Health vitals: a successful save no longer shows a generic error when the follow-up refresh fails.
+
+## [1.1.30] - 2026-08-04
 
 ### Fixed
 - Budget recurring: deleting an entire series keeps past months and only removes current/future instances (series ends instead of wiping history).
