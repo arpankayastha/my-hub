@@ -17,20 +17,7 @@
   padding-bottom: calc(var(--nav-bottom-height) + var(--space-6));
 }
 
-.health-page__chrome {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: calc(-1 * var(--space-2));
-}
-
-.health-page__profile-tools {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.health-page__profile-tools .dashboard-icon-btn--profile-active {
+.health-tabs-bar .sub-tabs-bar__tools .dashboard-icon-btn--profile-active {
   border-color: color-mix(in srgb, var(--module-accent) 55%, var(--color-border));
   background: color-mix(in srgb, var(--module-accent) 14%, var(--glass-bg-card, var(--color-surface)));
 }

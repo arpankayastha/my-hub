@@ -2,6 +2,18 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.23] - 2026-08-04
+
+### Added
+- Household profile switcher on Budget and Health (same users icon as Overview).
+- Overview hero glance chips for monthly budget balance and today's med adherence.
+- Budget and Health widgets shown by default on Overview.
+
+### Changed
+- Dark glass cards are more translucent on black so ambient blobs read stronger.
+- Mobile PWA layout for category manager and budget entry modal (stacked forms, touch targets, sheet-style inline modals).
+- Service worker precaches Budget page dependencies and profile-switcher; avoids serving SPA HTML when a JS module fetch fails offline (fixes spurious "Failed to fetch dynamically imported module" on Budget).
+
 ## [1.1.22] - 2026-08-04
 
 ### Changed

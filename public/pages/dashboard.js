@@ -270,7 +270,7 @@ const COCKPIT_COVERED_WIDGETS = new Set(['tasks', 'calendar', 'shopping', 'meals
 // spezialisiert und nicht in jedem Haushalt aktiv — sie erscheinen als Opt-in im
 // „Anpassen"-Panel, statt frische Dashboards mit leeren Kacheln zu überladen
 // (PRODUCT.md: „Power wird auf Abruf enthüllt, nicht in einem Raster ausgebreitet").
-const DEFAULT_HIDDEN_WIDGETS = new Set([...COCKPIT_COVERED_WIDGETS, 'rewards', 'health', 'cycle', 'housekeeping']);
+const DEFAULT_HIDDEN_WIDGETS = new Set([...COCKPIT_COVERED_WIDGETS, 'rewards', 'cycle', 'housekeeping']);
 
 function defaultWidgetVisible(id) {
   return !DEFAULT_HIDDEN_WIDGETS.has(id);
@@ -1190,8 +1190,38 @@ function renderTodayCockpit(data, cfg = []) {
 }
 
 
-function renderDashboardOverview(user, editing = false) {
+function renderDashboardHeroGlance(data, currency) {
+  const items = [];
+  if (!window.myHub?.isModuleDisabled('budget') && data?.budget) {
+    const balance = Number(data.budget.balance) || 0;
+    const tone = balance >= 0 ? 'positive' : 'negative';
+    items.push(`
+      <a class="dashboard-hero__glance dashboard-hero__glance--budget" href="/budget" data-route="/budget">
+        <i data-lucide="wallet" aria-hidden="true"></i>
+        <span class="dashboard-hero__glance-label">${esc(t('dashboard.monthlyBalance'))}</span>
+        <strong class="dashboard-hero__glance-value dashboard-hero__glance-value--${tone}">${formatBudgetCurrency(balance, currency)}</strong>
+      </a>`);
+  }
+  if (!window.myHub?.isModuleDisabled('health') && data?.health?.hasMeds) {
+    const total = Number(data.health.dosesTotal) || 0;
+    const taken = Number(data.health.dosesTaken) || 0;
+    const label = total > 0
+      ? t('dashboard.healthGlanceTaken', { taken, total })
+      : t('dashboard.healthGlanceNone');
+    items.push(`
+      <a class="dashboard-hero__glance dashboard-hero__glance--health" href="/health" data-route="/health">
+        <i data-lucide="pill" aria-hidden="true"></i>
+        <span class="dashboard-hero__glance-label">${esc(t('dashboard.healthGlanceLabel'))}</span>
+        <strong class="dashboard-hero__glance-value">${esc(label)}</strong>
+      </a>`);
+  }
+  if (!items.length) return '';
+  return `<div class="dashboard-hero__glance-row" role="list">${items.join('')}</div>`;
+}
+
+function renderDashboardOverview(user, editing = false, data = null, currency = 'EUR') {
   const dateLabel = formatDate(new Date());
+  const glanceHtml = editing ? '' : renderDashboardHeroGlance(data, currency);
 
   return `
     <section class="dashboard-overview dashboard-hero">
@@ -1200,6 +1230,7 @@ function renderDashboardOverview(user, editing = false) {
           <div class="dashboard-hero__badge">${esc(dateLabel)}</div>
           <h2 class="dashboard-hero__title dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(profileDisplayName(user))}</h2>
           <p class="dashboard-hero__subtitle">${esc(t('dashboard.heroSubtitle'))}</p>
+          ${glanceHtml}
         </div>
         <div class="dashboard-overview__tools dashboard-hero__tools">
           ${editing ? `
@@ -2042,7 +2073,7 @@ export async function render(container, { user }) {
     if (!shell) return;
     if (loadFailed) {
       setHtml(shell, `
-        ${renderDashboardOverview(user, false)}
+        ${renderDashboardOverview(user, false, data, currency)}
         ${renderDashboardError(loadErrorStatus)}
       `);
       if (window.lucide) window.lucide.createIcons({ el: shell });
@@ -2059,7 +2090,7 @@ export async function render(container, { user }) {
     const mastheadSlim = cockpitHtml ? '' : ' dashboard-masthead--slim';
     setHtml(shell, `
       <section class="dashboard-masthead dashboard-masthead--${greetingPeriod()}${mastheadSlim}">
-        ${renderDashboardOverview(user, isCustomizing)}
+        ${renderDashboardOverview(user, isCustomizing, data, currency)}
         ${cockpitHtml}
       </section>
       ${renderDashboardLayout(cfg, data, weather, currency, { editing: isCustomizing, visibleMealTypes })}

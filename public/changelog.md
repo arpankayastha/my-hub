@@ -2,6 +2,18 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.23] - 2026-08-04
+
+### Added
+- Household profile switcher on Budget and Health (same users icon as Overview).
+- Overview hero glance chips for monthly budget balance and today's med adherence.
+- Budget and Health widgets shown by default on Overview.
+
+### Changed
+- Dark glass cards are more translucent on black so ambient blobs read stronger.
+- Mobile PWA layout for category manager and budget entry modal (stacked forms, touch targets, sheet-style inline modals).
+- Service worker precaches Budget page dependencies and profile-switcher; avoids serving SPA HTML when a JS module fetch fails offline (fixes spurious "Failed to fetch dynamically imported module" on Budget).
+
 ## [1.1.22] - 2026-08-04
 
 ### Changed
@@ -14,7 +26,7 @@ All notable changes to **My Hub** (this personal fork).
 - Health profile tool (same household switcher as Overview) — person chip pills removed from all Health tabs.
 
 ### Changed
-- Dark mode uses true black surfaces for a deeper OLED-style UI.
+- Dark mode uses true black surfaces (`#000` base) for a deeper OLED-style UI.
 - Budget “Current” month button is smaller (compact chip).
 
 ## [1.1.20] - 2026-08-04
@@ -24,12 +36,12 @@ All notable changes to **My Hub** (this personal fork).
 - Dashboard overview panel, Budget summary grid, and Health card grid layout refresh on glass routes.
 
 ### Fixed
-- Dark-theme glass looked flat because blob opacity was suppressed and scroll content hid the ambient backdrop.
+- Dark-theme glass looked flat because `module-liquid-glass.css` suppressed blob opacity and `.app-content` painted an opaque layer over the backdrop.
 
 ## [1.1.19] - 2026-08-04
 
 ### Added
-- Global glass surfaces — login card, empty states, and shared monthly hero panels.
+- Global glass surfaces (`app-glass-surfaces.css`) — login card, empty states, and shared monthly hero panels.
 - Budget monthly hero: month title, transaction count, and income-vs-expenses flow bar (no day calendar).
 - Health monthly overview hero: month label, 30-day adherence, due today, and streak above person chips.
 - Liquid glass extended to Settings (module tint + frosted cards).
@@ -40,7 +52,7 @@ All notable changes to **My Hub** (this personal fork).
 ## [1.1.18] - 2026-08-04
 
 ### Added
-- Liquid glass visual layer for Overview, Budget, and Health — frosted metric cards, richer typography, and module-tinted ambient backdrop.
+- Liquid glass visual layer for Overview, Budget, and Health — frosted metric cards, richer typography, and module-tinted ambient backdrop (Forecast-inspired polish on the three flagship modules).
 
 ## [1.1.17] - 2026-08-02
 
@@ -83,10 +95,10 @@ All notable changes to **My Hub** (this personal fork).
 ## [1.1.11] - 2026-07-30
 
 ### Added
-- Household profile switcher in the mobile **More** sheet (PWA / no sidebar).
+- Household profile switcher in mobile More sheet (PWA).
 
 ### Removed
-- Budget “Copy from previous month” button (recurring entries still auto-fill future months).
+- Budget “Copy from previous month” button.
 
 ## [1.1.10] - 2026-07-30
 
@@ -96,14 +108,14 @@ All notable changes to **My Hub** (this personal fork).
 ## [1.1.9] - 2026-07-30
 
 ### Fixed
-- App stuck on loading screen after 1.1.8 (duplicate `isValidFamilyRole` declaration in local permissions handler broke JS module load).
+- App stuck on loading screen after 1.1.8 (duplicate `isValidFamilyRole` broke module load on GitHub Pages).
 
 ## [1.1.8] - 2026-07-30
 
 ### Added
-- **Household profile switcher** in the sidebar: admins manage budget and health for each family member without logging out.
-- Extended **family roles** (spouse, wife, husband, mother, father, son, daughter, sibling).
-- Optional **biometric lock** when switching profiles (Settings → Account).
+- Household profile switcher for admins (manage each member's budget and health without re-login).
+- Extended family roles (spouse, wife, husband, mother, father, son, daughter, sibling).
+- Optional biometric lock when switching profiles (Settings → Account).
 
 ## [1.1.7] - 2026-07-30
 

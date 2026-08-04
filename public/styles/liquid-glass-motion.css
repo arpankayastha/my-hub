@@ -15,12 +15,12 @@ html[data-lg-module] {
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) html[data-lg-module],
   [data-theme="dark"] html[data-lg-module] {
-    --lg-blob-opacity: 0.48;
-    --lg-specular: 0.4;
-    --glass-bg-card: rgba(28, 28, 26, 0.46);
-    --glass-bg-card-hover: rgba(42, 42, 40, 0.58);
-    --glass-border-subtle: rgba(255, 255, 255, 0.17);
-    --glass-bg-toolbar: rgba(30, 30, 28, 0.62);
+    --lg-blob-opacity: 0.54;
+    --lg-specular: 0.42;
+    --glass-bg-card: rgba(18, 18, 16, 0.34);
+    --glass-bg-card-hover: rgba(32, 32, 30, 0.48);
+    --glass-border-subtle: rgba(255, 255, 255, 0.15);
+    --glass-bg-toolbar: rgba(24, 24, 22, 0.52);
   }
 }
 
