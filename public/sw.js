@@ -15,7 +15,7 @@
  *   → bypassCacheUntil (in-memory + Cache API für SW-Restart-Robustheit)
  */
 
-const APP_RELEASE   = '1.1.21';
+const APP_RELEASE   = '1.1.22';
 const SHELL_CACHE   = `my-hub-shell-${APP_RELEASE}`;
 const PAGES_CACHE   = `my-hub-pages-${APP_RELEASE}`;
 const LOCALES_CACHE = `my-hub-locales-${APP_RELEASE}`;

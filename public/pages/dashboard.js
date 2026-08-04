@@ -491,6 +491,18 @@ function initials(name = '') {
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
+function formatBudgetCurrency(amount, currency = 'EUR') {
+  try {
+    if (localStorage.getItem(HIDE_AMOUNTS_KEY) === '1') return '••••';
+  } catch (_) { /* Private-Mode */ }
+  return getNumberFormat({
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  }).format(Math.round(Number(amount) || 0));
+}
+
 function formatCurrency(amount, currency = 'EUR') {
   try {
     if (localStorage.getItem(HIDE_AMOUNTS_KEY) === '1') return '••••';
@@ -851,21 +863,21 @@ function renderBudgetWidget(budget, currency) {
     <div class="budget-widget">
       <div class="budget-widget__headline">
         <span>${t('dashboard.monthlyBalance')}</span>
-        <strong class="budget-widget__balance budget-widget__balance--${balanceTone}">${formatCurrency(balance, currency)}</strong>
+        <strong class="budget-widget__balance budget-widget__balance--${balanceTone}">${formatBudgetCurrency(balance, currency)}</strong>
       </div>
       ${renderBudgetSavings(budget, balance, income, savingsRate)}
       <div class="budget-widget__flow">
         <span class="budget-widget__flow-item budget-widget__flow-item--income">
           <span>${t('dashboard.monthlyIncome')}</span>
-          <strong>${formatCurrency(income, currency)}</strong>
+          <strong>${formatBudgetCurrency(income, currency)}</strong>
         </span>
         <span class="budget-widget__flow-item budget-widget__flow-item--expense">
           <span>${t('dashboard.monthlyExpenses')}</span>
-          <strong>${formatCurrency(expenses, currency)}</strong>
+          <strong>${formatBudgetCurrency(expenses, currency)}</strong>
         </span>
       </div>
       ${budget?.topExpenseCategory
-        ? `<div class="budget-widget__footer">${t('dashboard.topExpense')}: <strong>${esc(budgetCategoryLabel(budget.topExpenseCategory))}</strong> · ${formatCurrency(budget.topExpenseAmount, currency)}</div>`
+        ? `<div class="budget-widget__footer">${t('dashboard.topExpense')}: <strong>${esc(budgetCategoryLabel(budget.topExpenseCategory))}</strong> · ${formatBudgetCurrency(budget.topExpenseAmount, currency)}</div>`
         : ''}
     </div>
   </div>`;

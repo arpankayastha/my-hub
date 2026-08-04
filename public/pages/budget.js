@@ -221,9 +221,13 @@ function tabCaps() {
 
 // currency-Override für Darlehen in Fremdwährung (#582); ohne Argument gilt
 // unverändert die haushaltweite Budget-Währung.
+// Whole numbers only — no cent display (personal CC / monthly planning).
+const BUDGET_CURRENCY_FMT = { maximumFractionDigits: 0, minimumFractionDigits: 0 };
+
 function formatAmount(n, currency = state.currency) {
   if (state.hideAmounts) return '••••';
-  return getNumberFormat({ style: 'currency', currency }).format(n);
+  const value = Math.round(Number(n) || 0);
+  return getNumberFormat({ style: 'currency', currency, ...BUDGET_CURRENCY_FMT }).format(value);
 }
 
 // Beträge eines Darlehens stehen in dessen eigener Währung (#582).
@@ -1574,7 +1578,7 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
   const editAmount = isEdit && entry.recurrence_virtual && entry.recurrence_full_amount != null
     ? entry.recurrence_full_amount
     : (isEdit ? entry.amount : 0);
-  const absAmount  = isEdit ? Math.abs(editAmount).toFixed(2) : '';
+  const absAmount  = isEdit ? String(Math.round(Math.abs(editAmount))) : '';
   const curInterval = isEdit && entry.recurrence_interval ? entry.recurrence_interval : 'monthly';
   const intervalOption = (val, key) =>
     `<option value="${val}" ${curInterval === val ? 'selected' : ''}>${t(key)}</option>`;
@@ -1618,8 +1622,8 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
     <div class="form-group js-entry-field">
       <label class="form-label" for="bm-amount">${t('budget.amountLabel')}<span class="required-marker" aria-hidden="true"> *</span></label>
       <input type="number" class="form-input" id="bm-amount"
-             placeholder="${t('budget.amountPlaceholder')}" step="0.01" min="0.01"
-             inputmode="decimal" value="${absAmount}">
+             placeholder="${t('budget.amountPlaceholder')}" step="1" min="1"
+             inputmode="numeric" value="${absAmount}">
     </div>
 
     <div class="form-group js-entry-field">
@@ -1856,7 +1860,7 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
         }
 
         const title      = panel.querySelector('#bm-title').value.trim();
-        const absVal     = parseFloat(panel.querySelector('#bm-amount').value);
+        const absVal     = Math.round(parseFloat(panel.querySelector('#bm-amount').value));
         const category   = panel.querySelector('#bm-category').value;
         const subcategory = currentType === 'expense' ? panel.querySelector('#bm-subcategory').value : '';
         const date       = panel.querySelector('#bm-date').value;

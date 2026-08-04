@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.22] - 2026-08-04
+
+### Changed
+- Budget amounts display as whole numbers (no decimal cents) across Budget, Reports, Plan, Accounts, and the Overview budget widget. Entry form uses integer step and rounds on save.
+
 ## [1.1.21] - 2026-08-04
 
 ### Added

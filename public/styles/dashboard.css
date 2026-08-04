@@ -1962,13 +1962,15 @@ svg.weather-forecast__icon {
 /* Bearbeiten-Modus: die Customize-Toolbar braucht volle Breite, daher mobil unter
  * die Begrüßung umbrechen; ab Container-Breite wieder einzeilig. Der schlanke
  * Normalzustand bleibt einzeilig (Icon rechts, vertikal zur Begrüßung zentriert). */
-.dashboard-overview__header--editing {
+.dashboard-overview__header--editing,
+.dashboard-hero__row.dashboard-overview__header--editing {
   flex-direction: column;
   align-items: stretch;
 }
 
 @container dashboard-overview (min-width: 640px) {
-  .dashboard-overview__header--editing {
+  .dashboard-overview__header--editing,
+  .dashboard-hero__row.dashboard-overview__header--editing {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
