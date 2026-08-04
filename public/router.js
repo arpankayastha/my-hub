@@ -130,6 +130,40 @@ function updateThemeColorForRoute(route) {
 // Dynamisches Stylesheet-Loading pro Seitenmodul
 // --------------------------------------------------------
 let activePageStyle = null;
+let activeLiquidGlassStyle = null;
+
+const LIQUID_GLASS_MODULES = new Set(['dashboard', 'budget', 'health']);
+const LIQUID_GLASS_HREF = '/styles/module-liquid-glass.css';
+
+function loadLiquidGlassStyle(moduleName) {
+  if (!LIQUID_GLASS_MODULES.has(moduleName)) {
+    if (activeLiquidGlassStyle) {
+      activeLiquidGlassStyle.remove();
+      activeLiquidGlassStyle = null;
+    }
+    delete document.documentElement.dataset.lgModule;
+    return Promise.resolve();
+  }
+
+  document.documentElement.dataset.lgModule = moduleName;
+
+  if (activeLiquidGlassStyle?.getAttribute('href') === LIQUID_GLASS_HREF) {
+    return Promise.resolve();
+  }
+
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = LIQUID_GLASS_HREF;
+
+  const ready = new Promise((resolve) => {
+    link.onload = resolve;
+    link.onerror = resolve;
+  });
+
+  document.head.appendChild(link);
+  activeLiquidGlassStyle = link;
+  return ready;
+}
 
 function loadPageStyle(moduleName, routeStyle = null) {
   if (!moduleName && !routeStyle) return { ready: Promise.resolve(), cleanup: () => {} };
@@ -203,6 +237,14 @@ function prefetchRoute(path) {
     link.as = 'style';
     link.href = assetUrl(cssHref);
     document.head.appendChild(link);
+  }
+  if (route.module && LIQUID_GLASS_MODULES.has(route.module) && !_prefetchedStyles.has(LIQUID_GLASS_HREF)) {
+    _prefetchedStyles.add(LIQUID_GLASS_HREF);
+    const lg = document.createElement('link');
+    lg.rel = 'prefetch';
+    lg.as = 'style';
+    lg.href = LIQUID_GLASS_HREF;
+    document.head.appendChild(lg);
   }
 }
 
@@ -935,6 +977,7 @@ async function renderPage(route, previousPath = null) {
     const [module] = await Promise.all([
       importPage(route.page),
       style.ready,
+      loadLiquidGlassStyle(route.thirdPartyModule ? null : route.module),
     ]);
 
     if (typeof module.render !== 'function') {
