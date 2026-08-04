@@ -614,6 +614,16 @@ function renderBody() {
       <div class="budget-month-hero__head">
         <h2 class="budget-month-hero__title">${esc(formatMonthLabel(state.month))}</h2>
         <p class="budget-month-hero__meta">${t('budget.monthHero.transactions', { count: state.entries.length })}</p>
+        <div class="budget-month-hero__actions">
+          <button class="btn btn--secondary btn--sm" type="button" id="budget-copy-prev" title="${t('budget.copyFromPrevMonthHint')}">
+            <i data-lucide="copy" class="icon-sm" aria-hidden="true"></i>
+            ${t('budget.copyFromPrevMonth')}
+          </button>
+          <button class="btn btn--secondary btn--sm" type="button" id="budget-apply-recurring" title="${t('budget.applyRecurringHint')}">
+            <i data-lucide="repeat" class="icon-sm" aria-hidden="true"></i>
+            ${t('budget.applyRecurring')}
+          </button>
+        </div>
       </div>
       ${renderMonthFlowBar(s, expensesOnly)}
     <!-- Anzeige-Umschalter: nur Ausgaben vs. volle Zusammenfassung -->
@@ -697,6 +707,8 @@ function renderBody() {
     renderBody();
   });
   _container.querySelector('#budget-manage-categories')?.addEventListener('click', openCategoryManager);
+  _container.querySelector('#budget-copy-prev')?.addEventListener('click', () => copyFromPreviousMonth());
+  _container.querySelector('#budget-apply-recurring')?.addEventListener('click', () => applyRecurringToMonth());
   _container.querySelector('#budget-clear-account-filter')?.addEventListener('click', async () => {
     state.accountFilterId = null;
     await loadMonth(state.month);
@@ -2529,6 +2541,39 @@ function recurringChoiceModal({ title, thisLabel, seriesLabel, seriesDanger = fa
       },
     });
   });
+}
+
+async function copyFromPreviousMonth() {
+  const fromMonth = addMonths(state.month, -1);
+  try {
+    const res = await api.post('/budget/clone-month', { from_month: fromMonth, to_month: state.month });
+    const copied = res.data?.copied ?? 0;
+    if (copied > 0) {
+      window.myHub?.showToast(t('budget.copyFromPrevMonthDone', { count: copied }), 'success');
+      await loadMonth(state.month);
+      renderBody();
+    } else {
+      window.myHub?.showToast(t('budget.copyFromPrevMonthEmpty'), 'info');
+    }
+  } catch (err) {
+    window.myHub?.showToast(err.data?.error ?? t('common.unknownError'), 'danger');
+  }
+}
+
+async function applyRecurringToMonth() {
+  try {
+    const res = await api.post('/budget/apply-recurring', { to_month: state.month });
+    const created = res.data?.created ?? 0;
+    if (created > 0) {
+      window.myHub?.showToast(t('budget.applyRecurringDone', { count: created }), 'success');
+      await loadMonth(state.month);
+      renderBody();
+    } else {
+      window.myHub?.showToast(t('budget.applyRecurringEmpty'), 'info');
+    }
+  } catch (err) {
+    window.myHub?.showToast(err.data?.error ?? t('common.unknownError'), 'danger');
+  }
 }
 
 async function deleteEntrySeries(id) {

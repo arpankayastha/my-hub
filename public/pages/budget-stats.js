@@ -8,7 +8,7 @@ import { toLocalDateKey, parseLocalDateKey, addLocalDays } from '/utils/date.js'
 import { wireTablist } from '/utils/tablist.js';
 import { renderSkeletonList } from '/utils/skeleton.js';
 
-const view = { range: 'month', anchor: toLocalDateKey(new Date()), data: null, error: false, ctx: null, root: null };
+const view = { range: 'month', anchor: toLocalDateKey(new Date()), data: null, error: false, ctx: null, root: null, wired: false };
 
 const RANGE_LABELS = {
   week: 'budget.statsRangeWeek',
@@ -19,22 +19,26 @@ const RANGE_LABELS = {
 export async function renderStats(panel, ctx) {
   view.ctx = ctx;
   view.root = panel;
+  view.wired = false;
   renderShell();
   await loadStats();
 }
 
 function fmtAmount(v) { return view.ctx.formatAmount(v); }
 
-// Ansichts-Scope (#476/#505): im personal-Modus folgen Statistik und Export dem
-// Mein/Haushalt-Umschalter, sonst ignoriert der Server den Parameter.
 function scopeQuery() {
   return view.ctx?.budgetMode === 'personal' ? `&scope=${view.ctx.scope}` : '';
 }
 
+function isEmptyData(d) {
+  if (!d) return true;
+  const series = Array.isArray(d.series) ? d.series : [];
+  const hasSeries = series.some((s) => s.income || s.expenses);
+  return d.totals.income === 0 && d.totals.expenses === 0 && !hasSeries;
+}
+
 async function loadStats() {
-  const body = view.root.querySelector('#budget-stats-body');
-  // Ladezustand statt leerer Fläche — der Budget-Tab zeigt beim Monatswechsel
-  // ebenfalls ein Skelett; hier blieb das Panel bis zur Antwort einfach leer.
+  const body = view.root?.querySelector('#budget-stats-body');
   if (body) {
     body.replaceChildren();
     body.insertAdjacentHTML('beforeend', renderSkeletonList({ rows: 4, lines: 2 }));
@@ -49,13 +53,15 @@ async function loadStats() {
     view.error = true;
   }
   renderBodyContent(body);
+  updatePeriodLabel();
+  updateRangeTabs();
 }
 
 function renderShell() {
   view.root.replaceChildren();
   view.root.insertAdjacentHTML('beforeend', `
     <div class="budget-stats">
-      <div class="budget-stats__controls">
+      <div class="budget-stats__controls" id="budget-stats-controls">
         <div class="budget-stats__ranges" role="tablist" aria-label="${t('budget.statsRangeLabel')}">
           ${['week', 'month', 'year'].map((r) => {
             const on = r === view.range;
@@ -75,20 +81,40 @@ function renderShell() {
     </div>
   `);
   if (window.lucide) lucide.createIcons({ el: view.root });
-  wire();
+  wireShell();
 }
 
-function wire() {
-  // Geteilte Tablist-Grammatik (Klick + Pfeiltasten/Home/End + Roving-Tabindex)
-  // wie die Budget-Haupttabs — vorher trug der Container role="tablist", ohne
-  // dass ein Kind role="tab" hatte, und Pfeiltasten taten nichts.
+function wireShell() {
+  if (view.wired) return;
+  view.wired = true;
   wireTablist(view.root.querySelector('.budget-stats__ranges'), {
     activeId: view.range,
     activeClass: 'is-active',
-    onChange: (id) => { view.range = id; renderShell(); loadStats(); },
+    onChange: (id) => {
+      view.range = id;
+      updateRangeTabs();
+      loadStats();
+    },
   });
-  view.root.querySelectorAll('[data-step]').forEach((b) =>
-    b.addEventListener('click', () => { stepAnchor(Number(b.dataset.step)); renderShell(); loadStats(); }));
+  view.root.querySelector('[data-step="-1"]')?.addEventListener('click', () => {
+    stepAnchor(-1);
+    updatePeriodLabel();
+    loadStats();
+  });
+  view.root.querySelector('[data-step="1"]')?.addEventListener('click', () => {
+    stepAnchor(1);
+    updatePeriodLabel();
+    loadStats();
+  });
+}
+
+function updateRangeTabs() {
+  view.root?.querySelectorAll('.budget-stats__range').forEach((btn) => {
+    const on = btn.dataset.tabId === view.range;
+    btn.classList.toggle('is-active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    btn.tabIndex = on ? 0 : -1;
+  });
 }
 
 function stepAnchor(dir) {
@@ -103,8 +129,7 @@ function stepAnchor(dir) {
 }
 
 function renderBodyContent(body) {
-  // Fehler beim Laden klar von „keine Daten" trennen: ein Netzwerk-/Serverfehler
-  // darf der Familie nicht vortäuschen, ihre Finanzhistorie sei leer.
+  if (!body) return;
   if (view.error) {
     body.replaceChildren();
     body.insertAdjacentHTML('beforeend', `
@@ -121,48 +146,46 @@ function renderBodyContent(body) {
     body.querySelector('#budget-stats-retry')?.addEventListener('click', () => loadStats());
     return;
   }
+
   const d = view.data;
-  if (!d || (d.totals.income === 0 && d.totals.expenses === 0 && !d.series.some((s) => s.income || s.expenses))) {
-    body.replaceChildren();
-    body.insertAdjacentHTML('beforeend', `
-      <div class="empty-state">
-        <div class="empty-state__title">${t('budget.statsEmptyTitle')}</div>
-        <div class="empty-state__description">${t('budget.statsEmptyDescription')}</div>
-      </div>`);
-    return;
-  }
+  const empty = isEmptyData(d);
+
   body.replaceChildren();
   body.insertAdjacentHTML('beforeend', `
     <div class="budget-summary">
       <div class="budget-summary-card budget-summary-card--income">
         <div class="budget-summary-card__label">${t('budget.statsIncome')}</div>
-        <div class="budget-summary-card__amount">${fmtAmount(d.totals.income)}</div>
+        <div class="budget-summary-card__amount">${fmtAmount(d?.totals?.income ?? 0)}</div>
       </div>
       <div class="budget-summary-card budget-summary-card--expenses">
         <div class="budget-summary-card__label">${t('budget.statsExpenses')}</div>
-        <div class="budget-summary-card__amount">${fmtAmount(Math.abs(d.totals.expenses))}</div>
+        <div class="budget-summary-card__amount">${fmtAmount(Math.abs(d?.totals?.expenses ?? 0))}</div>
       </div>
-      <div class="budget-summary-card ${d.totals.balance >= 0 ? 'budget-summary-card--balance-positive' : 'budget-summary-card--balance-negative'}">
+      <div class="budget-summary-card ${(d?.totals?.balance ?? 0) >= 0 ? 'budget-summary-card--balance-positive' : 'budget-summary-card--balance-negative'}">
         <div class="budget-summary-card__label">${t('budget.statsBalance')}</div>
-        <div class="budget-summary-card__amount">${fmtAmount(d.totals.balance)}</div>
+        <div class="budget-summary-card__amount">${fmtAmount(d?.totals?.balance ?? 0)}</div>
       </div>
     </div>
+    ${empty ? `
+      <div class="budget-stats__empty-note">
+        <i data-lucide="bar-chart-2" class="icon-md" aria-hidden="true"></i>
+        <p>${t('budget.statsEmptyDescription')}</p>
+      </div>` : ''}
     <div id="budget-stats-trend"></div>
     <div id="budget-stats-cat"></div>
     <div id="budget-stats-donut"></div>
     <div class="budget-stats__export"></div>
   `);
-  updatePeriodLabel();
-  renderTrendChart();
-  renderCatBars();
-  renderDonut();
+
+  if (!empty) {
+    renderTrendChart();
+    renderCatBars();
+    renderDonut();
+  }
   renderExport();
+  if (window.lucide) lucide.createIcons({ el: body });
 }
 
-// Eigene Datenreihen-Palette (tokens.css) statt geborgter Fremdmodul-Akzente:
-// --module-shopping/--module-meals tragen eine andere Bedeutung und garantieren
-// keinen Kontrast gegen die Kartenfläche. Die Zahl der Segmente ist auf
-// DONUT_SEGMENTS begrenzt, damit sich keine zwei Segmente dieselbe Farbe teilen.
 const DONUT_COLORS = [
   'var(--chart-series-1)', 'var(--chart-series-2)', 'var(--chart-series-3)',
   'var(--chart-series-4)', 'var(--chart-series-5)', 'var(--chart-series-6)',
@@ -172,11 +195,9 @@ const DONUT_SEGMENTS = DONUT_COLORS.length;
 
 function renderCatBars() {
   const host = view.root.querySelector('#budget-stats-cat');
-  const cats = view.data.byCategory.filter((c) => c.total !== 0);
+  const cats = (view.data?.byCategory ?? []).filter((c) => c.total !== 0);
   if (!host || !cats.length) return;
   const maxAbs = Math.max(...cats.map((c) => Math.abs(c.total)), 1);
-  // Budgetplan-Ziele nur im Monatsbereich einblenden — dort deckt sich der
-  // Zeitraum exakt mit dem stetigen Monatsplan (kein irreführendes Hochskalieren).
   const plans = view.data.range === 'month' ? (view.data.plans || {}) : {};
   const rows = cats.map((c) => {
     const isExp = c.total < 0;
@@ -209,9 +230,6 @@ function renderCatBars() {
     </div>`);
 }
 
-// Segmente auf die Palettengröße begrenzen: alles jenseits davon fließt in eine
-// „Sonstige"-Sammelscheibe. Ein Donut mit 15 Kategorien ist ohnehin nicht mehr
-// ablesbar, und ohne Deckel bekämen Segment 1 und 8 dieselbe Farbe.
 function donutSlices(byCategory) {
   const exp = byCategory
     .filter((c) => c.expenses < 0)
@@ -230,7 +248,7 @@ function renderDonut() {
   if (!host || total === 0) return;
 
   const pctOf = (value) => Math.round((value / total) * 100);
-  const C = 2 * Math.PI * 60; // r=60
+  const C = 2 * Math.PI * 60;
   let offset = 0;
   const segs = exp.map((e, i) => {
     const frac = e.value / total;
@@ -241,8 +259,6 @@ function renderDonut() {
     offset += frac * C;
     return seg;
   }).join('');
-  // Die Legende trägt Betrag und Anteil als Text — die Farbe ist Beiwerk, nicht
-  // der einzige Träger der Information (gilt auch für Farbfehlsichtigkeit).
   const legend = exp.map((e, i) => `
     <span class="budget-stats__legend-item">
       <i class="budget-stats__swatch" style="background:${DONUT_COLORS[i]};"></i>
@@ -269,7 +285,7 @@ function renderDonut() {
 
 function renderExport() {
   const host = view.root.querySelector('.budget-stats__export');
-  if (!host) return;
+  if (!host || !view.data) return;
   const { from, to } = view.data;
   host.replaceChildren();
   host.insertAdjacentHTML('beforeend', `
@@ -281,7 +297,7 @@ function renderExport() {
 
 function renderTrendChart() {
   const host = view.root.querySelector('#budget-stats-trend');
-  if (!host) return;
+  if (!host || !view.data?.series?.length) return;
   const s = view.data.series;
   const W = 600, H = 180, PAD = 8;
   const incomes  = s.map((p) => p.income);
@@ -292,13 +308,6 @@ function renderTrendChart() {
   const points = (arr) => arr.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 
-  // Die Kurve trug bisher weder Skala noch Zeitachse: zwei farbige Linien ohne
-  // jeden ablesbaren Wert. Achsenbeschriftung liegt als HTML außerhalb des SVG,
-  // weil preserveAspectRatio="none" jeden Text im SVG verzerren würde.
-  // Zweiter Kanal neben der Farbe (Critique P2): Einnahmen solide, Ausgaben
-  // gestrichelt - so trennen sich die Serien auch bei Rot-Grün-Schwäche. Der
-  // Screenreader-Zugang liegt in der sr-only-Summary + den Punkt-Buttons; das
-  // rein visuelle SVG bleibt daher bewusst aria-hidden.
   const summary = t('budget.statsTrendSummary', {
     periods: s.length,
     income: fmtAmount(sum(incomes)),
@@ -306,10 +315,6 @@ function renderTrendChart() {
     peak: fmtAmount(max),
   });
 
-  // Ablesbare Einzelwerte: die Kurve allein sagt nur "irgendwann im Mai war es
-  // viel". Je Datenpunkt eine unsichtbare Schaltfläche über dem Diagramm — der
-  // Wert steht in ihrem aria-label (also auch ohne Maus erreichbar, nicht als
-  // Hover-only-Tooltip) und erscheint sichtbar in der Ableselinie darunter.
   const hotspots = s.map((p, i) => {
     const label = t('budget.statsPointLabel', {
       period: periodLabel(p.period),
@@ -358,7 +363,6 @@ function renderTrendChart() {
   wireTrendPoints(host, s);
 }
 
-// Bucket-Schlüssel der Serie: 'YYYY-MM' (Monatsraster) oder 'YYYY-MM-DD' (Tage).
 function periodLabel(period) {
   if (/^\d{4}-\d{2}$/.test(period)) {
     const [y, m] = period.split('-').map(Number);
@@ -367,10 +371,6 @@ function periodLabel(period) {
   return formatDate(period);
 }
 
-// Ableselinie + Roving-Tabindex über den Datenpunkten. Ein Tabstopp für die
-// ganze Kurve (nicht 31 bei einem Monatsraster), Pfeiltasten wandern, Zeigen
-// und Antippen wählen direkt. Der Wert steht ohnehin im aria-label jedes
-// Punktes — die sichtbare Zeile ist die Entsprechung für alle anderen.
 function wireTrendPoints(host, series) {
   const group = host.querySelector('.budget-stats__points');
   const readout = host.querySelector('#budget-stats-readout');
@@ -413,15 +413,26 @@ function wireTrendPoints(host, series) {
     show(next, { focus: true });
   });
 
-  // Jüngster Zeitabschnitt MIT Daten als Ausgangswert: der Monatsletzte ist
-  // oft noch leer und "31.07. · 0,00" wäre ein nichtssagender Start
-  // (Audit A2-05). Ganz ohne Daten bleibt der letzte Abschnitt.
   let initial = series.length - 1;
   while (initial > 0 && !series[initial].income && !series[initial].expenses) initial--;
   show(initial);
 }
 
 function updatePeriodLabel() {
-  const el = view.root.querySelector('#budget-stats-period');
-  if (el && view.data) el.textContent = `${formatDate(view.data.from)} – ${formatDate(view.data.to)}`;
+  const el = view.root?.querySelector('#budget-stats-period');
+  if (!el) return;
+  if (view.data?.from && view.data?.to) {
+    el.textContent = `${formatDate(view.data.from)} – ${formatDate(view.data.to)}`;
+    return;
+  }
+  const d = parseLocalDateKey(view.anchor);
+  if (view.range === 'year') {
+    el.textContent = String(d.getFullYear());
+    return;
+  }
+  if (view.range === 'month') {
+    el.textContent = new Intl.DateTimeFormat(getLocale(), { month: 'long', year: 'numeric' }).format(d);
+    return;
+  }
+  el.textContent = formatDate(view.anchor);
 }

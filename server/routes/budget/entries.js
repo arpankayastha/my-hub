@@ -19,6 +19,64 @@ import {
 const log = createLogger('Budget');
 const router = express.Router();
 
+function cloneMonthEntries(database, fromMonth, toMonth, userId) {
+  if (!MONTH_RE.test(fromMonth) || !MONTH_RE.test(toMonth)) {
+    throw Object.assign(new Error('month must be YYYY-MM'), { status: 400 });
+  }
+  if (fromMonth === toMonth) {
+    throw Object.assign(new Error('Source and target month must differ.'), { status: 400 });
+  }
+  const from = `${fromMonth}-01`;
+  const to = `${fromMonth}-31`;
+  const sources = database.prepare(`
+    SELECT * FROM budget_entries
+    WHERE date BETWEEN ? AND ?
+      AND recurrence_parent_id IS NULL
+      AND is_recurring = 0
+  `).all(from, to);
+  const [ty, tm] = toMonth.split('-').map(Number);
+  const lastDay = new Date(ty, tm, 0).getDate();
+  let copied = 0;
+  const insert = database.prepare(`
+    INSERT INTO budget_entries
+      (title, amount, category, subcategory, date, account_id, is_recurring,
+       created_by, owner_id, visibility)
+    VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)
+  `);
+  for (const src of sources) {
+    const day = Math.min(parseInt(src.date.slice(8, 10), 10), lastDay);
+    const newDate = `${toMonth}-${String(day).padStart(2, '0')}`;
+    const dup = database.prepare(`
+      SELECT 1 FROM budget_entries
+      WHERE date = ? AND title = ? AND amount = ? AND category = ?
+    `).get(newDate, src.title, src.amount, src.category);
+    if (dup) continue;
+    insert.run(
+      src.title,
+      src.amount,
+      src.category,
+      src.subcategory || '',
+      newDate,
+      src.account_id ?? null,
+      userId,
+      src.owner_id ?? src.created_by ?? userId,
+      src.visibility || 'shared',
+    );
+    copied += 1;
+  }
+  return copied;
+}
+
+function countRecurringApplied(database, month) {
+  const monthStart = `${month}-01`;
+  const monthEnd = `${month}-31`;
+  return database.prepare(`
+    SELECT COUNT(*) AS n FROM budget_entries
+    WHERE recurrence_parent_id IS NOT NULL
+      AND date BETWEEN ? AND ?
+  `).get(monthStart, monthEnd).n;
+}
+
 /**
  * GET /api/v1/budget/summary
  * Monatsübersicht: Einnahmen, Ausgaben, Saldo, Aufschlüsselung nach Kategorie.
@@ -202,6 +260,45 @@ router.get('/', (req, res) => {
 
     const entries = db.get().prepare(sql).all(...params);
     res.json({ data: entries });
+  } catch (err) {
+    log.error('', err);
+    res.status(500).json({ error: 'Internal error', code: 500 });
+  }
+});
+
+/**
+ * POST /api/v1/budget/clone-month
+ * Copy one-time entries from a source month into a target month.
+ * Body: { from_month, to_month }
+ */
+router.post('/clone-month', (req, res) => {
+  try {
+    const fromMonth = String(req.body.from_month || req.body.from || '').trim();
+    const toMonth = String(req.body.to_month || req.body.to || '').trim();
+    const copied = cloneMonthEntries(db.get(), fromMonth, toMonth, viewerId(req));
+    res.json({ data: { copied, from_month: fromMonth, to_month: toMonth } });
+  } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message, code: 400 });
+    log.error('', err);
+    res.status(500).json({ error: 'Internal error', code: 500 });
+  }
+});
+
+/**
+ * POST /api/v1/budget/apply-recurring
+ * Materialize recurring series into a target month (planning ahead).
+ * Body: { to_month }
+ */
+router.post('/apply-recurring', (req, res) => {
+  try {
+    const toMonth = String(req.body.to_month || req.body.month || '').trim();
+    if (!MONTH_RE.test(toMonth)) {
+      return res.status(400).json({ error: 'month must be YYYY-MM', code: 400 });
+    }
+    const before = countRecurringApplied(db.get(), toMonth);
+    generateRecurringInstances(db.get(), toMonth, { planning: true });
+    const after = countRecurringApplied(db.get(), toMonth);
+    res.json({ data: { created: after - before, to_month: toMonth } });
   } catch (err) {
     log.error('', err);
     res.status(500).json({ error: 'Internal error', code: 500 });

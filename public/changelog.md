@@ -9,6 +9,10 @@ All notable changes to **My Hub** (this personal fork).
 - Cycle calendar: fertile window and ovulation for the **current** cycle are shown correctly (not as next-month predictions).
 
 ### Changed
+- Budget recurring: rolls forward one month at a time; “Apply recurring here” for planning ahead; past instances stay unchanged on edits.
+- Budget statistics: filters stay visible on empty years; summary cards show zeros instead of trapping the page.
+- Category/subcategory inline modals: solid panel on glass (no transparency overlap).
+- Health: profile switcher aligned with Budget; quick-jump tabs on overview; dashboard health widget shows vitals, meds, cycle, and vaccination-style calendar events per profile.
 - Cycle page: clearer ring labels (cycle day, period start date, next period date), horizontal timeline bar, and improved legend (logged vs predicted vs current cycle).
 
 ## [1.1.25] - 2026-08-04

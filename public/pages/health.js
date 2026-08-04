@@ -280,8 +280,10 @@ function mountHealthProfileTool(container) {
   let slot = bar.querySelector('.sub-tabs-bar__tools');
   if (!slot) {
     slot = document.createElement('div');
-    slot.className = 'sub-tabs-bar__tools';
-    bar.appendChild(slot);
+    slot.className = 'sub-tabs-bar__tools sub-tabs-bar__tools--lead';
+    const anchor = bar.querySelector('.sub-tab') || bar.querySelector('.sub-tabs-bar__title');
+    if (anchor) bar.insertBefore(slot, anchor);
+    else bar.appendChild(slot);
   }
   slot.innerHTML = dashboardProfileToolMarkup(_sessionUser);
   if (window.lucide) window.lucide.createIcons({ el: slot });
@@ -2957,6 +2959,7 @@ function renderOverviewShell() {
 
   overview.root.insertAdjacentHTML('beforeend', `
     ${overviewMonthHeroMarkup()}
+    ${overviewQuickTabsMarkup()}
     ${readOnlyBannerMarkup(overview.members, overview.personId, isOwnOverviewView())}
     <div class="health-overview__grid">
       ${overviewCard('calendar-check', 'health.overview.dueToday.title', overviewDueMarkup())}
@@ -2970,6 +2973,35 @@ function renderOverviewShell() {
   `);
   if (window.lucide) window.lucide.createIcons({ el: overview.root });
   wireOverview();
+}
+
+function overviewQuickTabsMarkup() {
+  const tabs = [
+    { route: '/health/vitals', icon: 'activity', labelKey: 'health.tabs.vitals' },
+    { route: '/health/meds', icon: 'pill', labelKey: 'health.tabs.meds' },
+  ];
+  if (cycleEnabled) tabs.push({ route: '/health/cycle', icon: 'droplet', labelKey: 'health.tabs.cycle' });
+  tabs.push(
+    { route: '/health/labs', icon: 'flask-conical', labelKey: 'health.tabs.labs' },
+    { route: '/health/activity', icon: 'dumbbell', labelKey: 'health.tabs.activity' },
+  );
+  return `
+    <nav class="health-overview__quick-tabs" aria-label="${esc(t('health.overview.quickTabs'))}">
+      ${tabs.map((tab) => `
+        <button type="button" class="health-overview__quick-tab" data-health-route="${esc(tab.route)}">
+          <i data-lucide="${esc(tab.icon)}" aria-hidden="true"></i>
+          <span>${esc(t(tab.labelKey))}</span>
+        </button>`).join('')}
+    </nav>`;
+}
+
+function wireOverviewQuickTabs() {
+  overview.root?.querySelectorAll('[data-health-route]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const route = btn.dataset.healthRoute;
+      if (route) window.myHub?.navigate(route);
+    });
+  });
 }
 
 function overviewCard(icon, titleKey, body) {
@@ -3240,6 +3272,7 @@ function rerenderExportButtons() {
 
 function wireOverview() {
   wireTablistKeys(overview.root);
+  wireOverviewQuickTabs();
 
   overview.root.querySelectorAll('[data-ov-dose-take]').forEach((btn) =>
     btn.addEventListener('click', () => handleOverviewDose(btn, 'take')));
