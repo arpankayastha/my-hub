@@ -5,15 +5,15 @@
  * Abhängigkeiten: tokens.css, glass.css, dashboard.css, budget.css, health.css
  */
 
-/* Stronger ambient blobs on glass-first modules */
+/* Stronger ambient on flagship routes — opacity tuned in liquid-glass-motion.css */
 html[data-lg-module] {
-  --lg-blob-opacity: 0.22;
+  --lg-glass-saturate: 200%;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) html[data-lg-module],
   [data-theme="dark"] html[data-lg-module] {
-    --lg-blob-opacity: 0.28;
+    --lg-glass-saturate: 210%;
   }
 }
 
@@ -59,10 +59,32 @@ html[data-lg-module="settings"] .settings-navigation-panel {
 
 html[data-lg-module="budget"] .budget-month-hero {
   border-color: color-mix(in srgb, var(--module-accent) 28%, var(--glass-border-subtle));
+  padding: var(--space-5);
 }
 
 html[data-lg-module="budget"] .budget-month-hero__title {
   font-size: var(--text-2xl);
+}
+
+html[data-lg-module="budget"] .budget-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+html[data-lg-module="budget"] .budget-summary--expenses-only {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 520px) {
+  html[data-lg-module="budget"] .budget-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+html[data-lg-module="budget"] .budget-chart-section,
+html[data-lg-module="budget"] .budget-list-section {
+  margin-top: var(--space-4);
 }
 
 /* ================================================================
@@ -71,15 +93,52 @@ html[data-lg-module="budget"] .budget-month-hero__title {
 
 html[data-lg-module="health"] .health-month-hero {
   border-color: color-mix(in srgb, var(--module-accent) 28%, var(--glass-border-subtle));
+  padding: var(--space-5);
 }
 
 html[data-lg-module="health"] .health-month-hero__title {
   font-size: var(--text-2xl);
 }
 
+html[data-lg-module="health"] .health-overview__grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+html[data-lg-module="health"] .health-overview__card-head {
+  border-bottom: 1px solid var(--glass-border-subtle);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
 /* ================================================================
  * OVERVIEW (Dashboard)
  * ================================================================ */
+
+html[data-lg-module="dashboard"] .dashboard-overview {
+  margin-bottom: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-glass-card);
+  background:
+    radial-gradient(140% 120% at 100% 0%,
+      color-mix(in srgb, var(--module-accent) 14%, transparent),
+      transparent 58%),
+    var(--glass-bg-card);
+  box-shadow:
+    var(--glass-shadow-md),
+    inset 0 1px 0 color-mix(in srgb, white calc(var(--lg-specular) * 100%), transparent);
+}
+
+html[data-lg-module="dashboard"] .dashboard-overview__title {
+  font-size: clamp(var(--text-xl), 4vw, var(--text-3xl));
+  letter-spacing: -0.03em;
+}
+
+html[data-lg-module="dashboard"] .dashboard__grid {
+  gap: var(--space-5);
+}
 
 html[data-lg-module="dashboard"] .dashboard-masthead:not(.dashboard-masthead--slim) {
   border: 1px solid var(--glass-border-subtle);
@@ -109,16 +168,16 @@ html[data-lg-module="dashboard"] .dashboard .widget-skeleton {
 }
 
 html[data-lg-module="dashboard"] .dashboard .widget::before {
-  height: 1px;
-  background: color-mix(in srgb, var(--widget-accent, var(--module-accent)) 28%, var(--glass-highlight-subtle));
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--widget-accent, var(--module-accent)) 45%, transparent),
+    color-mix(in srgb, var(--widget-accent, var(--module-accent)) 8%, var(--glass-highlight-subtle))
+  );
 }
 
 html[data-lg-module="dashboard"] .dashboard .widget:hover {
-  border-color: color-mix(in srgb, var(--widget-accent, var(--module-accent)) 35%, var(--glass-border));
-  box-shadow:
-    var(--glass-shadow-lg),
-    inset 0 1px 0 color-mix(in srgb, white calc(var(--lg-specular) * 100%), transparent);
-  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--widget-accent, var(--module-accent)) 40%, var(--glass-border));
 }
 
 html[data-lg-module="dashboard"] .dashboard .widget__header {
@@ -328,8 +387,6 @@ html[data-lg-module="health"] .health-metric-card {
 
 html[data-lg-module="health"] .health-metric-card:hover {
   border-color: color-mix(in srgb, var(--module-accent) 45%, var(--glass-border));
-  box-shadow: var(--glass-shadow-md);
-  transform: translateY(-1px);
 }
 
 html[data-lg-module="health"] .health-metric-card.is-active {
@@ -363,7 +420,7 @@ html[data-lg-module="health"] .health-overview-reminder {
 
 @media (prefers-reduced-transparency: reduce) {
   html[data-lg-module] {
-    --lg-blob-opacity: 0;
+    --lg-glass-saturate: 100%;
   }
 
   html[data-lg-module="dashboard"] .dashboard .widget:hover,
