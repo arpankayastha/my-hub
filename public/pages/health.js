@@ -3092,17 +3092,6 @@ function overviewWidget(icon, titleKey, body, size = 'default') {
     </section>`;
 }
 
-function overviewCard(icon, titleKey, body) {
-  return `
-    <section class="health-overview__card">
-      <header class="health-overview__card-head">
-        <i data-lucide="${esc(icon)}" class="health-overview__card-icon" aria-hidden="true"></i>
-        <h3 class="health-overview__card-title u-toolbar-title">${esc(t(titleKey))}</h3>
-      </header>
-      <div class="health-overview__card-body">${body}</div>
-    </section>`;
-}
-
 // --- Heute fällig (identische Logik wie dueTodayMarkup im Meds-Tab) ---
 
 function overviewDueMarkup() {
