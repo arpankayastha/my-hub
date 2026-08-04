@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.24] - 2026-08-04
+
+### Changed
+- Route error page: full-width readable report panel (version, URL, time, stack), one-click copy, mobile-friendly layout.
+
 ## [1.1.23] - 2026-08-04
 
 ### Added

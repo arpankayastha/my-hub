@@ -2762,41 +2762,131 @@ function updateNav(path) {
 }
 
 function renderError(container, err) {
+  const report = buildErrorReport(err);
+
   const state = document.createElement('div');
-  state.className = 'empty-state';
+  state.className = 'empty-state empty-state--error';
   state.tabIndex = -1;
   state.setAttribute('role', 'alert');
+
+  const icon = document.createElement('i');
+  icon.dataset.lucide = 'alert-triangle';
+  icon.className = 'empty-state__icon';
+  icon.setAttribute('aria-hidden', 'true');
+
   const title = document.createElement('div');
   title.className = 'empty-state__title';
   title.textContent = t('common.errorOccurred');
+
   const desc = document.createElement('div');
   desc.className = 'empty-state__description';
   desc.textContent = friendlyError(err);
-  const btn = document.createElement('button');
-  btn.className = 'btn btn--primary';
-  btn.id = 'error-reload-btn';
-  btn.textContent = t('common.reload');
-  btn.addEventListener('click', () => location.reload());
-  state.append(title, desc, btn);
 
-  // „Ein unerwarteter Fehler ist aufgetreten" sagt niemandem, was kaputt ist -
-  // die einzige verwertbare Information (Name, Meldung, Stack) lag bisher nur in
-  // der Browserkonsole. Zugeklappt beigelegt stört sie das Layout nicht, ist
-  // aber ohne DevTools erreichbar und kopierbar.
-  const detailText = errorDetails(err);
-  if (detailText) {
-    const details = document.createElement('details');
-    details.className = 'empty-state__details';
-    const summary = document.createElement('summary');
-    summary.textContent = t('common.errorDetails');
+  const actions = document.createElement('div');
+  actions.className = 'empty-state__actions';
+
+  const reloadBtn = document.createElement('button');
+  reloadBtn.className = 'btn btn--primary';
+  reloadBtn.id = 'error-reload-btn';
+  reloadBtn.type = 'button';
+  reloadBtn.textContent = t('common.reload');
+  reloadBtn.addEventListener('click', () => location.reload());
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'btn btn--secondary';
+  copyBtn.id = 'error-copy-btn';
+  copyBtn.type = 'button';
+  copyBtn.textContent = t('common.errorCopy');
+  copyBtn.addEventListener('click', () => copyErrorReport(report, copyBtn));
+
+  actions.append(reloadBtn, copyBtn);
+  state.append(icon, title, desc, actions);
+
+  if (report) {
+    const panel = document.createElement('div');
+    panel.className = 'empty-state__error-panel';
+
+    const panelHead = document.createElement('div');
+    panelHead.className = 'empty-state__error-panel-head';
+
+    const panelTitle = document.createElement('span');
+    panelTitle.className = 'empty-state__error-panel-title';
+    panelTitle.textContent = t('common.errorDetails');
+
+    const panelCopy = document.createElement('button');
+    panelCopy.className = 'btn btn--ghost empty-state__error-copy';
+    panelCopy.type = 'button';
+    panelCopy.textContent = t('common.errorCopy');
+    panelCopy.addEventListener('click', () => copyErrorReport(report, panelCopy));
+
+    panelHead.append(panelTitle, panelCopy);
+
     const pre = document.createElement('pre');
-    pre.textContent = detailText;
-    details.append(summary, pre);
-    state.append(details);
+    pre.className = 'empty-state__error-pre';
+    pre.textContent = report;
+    pre.tabIndex = 0;
+    pre.setAttribute('aria-label', t('common.errorDetails'));
+
+    panel.append(panelHead, pre);
+    state.append(panel);
   }
 
   container.replaceChildren(state);
+  if (window.lucide) window.lucide.createIcons({ el: state });
   state.focus({ preventScroll: true });
+}
+
+async function copyErrorReport(report, btn) {
+  const ok = await copyTextToClipboard(report);
+  if (ok) {
+    showToast(t('common.errorCopied'), 'success', 2000);
+    const label = t('common.errorCopy');
+    const copied = t('common.errorCopied');
+    btn.textContent = copied;
+    window.setTimeout(() => { btn.textContent = label; }, 2000);
+  } else {
+    showToast(t('common.errorCopyFailed'), 'warning');
+  }
+}
+
+async function copyTextToClipboard(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch { /* execCommand fallback (some PWAs) */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+function buildErrorReport(err) {
+  const version = localStorage.getItem(APP_VERSION_STORAGE_KEY) || 'unknown';
+  const technical = errorDetails(err);
+  const lines = [
+    `My Hub v${version}`,
+    `URL: ${location.href}`,
+    `Time: ${new Date().toISOString()}`,
+    `Online: ${navigator.onLine}`,
+    '',
+    `Summary: ${friendlyError(err)}`,
+  ];
+  if (technical) {
+    lines.push('', technical);
+  }
+  return lines.join('\n').trim();
 }
 
 /**
