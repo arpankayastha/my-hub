@@ -1,0 +1,11 @@
+---
+description: Cloud agent workflow preferences for this repo
+alwaysApply: true
+---
+
+# Cloud agent workflow
+
+- **Do not add unit tests** unless the user explicitly asks for them.
+- **Merge PRs to `main`** after work is done — mark drafts ready, resolve conflicts, merge (do not leave PRs open by default).
+- **Verify build only**: run `GITHUB_PAGES_BASE=/my-hub node scripts/build-pages.mjs` — do not run the full test suite unless asked.
+- Skip version/changelog churn when the user only wants a quick fix unless they expect a release bump.
