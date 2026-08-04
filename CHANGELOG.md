@@ -2,6 +2,12 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.31] - 2026-08-04
+
+### Fixed
+- Health vitals: saving measurements works again in local/PWA mode (normalized IndexedDB `nextId`, validated POST body, reliable datetime read from the datepicker).
+- Health vitals: a successful save no longer shows a generic error when the follow-up refresh fails.
+
 ## [1.1.30] - 2026-08-04
 
 ### Fixed

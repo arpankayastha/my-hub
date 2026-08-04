@@ -849,6 +849,16 @@ function localDateTimeValue(date) {
   return `${key}T${hh}:${mm}`;
 }
 
+/** Reads canonical ISO from my-hub-datepicker (or falls back to the value attribute). */
+function formDateTimeValue(host, selector) {
+  const el = host.querySelector(selector);
+  if (!el) return '';
+  const raw = el.value;
+  if (raw != null && String(raw).trim()) return String(raw).trim();
+  const attr = el.getAttribute?.('value');
+  return attr ? String(attr).trim() : '';
+}
+
 function valueFieldsMarkup(type) {
   const metric = vitalMetric(type) || VITAL_METRICS[0];
   if (type === 'bp') {
@@ -951,14 +961,20 @@ function openVitalModal(opts = {}) {
         submitBtn.disabled = true;
         try {
           await api.post('/health/vitals', body);
-          closeModal({ force: true });
+          await closeModal({ force: true });
           window.myHub?.showToast(t('health.vitals.saved'), 'success');
-          await reloadAfterSave(body.type);
-          await opts.onSaved?.();
+          try {
+            await reloadAfterSave(body.type);
+            await opts.onSaved?.();
+          } catch (refreshErr) {
+            console.error('[Health] vitals post-save refresh error:', refreshErr);
+            window.myHub?.showToast(t('health.vitals.loadError'), 'warning');
+          }
         } catch (err) {
           console.error('[Health] vitals save error:', err);
           submitBtn.disabled = false;
-          window.myHub?.showToast(err?.data?.error || t('health.vitals.saveError'), 'danger');
+          const msg = err?.data?.error || err?.message;
+          window.myHub?.showToast(msg && err?.status !== 0 ? msg : t('health.vitals.saveError'), 'danger');
         }
       });
     },
@@ -972,7 +988,7 @@ function numOrNull(input) {
 }
 
 function collectVitalBody(panel, type) {
-  const measuredAt = panel.querySelector('#vital-measured-at')?.value;
+  const measuredAt = formDateTimeValue(panel, '#vital-measured-at');
   const visibility = panel.querySelector('#vital-visibility')?.value || 'private';
   const note = panel.querySelector('#vital-note')?.value.trim() || undefined;
   if (!measuredAt) return null;
@@ -1008,7 +1024,14 @@ async function reloadAfterSave(savedType) {
     console.error('[Health] vitals reload error:', err);
     vitals.error = true;
   }
-  renderVitalsShell();
+  if (!vitals.root?.isConnected) return;
+  try {
+    renderVitalsShell();
+  } catch (err) {
+    console.error('[Health] vitals render error:', err);
+    vitals.error = true;
+    throw err;
+  }
 }
 
 // --------------------------------------------------------
