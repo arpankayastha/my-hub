@@ -2,6 +2,17 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.31] - 2026-08-04
+
+### Fixed
+- Budget CSV export: category and subcategory columns use the app language (income categories no longer show German keys like `Erwerbseinkommen`).
+
+## [1.1.30] - 2026-08-04
+
+### Fixed
+- Budget recurring: deleting an entire series keeps past months and only removes current/future instances (series ends instead of wiping history).
+- Budget recurring: new series no longer auto-fill when browsing future months; use “Apply recurring here” to plan ahead.
+
 ## [1.1.29] - 2026-08-04
 
 ### Changed

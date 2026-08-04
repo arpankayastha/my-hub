@@ -9,6 +9,10 @@ import {
   shouldAutoMaterializeRecurring,
   shouldPlanMaterializeRecurring,
 } from '../utils/budget-recurrence.js';
+import {
+  budgetCategoryLabel,
+  budgetSubcategoryLabel,
+} from '../utils/category-labels.js';
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -153,19 +157,25 @@ function csvSafe(val) {
   return `"${s}"`;
 }
 
-function buildBudgetExportCsv(state, from, to, effectiveUserId, scope, authUserId, findUser) {
+function buildBudgetExportCsv(state, from, to, effectiveUserId, scope, authUserId, findUser, labelFns = {}) {
+  const categoryLabel = labelFns.categoryLabel ?? ((key) => key);
+  const subcategoryLabel = labelFns.subcategoryLabel ?? ((key) => key);
   let rows = entriesInRange(state, from, to);
   rows = filterEntriesForView(rows, effectiveUserId, scope, authUserId);
   rows = rows.sort((a, b) => (a.date > b.date ? 1 : -1));
   const header = 'Date,Title,Amount,Category,Subcategory,Recurring,Created by\n';
   const body = rows.map((e) => {
     const enriched = enrichEntry(state, e, findUser);
+    const cat = state.budget_categories.find((c) => c.key === e.category);
+    const sub = state.budget_subcategories.find(
+      (s) => s.key === e.subcategory && s.category_key === e.category,
+    );
     return [
       e.date,
       csvSafe(e.title),
       Number(e.amount).toFixed(2),
-      e.category,
-      e.subcategory || '',
+      csvSafe(categoryLabel(e.category, cat?.name ?? '')),
+      e.subcategory ? csvSafe(subcategoryLabel(e.subcategory, sub?.name ?? '')) : '',
       e.is_recurring ? 'Yes' : 'No',
       csvSafe(enriched.creator_name),
     ].join(',');
@@ -984,8 +994,13 @@ export async function handleBudgetApi(method, parts, query, body, state, effecti
     const filename = DATE_RE.test(String(query.from || '')) && DATE_RE.test(String(query.to || ''))
       ? `budget-${range.from}_${range.to}.csv`
       : `budget-${query.month || range.month}.csv`;
+    const { t } = await import('/i18n.js');
+    const labelFns = {
+      categoryLabel: (key, name) => budgetCategoryLabel(key, name, t),
+      subcategoryLabel: (key, name) => budgetSubcategoryLabel(key, name, t),
+    };
     const csv = buildBudgetExportCsv(
-      state, range.from, range.to, effectiveUserId, query.scope, authUserId, findUser,
+      state, range.from, range.to, effectiveUserId, query.scope, authUserId, findUser, labelFns,
     );
     return {
       __export: {
