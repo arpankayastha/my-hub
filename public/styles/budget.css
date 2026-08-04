@@ -247,6 +247,14 @@
   padding-bottom: var(--budget-fab-clearance);
 }
 
+.budget-tab-panel--reports {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--budget-fab-clearance);
+}
+
 .budget-tab-panel--subscriptions {
   overflow-y: auto;
   padding-bottom: var(--budget-fab-clearance);
