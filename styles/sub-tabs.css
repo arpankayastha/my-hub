@@ -1,0 +1,119 @@
+/* Sub-Tabs Bar — shared pill-style segment control
+ * Used by kitchen modules, settings, and any future sub-module navigation.
+ * Height: --sub-tabs-height (default from tokens.css); override per context.
+ */
+
+.sub-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-block: var(--space-2);
+  /* Full-bleed-Rail wie .page-toolbar (Issue #577): Hintergrund, Akzentstreifen
+   * und Trennlinie laufen bis zur Shell-Kante, der Tab-Inhalt sitzt in der
+   * zentrierten Content-Spalte und fluchtet mit dem Seiten-Body darunter.
+   * Konsumenten sind ausschließlich kitchen-tabs.js und health-tabs.js; beide
+   * hängen die Leiste als GESCHWISTER des Modul-Roots in den Router-Wrapper,
+   * womit das `100%` die volle Shell-Breite trifft. (Settings nutzt eine andere
+   * Tab-Mechanik, utils/tablist.js, und rendert keine .sub-tabs-bar.) */
+  padding-inline: var(--page-inline-pad);
+  height: var(--sub-tabs-height);
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex-shrink: 0;
+}
+
+.sub-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Optionaler Modul-Titel links der Tabs (Canonical Page Head).
+ * Größe/Weight aus der u-toolbar-title-Rolle (typography.css). */
+.sub-tabs-bar__title {
+  flex-shrink: 0;
+  margin-right: var(--space-2);
+  color: var(--color-text-primary);
+}
+
+/* Optional trailing actions (profile switch, module tools) — pinned right while tabs scroll. */
+.sub-tabs-bar__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: var(--space-2);
+}
+
+/* Profile / tools before tabs (Health matches Budget toolbar placement). */
+.sub-tabs-bar__tools--lead {
+  margin-left: 0;
+  margin-right: var(--space-2);
+  padding-left: 0;
+  order: 0;
+}
+
+.sub-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-3);
+  height: var(--target-base);
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sub-tab:active {
+  transform: scale(0.96);
+  transition-duration: 0.06s;
+}
+
+/* Aktiv: Akzent-Tint trägt die Modul-Identität, das Label bleibt Ink + semibold
+ * (Modul-Akzent-Text auf Hell erreicht nur ~3.5:1 — unter AA 4.5). */
+.sub-tab--active {
+  background-color: color-mix(in srgb, var(--active-module-accent, var(--color-accent)) 14%, transparent);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sub-tab__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.sub-tab__label {
+  /* --line-height-tight statt 1: bei `font-size: 14px` ergab `line-height: 1`
+   * eine 14px hohe Zeilenbox für Glyphen, die 16px brauchen - gemessen
+   * `scrollHeight 16 > clientHeight 14` auf JEDEM Viewport. Mobil kommt in
+   * kitchen-tabs.css ein `overflow: hidden` dazu, das die 2px dann wirklich
+   * abschneidet: die Unterlänge im „p" von „Rezepte" verlor ihre Spitze
+   * (Critique 2026-07-30). Die Pillenhöhe steuert --target-base, nicht die
+   * Zeilenhöhe, der Kopf wächst dadurch nicht. */
+  line-height: var(--line-height-tight);
+}
+
+/* Vertical divider between tab groups */
+.sub-tabs-separator {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+  flex-shrink: 0;
+  margin: 0 var(--space-1);
+}

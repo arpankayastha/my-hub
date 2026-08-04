@@ -1,0 +1,267 @@
+/**
+ * Modul: Rezepte (Recipes)
+ * Zweck: Styles fuer gespeicherte Rezepte und Aktionskarten
+ */
+
+.recipes-page {
+  /* Geteilter Küchen-Akzent, siehe --module-kitchen in tokens.css. */
+  --module-accent: var(--module-kitchen);
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--safe-area-inset-top) - var(--nav-bottom-height) - var(--safe-area-inset-bottom));
+  /* Full-bleed-Root (Issue #577): Content-Spalte über --page-inline-pad auf den
+   * direkten Kindern, fluchtend mit der Küchen-Tab-Leiste darüber. */
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .recipes-page {
+    height: 100dvh;
+  }
+}
+
+.recipes-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-inline: var(--page-inline-pad);
+  /* Auslauf unten wie in .pantry-list: ohne ihn deckt der FAB die
+   * „In Essensplan übernehmen"-Aktion der letzten Karte ab. */
+  padding-block: var(--space-4) var(--fab-clearance);
+  display: grid;
+  /* Kachelt 2–3-spaltig auf Desktop, automatisch einspaltig auf Mobil
+   * (Karten fassen ihre natürliche Höhe via align-items:start). */
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-3);
+  align-content: start;
+  align-items: start;
+}
+
+.recipe-card {
+  /* Arbeitsfläche = opak (Budget-Benchmark: Glass bleibt Overlays/Modals
+   * vorbehalten, Inhalt muss auf einen Blick lesbar sein). */
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-glass-card);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.recipe-card:hover {
+  background-color: var(--color-surface-hover);
+  box-shadow: var(--shadow-md);
+}
+
+/* Die Kartenfläche öffnet die Lese-Ansicht (Audit A1-21). */
+.recipe-card {
+  cursor: pointer;
+}
+
+.recipe-card:focus-visible {
+  outline: 2px solid var(--module-accent);
+  outline-offset: 2px;
+}
+
+/* Die Suchzeile (Audit A1-21) ist jetzt der kanonische Kopf in der Variante
+ * .page-toolbar--in-group (layout.css); die frühere eigene .recipes-toolbar
+ * entfällt samt Padding-Regeln, die der Kopf schon mitbringt. */
+
+.recipes-search {
+  flex: 1;
+  max-width: 420px;
+}
+
+.recipes-search-empty {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--color-text-tertiary);
+}
+
+/* Nur-Lese-Rezeptansicht im Modal (Audit A1-21) */
+.recipe-read {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.recipe-read__heading {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.recipe-read__ingredients {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: grid;
+  gap: var(--space-1);
+}
+
+.recipe-read__notes {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.recipe-card__title {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text-primary);
+}
+
+.recipe-card__notes {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--type-body);
+  white-space: pre-wrap;
+}
+
+.recipe-card__meal-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* Rezept-Link: natürliche Breite, links ausgerichtet — nicht als
+ * vollbreiter Grid-Child strecken (sonst zentriert das btn-Label). */
+.recipe-card__link {
+  justify-self: start;
+}
+
+.recipe-card__ingredients {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.recipe-card__ingredient {
+  font-size: var(--type-body);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rest-Indikator „+N": gedämpft, kein Listenpunkt-Gewicht. */
+.recipe-card__ingredient--more {
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+.recipe-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* Zwei Zeilen, nicht drei: die Primäraktion nimmt Zeile 1 allein, der zweite
+ * Ausgang teilt sich Zeile 2 mit den Icon-Aktionen.
+ *
+ * Vorher trugen beide CTAs `flex: 1 1 auto` und damit je die volle Kartenbreite,
+ * wodurch `margin-right: auto` unten wirkungslos wurde und die Icon-Zeile
+ * zwangsläufig in eine dritte Zeile brach - auf Desktop mit `opacity: 0`, also
+ * als 48px hohes unsichtbares Band unter jeder Karte (gemessen: actions 144px,
+ * 3 Zeilen). Damit „Auf die Einkaufsliste" neben die drei Icon-Buttons passt
+ * (167px + 152px + gap ≤ 343px Kartenbreite), trägt der Button kein eigenes
+ * Icon mehr; direkt neben drei Icon-Buttons war ein viertes ohnehin Rauschen. */
+.recipe-card__primary {
+  flex: 1 1 100%;
+  justify-content: center;
+}
+
+.recipe-card__to-shopping {
+  flex: 0 1 auto;
+}
+
+.recipe-card__icon-actions {
+  margin-left: auto;
+}
+
+/* Primäraktion drängt die Icon-Aktionen an den rechten Rand.
+ * Modul-Identität via getönte Füllung + Border; das LABEL bleibt Ink
+ * (--color-text-primary), weil Modul-Akzent-Text auf Hell die AA-Schwelle 4.5
+ * nicht hält. So flutet kein Karten-Raster mit Akzentfarbe UND das Label ist in
+ * beiden Themes AA-sicher.
+ * Die früheren px-genauen Kontrastangaben standen hier für das alte Teal
+ * (--module-recipes) und gelten seit dem Wechsel auf --module-kitchen nicht
+ * mehr; der Border-Kontrast gegen die Karte wird in der Audit-Runde neu
+ * gemessen (WCAG 1.4.11 fordert 3:1). */
+.recipe-card__primary {
+  margin-right: auto;
+  background-color: color-mix(in srgb, var(--module-accent) 12%, transparent);
+  color: var(--color-text-primary);
+  /* Voller Akzent-Border (3.51:1 ggü. Weiß ✓ WCAG 1.4.11 für UI-Elemente),
+   * damit der Button auf der weißen Karte klar als Affordanz lesbar ist. */
+  border: 1.5px solid var(--module-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.recipe-card__primary:hover {
+  background-color: color-mix(in srgb, var(--module-accent) 20%, transparent);
+  border-color: var(--module-accent);
+}
+
+.recipe-card__primary:focus-visible {
+  outline: 2px solid var(--module-accent);
+  outline-offset: 2px;
+}
+
+/* Sekundäraktionen folgen derselben Reveal-Policy wie Meal-Cards: auf Desktop
+ * per Hover/Focus einblenden, auf Touch dauerhaft sichtbar. Die Primäraktion
+ * ("Zu Mahlzeiten") bleibt immer sichtbar. So teilt die Karten-Familie
+ * (Rezepte + Mahlzeiten) genau ein Interaktionsmuster. */
+.recipe-card__icon-actions {
+  display: flex;
+  gap: var(--space-1);
+  transition: opacity var(--transition-fast);
+}
+
+/* Wie .meal-card__actions: an die Geräte-Fähigkeit gebunden, nicht an die
+ * Viewport-Breite. Der frühere `@media (max-width: 640px)`-Rücknahme ließ ein
+ * Tablet ohne Hover über 640px ohne sichtbare Kartenaktionen zurück, und im
+ * ausgeblendeten Zustand blieb ein 152px breites unsichtbares Klickziel stehen
+ * (Critique 2026-07-29). */
+@media (hover: hover) {
+  .recipe-card__icon-actions {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .recipe-card:hover .recipe-card__icon-actions,
+  .recipe-card:focus-within .recipe-card__icon-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Die Karten-Aktions-Buttons (Bearbeiten/Duplizieren/Löschen) nutzen die
+ * geteilte .row-action-Grammatik aus layout.css (Audit F1). Der Container
+ * .recipe-card__icon-actions behält nur das Hover-Reveal-Layout. */
+
+.recipe-ingredient-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Zutaten-Zeilen (.ingredient-row*) sind global in layout.css definiert und
+ * werden mit dem Mahlzeiten-Modal geteilt. */
+
+.recipe-add-ingredient {
+  align-self: flex-start;
+}
+
+.recipe-meal-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.recipe-meal-types__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+}
