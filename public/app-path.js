@@ -31,6 +31,13 @@ export function toAppUrlWithQuery(pathWithQuery) {
   return `${toAppUrl(pathWithQuery.slice(0, qIndex))}${pathWithQuery.slice(qIndex)}`;
 }
 
+/** Prefix root-absolute paths (API, downloads) for GitHub Pages subpath hosting. */
+export function apiUrl(path) {
+  const base = getBasePath();
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${p}`;
+}
+
 /** Prefix root-absolute asset URLs (modules, locales, styles) for GitHub Pages. */
 export function assetUrl(path) {
   const base = getBasePath();

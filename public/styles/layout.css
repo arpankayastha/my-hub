@@ -1049,6 +1049,18 @@ html.fab-anim-done .page-fab {
   flex-shrink: 0;
 }
 
+.page-toolbar__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.page-toolbar__title-row .page-toolbar__title {
+  margin: 0;
+}
+
 /* Profile switcher compact icon (Overview, Budget, Health toolbars). */
 .dashboard-icon-btn {
   display: inline-flex;

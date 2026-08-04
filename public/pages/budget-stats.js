@@ -6,6 +6,7 @@ import { api } from '/api.js';
 import { t, formatDate, getLocale } from '/i18n.js';
 import { toLocalDateKey, parseLocalDateKey, addLocalDays } from '/utils/date.js';
 import { wireTablist } from '/utils/tablist.js';
+import { downloadApiFile } from '/utils/api-download.js';
 import { renderSkeletonList } from '/utils/skeleton.js';
 
 const view = { range: 'month', anchor: toLocalDateKey(new Date()), data: null, error: false, ctx: null, root: null, wired: false };
@@ -289,10 +290,16 @@ function renderExport() {
   const { from, to } = view.data;
   host.replaceChildren();
   host.insertAdjacentHTML('beforeend', `
-    <a class="btn btn--secondary" href="/api/v1/budget/export?from=${from}&to=${to}${scopeQuery()}">
+    <button type="button" class="btn btn--secondary" id="budget-stats-csv-export">
       <i data-lucide="download" class="icon-md" aria-hidden="true"></i> ${t('budget.statsExport')}
-    </a>`);
+    </button>`);
   if (window.lucide) lucide.createIcons({ el: host });
+  host.querySelector('#budget-stats-csv-export')?.addEventListener('click', () => {
+    downloadApiFile(
+      `/api/v1/budget/export?from=${from}&to=${to}${scopeQuery()}`,
+      `budget-${from}_${to}.csv`,
+    ).catch(() => {});
+  });
 }
 
 function renderTrendChart() {

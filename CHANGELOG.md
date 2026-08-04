@@ -2,6 +2,17 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.28] - 2026-08-04
+
+### Fixed
+- CSV export (Budget, Health, Statistics): downloads use the GitHub Pages base path and work in local/PWA mode instead of 404 on `github.io/api/...`.
+- Split expenses on GitHub Pages: groups persist in IndexedDB; group creation modal survives partial load failures.
+- Budget mobile tabs: full-width scroll row so Split is reachable; Split tab moved earlier in the list.
+- PWA icons regenerated from the current hub logo; apple-touch icon points to the correct asset.
+
+### Changed
+- Budget header: profile switcher beside the module title (aligned with Health tab bar layout).
+
 ## [1.1.27] - 2026-08-04
 
 ### Fixed
