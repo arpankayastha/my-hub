@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 // /i18n.js wird durch test-browser-loader.mjs gemockt (--loader Flag)
-const { wireBlurValidation, btnSuccess, btnError } = await import('../public/components/modal.js');
+const { wireBlurValidation, btnSuccess, btnError, modalFormSubmitButton } = await import('../public/components/modal.js');
 
 // matchMedia und document.createElementNS werden von btnSuccess/btnError benötigt
 global.matchMedia = () => ({ matches: false });
@@ -272,4 +272,31 @@ test('btnError: entfernt btn--shaking zuerst um Animation-Restart zu erzwingen',
   btnError(btn);
   assert.equal(order[0], 'remove:btn--shaking');
   assert.equal(order[1], 'add:btn--shaking');
+});
+
+// --------------------------------------------------------
+// modalFormSubmitButton
+// --------------------------------------------------------
+
+test('modalFormSubmitButton: finds submit linked via form attribute in footer', () => {
+  const footerBtn = { type: 'submit', getAttribute: (k) => k === 'form' ? 'vital-form' : null };
+  const panel = {
+    querySelector(sel) {
+      if (sel === '.modal-panel__footer [type="submit"]') return footerBtn;
+      return null;
+    },
+    querySelectorAll(sel) {
+      if (sel === 'button[type="submit"]') return [footerBtn];
+      return [];
+    },
+  };
+  const form = { id: 'vital-form', querySelector: () => null };
+  assert.equal(modalFormSubmitButton(panel, form), footerBtn);
+});
+
+test('modalFormSubmitButton: falls back to in-form submit', () => {
+  const inFormBtn = { type: 'submit' };
+  const panel = { querySelector: () => null };
+  const form = { id: '', querySelector: (sel) => sel === '[type="submit"]' ? inFormBtn : null };
+  assert.equal(modalFormSubmitButton(panel, form), inFormBtn);
 });

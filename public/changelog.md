@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.32] - 2026-08-04
+
+### Fixed
+- Health vitals modal: Save works again when the footer button sits outside the form (fixes “An unexpected error occurred” on submit).
+
 ## [1.1.31] - 2026-08-04
 
 ### Fixed
