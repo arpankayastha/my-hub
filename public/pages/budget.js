@@ -450,6 +450,9 @@ function wireNav() {
     isEnabled: () => tabCaps().month,
   });
 
+  _container.addEventListener('beforetoggle', onBudgetMorePanelBeforeToggle, true);
+  _container.addEventListener('toggle', onBudgetMorePanelToggle, true);
+
   _container.querySelector('#budget-prev').addEventListener('click', () => goMonth(-1));
   _container.querySelector('#budget-next').addEventListener('click', () => goMonth(1));
   _container.querySelector('#budget-today').addEventListener('click', async () => {
@@ -510,6 +513,90 @@ function updateLabel() {
 // --------------------------------------------------------
 // Body
 // --------------------------------------------------------
+
+const BUDGET_MORE_MENU_ID = 'budget-month-more-menu';
+
+function onBudgetMorePanelBeforeToggle(e) {
+  const panel = e.target;
+  if (!(panel instanceof HTMLElement) || !panel.matches('.icon-more-menu__panel')) return;
+  if (e.newState === 'open') panel.style.opacity = '0';
+}
+
+function onBudgetMorePanelToggle(e) {
+  const panel = e.target;
+  if (!(panel instanceof HTMLElement) || !panel.matches('.icon-more-menu__panel')) return;
+  if (e.newState !== 'open') { panel.style.opacity = ''; return; }
+  const trigger = _container?.querySelector(`[popovertarget="${panel.id}"]`);
+  if (trigger) {
+    const r = trigger.getBoundingClientRect();
+    const pw = panel.offsetWidth || 200;
+    const ph = panel.offsetHeight || 48;
+    const gap = 4;
+    let left = Math.min(Math.max(8, r.right - pw), window.innerWidth - pw - 8);
+    let top = r.bottom + gap;
+    if (top + ph > window.innerHeight - 8) top = r.top - ph - gap;
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(Math.max(8, top))}px`;
+  }
+  panel.style.opacity = '1';
+}
+
+function budgetMonthToolbarMarkup(expensesOnly) {
+  const exportHref = `/api/v1/budget/export?month=${state.month}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
+  return `
+    <div class="month-hero__toolbar">
+      <button class="month-hero__icon-btn${expensesOnly ? ' month-hero__icon-btn--active' : ''}"
+              id="budget-expenses-only" type="button" role="switch"
+              aria-checked="${expensesOnly ? 'true' : 'false'}"
+              aria-label="${t('budget.expensesOnly')}"
+              title="${t('budget.expensesOnlyHint')}">
+        <i data-lucide="receipt" aria-hidden="true"></i>
+      </button>
+      <button class="month-hero__icon-btn${state.hideAmounts ? ' month-hero__icon-btn--active' : ''}"
+              id="budget-hide-amounts" type="button" role="switch"
+              aria-checked="${state.hideAmounts ? 'true' : 'false'}"
+              aria-label="${t('budget.hideAmountsHint')}"
+              title="${t('budget.hideAmountsHint')}">
+        <i data-lucide="${state.hideAmounts ? 'eye-off' : 'eye'}" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="month-hero__icon-btn"
+              popovertarget="${BUDGET_MORE_MENU_ID}"
+              aria-label="${t('budget.moreActions')}"
+              title="${t('budget.moreActions')}">
+        <i data-lucide="more-vertical" aria-hidden="true"></i>
+      </button>
+      <div class="icon-more-menu__panel" id="${BUDGET_MORE_MENU_ID}" popover role="menu">
+        <button type="button" class="icon-menu-item" id="budget-copy-prev" role="menuitem"
+                title="${t('budget.copyFromPrevMonthHint')}">
+          <i data-lucide="copy" class="icon-menu-item__icon" aria-hidden="true"></i>
+          ${t('budget.copyFromPrevMonth')}
+        </button>
+        <button type="button" class="icon-menu-item" id="budget-apply-recurring" role="menuitem"
+                title="${t('budget.applyRecurringHint')}">
+          <i data-lucide="repeat" class="icon-menu-item__icon" aria-hidden="true"></i>
+          ${t('budget.applyRecurring')}
+        </button>
+        <button type="button" class="icon-menu-item" id="budget-manage-categories" role="menuitem">
+          <i data-lucide="tags" class="icon-menu-item__icon" aria-hidden="true"></i>
+          ${t('budget.manageCategories')}
+        </button>
+        ${state.entries.length ? `
+        <a href="${exportHref}" class="icon-menu-item" role="menuitem">
+          <i data-lucide="download" class="icon-menu-item__icon" aria-hidden="true"></i>
+          ${t('budget.csvExport')}
+        </a>` : ''}
+      </div>
+    </div>`;
+}
+
+function budgetMonthStatMarkup(label, amount, trendHtml, modifier = '') {
+  return `
+    <div class="month-hero__stat${modifier ? ` ${modifier}` : ''}">
+      <span class="month-hero__stat-value">${amount}</span>
+      <span class="month-hero__stat-label">${esc(label)}</span>
+      ${trendHtml ? `<div class="month-hero__stat-trend">${trendHtml}</div>` : ''}
+    </div>`;
+}
 
 function renderBody() {
   const body = _container.querySelector('#budget-body');
@@ -582,6 +669,7 @@ function renderBody() {
     : s.balance >= 0
       ? 'budget-summary-card--balance-positive'
       : 'budget-summary-card--balance-negative';
+  const balanceStatClass = balanceClass.replace('budget-summary-card', 'month-hero__stat');
   const prevLabel = p ? formatMonthLabel(p.month).split(' ')[0].slice(0, 3) : '';
 
   // „Nur Ausgaben" (#504): Einnahmen- und Saldo-Karte entfallen ganz, die Ausgaben-
@@ -589,64 +677,41 @@ function renderBody() {
   // (neutralen) Saldo und keine Dauer-Null bei den Einnahmen. Liste, Diagramm und
   // CSV-Export bleiben unberührt - der Umschalter fokussiert nur die Zusammenfassung.
   const expensesOnly = state.expensesOnly;
-  const incomeCard = `
-      <div class="budget-summary-card budget-summary-card--income">
-        <div class="budget-summary-card__label">${t('budget.income')}</div>
-        <div class="budget-summary-card__amount">${formatAmount(s.income)}</div>
-        ${p ? renderTrend(s.income, p.income, prevLabel) : ''}
-      </div>`;
-  const expensesCard = `
-      <div class="budget-summary-card budget-summary-card--expenses">
-        <div class="budget-summary-card__label">${t('budget.expenses')}</div>
-        <div class="budget-summary-card__amount">${formatAmount(Math.abs(s.expenses))}</div>
-        ${p ? renderTrend(s.expenses, p.expenses, prevLabel) : ''}
-      </div>`;
-  const balanceCard = `
-      <div class="budget-summary-card ${balanceClass}">
-        <div class="budget-summary-card__label">${t('budget.balance')}</div>
-        <div class="budget-summary-card__amount">${formatAmount(s.balance)}</div>
-        ${p && !balanceNeutral ? renderTrend(s.balance, p.balance, prevLabel) : ''}
-      </div>`;
+
+  const incomeStat = budgetMonthStatMarkup(
+    t('budget.income'),
+    formatAmount(s.income),
+    p ? renderTrend(s.income, p.income, prevLabel) : '',
+    'month-hero__stat--income',
+  );
+  const expensesStat = budgetMonthStatMarkup(
+    t('budget.expenses'),
+    formatAmount(Math.abs(s.expenses)),
+    p ? renderTrend(s.expenses, p.expenses, prevLabel) : '',
+    'month-hero__stat--expenses',
+  );
+  const balanceStat = budgetMonthStatMarkup(
+    t('budget.balance'),
+    formatAmount(s.balance),
+    p && !balanceNeutral ? renderTrend(s.balance, p.balance, prevLabel) : '',
+    balanceStatClass,
+  );
+  const statsMarkup = expensesOnly
+    ? `<div class="month-hero__stats month-hero__stats--single">${expensesStat}</div>`
+    : `<div class="month-hero__stats">${incomeStat}${expensesStat}${balanceStat}</div>`;
 
   setHtml(body, `
     <div class="budget-tab-panel budget-tab-panel--budget">
     <section class="budget-month-hero">
-      <div class="budget-month-hero__head">
-        <h2 class="budget-month-hero__title">${esc(formatMonthLabel(state.month))}</h2>
-        <p class="budget-month-hero__meta">${t('budget.monthHero.transactions', { count: state.entries.length })}</p>
-        <div class="budget-month-hero__actions">
-          <button class="btn btn--secondary btn--sm" type="button" id="budget-copy-prev" title="${t('budget.copyFromPrevMonthHint')}">
-            <i data-lucide="copy" class="icon-sm" aria-hidden="true"></i>
-            ${t('budget.copyFromPrevMonth')}
-          </button>
-          <button class="btn btn--secondary btn--sm" type="button" id="budget-apply-recurring" title="${t('budget.applyRecurringHint')}">
-            <i data-lucide="repeat" class="icon-sm" aria-hidden="true"></i>
-            ${t('budget.applyRecurring')}
-          </button>
+      <div class="month-hero__head-row">
+        <div class="budget-month-hero__head">
+          <h2 class="budget-month-hero__title">${esc(formatMonthLabel(state.month))}</h2>
+          <p class="budget-month-hero__meta">${t('budget.monthHero.transactions', { count: state.entries.length })}</p>
         </div>
+        ${budgetMonthToolbarMarkup(expensesOnly)}
       </div>
       ${renderMonthFlowBar(s, expensesOnly)}
-    <!-- Anzeige-Umschalter: nur Ausgaben vs. volle Zusammenfassung -->
-    <div class="budget-summary-bar">
-      <button class="budget-expenses-toggle${expensesOnly ? ' budget-expenses-toggle--active' : ''}"
-              id="budget-expenses-only" type="button" role="switch"
-              aria-checked="${expensesOnly ? 'true' : 'false'}"
-              title="${t('budget.expensesOnlyHint')}">
-        <i data-lucide="receipt" class="icon-sm" aria-hidden="true"></i>
-        <span>${t('budget.expensesOnly')}</span>
-      </button>
-      <button class="budget-expenses-toggle budget-expenses-toggle--icon${state.hideAmounts ? ' budget-expenses-toggle--active' : ''}"
-              id="budget-hide-amounts" type="button" role="switch"
-              aria-checked="${state.hideAmounts ? 'true' : 'false'}"
-              aria-label="${t('budget.hideAmountsHint')}"
-              title="${t('budget.hideAmountsHint')}">
-        <i data-lucide="${state.hideAmounts ? 'eye-off' : 'eye'}" class="icon-sm" aria-hidden="true"></i>
-      </button>
-    </div>
-    <!-- Zusammenfassung -->
-    <div class="budget-summary${expensesOnly ? ' budget-summary--expenses-only' : ''}">
-      ${expensesOnly ? expensesCard : incomeCard + expensesCard + balanceCard}
-    </div>
+      ${statsMarkup}
     </section>
 
     <!-- Kategorie-Balken -->
@@ -671,16 +736,6 @@ function renderBody() {
             <span>${esc(accountName(state.accountFilterId))}</span>
             <i data-lucide="x" class="icon-sm" aria-hidden="true"></i>
           </button>` : ''}
-        </div>
-        <div class="budget-list-header__actions">
-        <button class="btn btn--secondary budget-manage-categories" id="budget-manage-categories"
-          title="${t('budget.manageCategories')}">
-          <i data-lucide="tags" class="icon-sm" aria-hidden="true"></i>${t('budget.manageCategories')}
-        </button>
-        ${state.entries.length ? `
-        <a href="/api/v1/budget/export?month=${state.month}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}" class="btn btn--secondary budget-csv-export">
-          <i data-lucide="download" class="icon-sm" aria-hidden="true"></i>CSV
-        </a>` : ''}
         </div>
       </div>
       <div class="budget-list" id="budget-list">
