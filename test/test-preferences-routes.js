@@ -426,6 +426,7 @@ test('POST /holidays/sync: Admin ohne konfiguriertes Land -> 200 (netz-freier Ea
 // Defensive Parse-Fallbacks der Lese-Helfer (korrupte sync_config-Werte)
 // --------------------------------------------------------
 test('GET / verkraftet korrupte dashboard_widgets (Fallback auf Default)', async () => {
+  cfgDelete('dashboard_widgets:user:1');
   cfgSet('dashboard_widgets', '{ kaputt');
   const widgets = (await get()).body.data.dashboard_widgets;
   assert.deepEqual(widgets, []); // Client erweitert leer auf seine aktuellen Defaults
