@@ -1872,6 +1872,8 @@ test('route failures expose a localized recoverable alert instead of raw technic
 
   assert.match(router, /function renderError\(container,\s*err\)[\s\S]*state\.setAttribute\(['"]role['"],\s*['"]alert['"]\)/);
   assert.match(router, /desc\.textContent\s*=\s*friendlyError\(err\)/);
+  assert.match(router, /copyErrorReport|errorCopy/);
+  assert.match(router, /buildErrorReport\(err\)/);
   assert.match(router, /state\.focus\(\{\s*preventScroll:\s*true\s*\}\)/);
   assert.match(router, /Failed to fetch\|NetworkError\|Load failed/i);
   assert.match(router, /return t\(['"]common\.errorServer['"]\)/);
