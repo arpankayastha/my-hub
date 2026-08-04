@@ -3377,6 +3377,8 @@
                 "inDays": "in {{count}} Tagen",
                 "overdue": "{{count}} Tage überfällig",
                 "nextPeriod": "Nächste Periode",
+                "currentCycle": "Aktueller Zyklus",
+                "periodStarted": "Begonnen {{date}}",
                 "fertileWindow": "Fruchtbares Fenster",
                 "ovulation": "Eisprung",
                 "avgCycle": "Ø Zykluslänge",
@@ -3414,9 +3416,11 @@
                 "sun": "So"
             },
             "legend": {
-                "period": "Periode",
-                "predicted": "Vorhergesagt",
+                "period": "Erfasste Periode",
+                "predicted": "Vorhergesagte Periode",
                 "fertile": "Fruchtbar",
+                "fertileCurrent": "Fruchtbar (dieser Zyklus)",
+                "fertilePredicted": "Fruchtbar (vorhergesagt)",
                 "ovulation": "Eisprung",
                 "today": "Heute",
                 "logged": "Eintrag"

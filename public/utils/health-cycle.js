@@ -255,6 +255,19 @@ export function pregnancyInfo(settings = {}, todayKey = toLocalDateKey(new Date(
 }
 
 // --------------------------------------------------------
+// Anker-Start (aktueller Zyklus)
+// --------------------------------------------------------
+
+/** Jüngster Periodenstart ≤ heute; sonst der jüngste Start insgesamt. */
+export function cycleAnchorStart(periods, todayKey = toLocalDateKey(new Date())) {
+  const asc = sortPeriodsAsc(periods);
+  if (!asc.length) return null;
+  const today = dayKey(todayKey);
+  const past = asc.filter((p) => daysBetween(p.start_date, today) >= 0);
+  return dayKey((past.length ? past[past.length - 1] : asc[asc.length - 1]).start_date);
+}
+
+// --------------------------------------------------------
 // Vorhersage
 // --------------------------------------------------------
 
@@ -286,10 +299,7 @@ export function predictCycle(periods, settings = {}, todayKey = toLocalDateKey(n
     return { hasData: false, isPregnant: false, pregnancy, stats, trackFertility: stats.trackFertility };
   }
 
-  // Jüngster Periodenstart, der nicht in der Zukunft liegt (sonst der jüngste).
-  const past = asc.filter((p) => daysBetween(p.start_date, today) >= 0);
-  const anchor = (past.length ? past[past.length - 1] : asc[asc.length - 1]);
-  const lastStart = dayKey(anchor.start_date);
+  const lastStart = cycleAnchorStart(asc, today);
 
   const { avgCycle, avgPeriod, lutealLength } = stats;
   const cycleDay = daysBetween(lastStart, today) + 1; // Tag 1 = Starttag
@@ -386,15 +396,20 @@ export function buildCycleCalendar(anchorKey, { periods = [], logs = [], setting
     if (l && l.log_date) logByDate.set(dayKey(l.log_date), l);
   }
 
-  // Projizierte Zyklen (nur zukünftige, ab dem letzten geloggten Start).
-  // Im Schwangerschafts-Modus entfällt jede Projektion — geloggte Perioden
-  // bleiben sichtbar, aber es werden keine künftigen Phasen vorhergesagt.
   const pregnant = pregnancyInfo(settings, today).active;
+  const anchorStart = cycleAnchorStart(asc, today);
+  const nextStart = anchorStart ? addLocalDays(anchorStart, avgCycle) : null;
+
+  // Aktueller Zyklus: Fruchtbarkeit/Eisprung (Kalendermethode vom nächsten erwarteten Start).
+  const currentOvulation = nextStart ? addLocalDays(nextStart, -lutealLength) : null;
+  const currentFertileStart = currentOvulation ? addLocalDays(currentOvulation, -(FERTILE_WINDOW_DAYS - 1)) : null;
+  const currentFertileEnd = currentOvulation;
+
+  // Folgezyklen: ab dem *nächsten* erwarteten Periodenstart (nicht ab dem aktuellen Anker).
   const projected = [];
-  if (asc.length && !pregnant) {
-    const lastStart = dayKey(asc[asc.length - 1].start_date);
-    for (let k = 1; k <= 3; k += 1) {
-      const start = addLocalDays(lastStart, avgCycle * k);
+  if (anchorStart && nextStart && !pregnant) {
+    for (let k = 0; k < 3; k += 1) {
+      const start = addLocalDays(nextStart, avgCycle * k);
       const ovul = addLocalDays(start, -lutealLength);
       projected.push({
         start,
@@ -411,19 +426,46 @@ export function buildCycleCalendar(anchorKey, { periods = [], logs = [], setting
   const firstOfMonth = `${monthStr}-01`;
   const gridStart = startOfLocalWeekKey(firstOfMonth, weekStartsOn);
 
+  const inCurrentCycle = (dateKey) => anchorStart && nextStart
+    && daysBetween(anchorStart, dateKey) >= 0
+    && daysBetween(dateKey, nextStart) > 0;
+
   const cell = (dateKey) => {
     const inMonth = dateKey.slice(0, 7) === monthStr;
     const log = logByDate.get(dateKey) || null;
 
     let phase = null;
     let predicted = false;
+    let currentCycle = false;
+
     if (loggedPeriodPhase(dateKey, asc, avgPeriod)) {
       phase = PHASE.MENSTRUATION;
+    } else if (inCurrentCycle(dateKey) && trackFertility) {
+      if (daysBetween(currentOvulation, dateKey) === 0) {
+        phase = PHASE.OVULATION;
+        currentCycle = true;
+      } else if (daysBetween(currentFertileStart, dateKey) >= 0 && daysBetween(dateKey, currentFertileEnd) >= 0) {
+        phase = PHASE.FERTILE;
+        currentCycle = true;
+      }
     } else {
+      const isFuture = daysBetween(today, dateKey) > 0;
       for (const c of projected) {
-        if (daysBetween(c.start, dateKey) >= 0 && daysBetween(dateKey, c.end) >= 0) { phase = PHASE.MENSTRUATION; predicted = true; break; }
-        if (trackFertility && daysBetween(c.ovulation, dateKey) === 0) { phase = PHASE.OVULATION; predicted = true; break; }
-        if (trackFertility && daysBetween(c.fertileStart, dateKey) >= 0 && daysBetween(dateKey, c.fertileEnd) >= 0) { phase = PHASE.FERTILE; predicted = true; break; }
+        if (isFuture && daysBetween(c.start, dateKey) >= 0 && daysBetween(dateKey, c.end) >= 0) {
+          phase = PHASE.MENSTRUATION;
+          predicted = true;
+          break;
+        }
+        if (isFuture && trackFertility && daysBetween(c.ovulation, dateKey) === 0) {
+          phase = PHASE.OVULATION;
+          predicted = true;
+          break;
+        }
+        if (isFuture && trackFertility && daysBetween(c.fertileStart, dateKey) >= 0 && daysBetween(dateKey, c.fertileEnd) >= 0) {
+          phase = PHASE.FERTILE;
+          predicted = true;
+          break;
+        }
       }
     }
 
@@ -435,6 +477,7 @@ export function buildCycleCalendar(anchorKey, { periods = [], logs = [], setting
       isFuture: daysBetween(today, dateKey) > 0,
       phase,
       predicted,
+      currentCycle,
       flow: log?.flow || null,
       hasLog: !!log && !!(log.flow || log.symptoms || log.mood || log.note),
     };
