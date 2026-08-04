@@ -11,6 +11,13 @@ import {
   englishBudgetCategoryLabel,
   englishBudgetSubcategoryLabel,
 } from '../../../public/utils/budget-category-defaults.js';
+import {
+  RECURRENCE_INTERVAL_KEYS,
+  effectiveMonthly,
+  monthsPerInterval,
+  shouldAutoMaterializeRecurring,
+  shouldPlanMaterializeRecurring,
+} from '../../../public/utils/budget-recurrence.js';
 import * as db from '../../db.js';
 import { budgetVisibilityWhere, budgetScopeWhere, canEditEntry, resolveBudgetMode } from '../../services/budget-visibility.js';
 import { computeLoanSchedule, remainingPrincipalAfter } from '../../services/loan-amortization.js';
@@ -238,39 +245,27 @@ export function localizedSubcategory(subcategory, _lang) {
   };
 }
 
-// --------------------------------------------------------
-// Wiederkehrende Einträge: Intervalle + virtuelles (geglättetes) Budget
-// --------------------------------------------------------
+// Re-export shared recurrence helpers (tests + routes import from budget.js).
+export { RECURRENCE_INTERVAL_KEYS, effectiveMonthly, monthsPerInterval };
 
-export const RECURRENCE_INTERVAL_KEYS = ['monthly', 'half_year', 'yearly'];
-
-/** Anzahl Monate zwischen zwei Vorkommen einer Serie. */
-export function monthsPerInterval(interval) {
-  return interval === 'yearly' ? 12 : interval === 'half_year' ? 6 : 1;
-}
-
-/** Effektiver Monatsanteil eines Periodenbetrags (für virtuelles Budget). */
-export function effectiveMonthly(amount, interval) {
-  return cents(Number(amount || 0) / monthsPerInterval(interval));
-}
+const latestInstanceMonthStmt = (database) => database.prepare(`
+  SELECT MAX(strftime('%Y-%m', date)) AS ym FROM budget_entries
+  WHERE recurrence_parent_id = ?
+`);
 
 /**
  * Erstellt fehlende Instanzen wiederkehrender Budget-Einträge für den angefragten Monat.
- * Läuft idempotent - bereits vorhandene oder explizit übersprungene Instanzen werden ignoriert.
- *
- * Virtuelle Serien (recurrence_virtual = 1) halten im Original bereits den
- * geglätteten Monatsanteil (amount); es wird in JEDEM Monat eine Instanz erzeugt.
- * Nicht-virtuelle Serien erzeugen den vollen Betrag nur in Fälligkeitsmonaten
- * (alle monthsPerInterval(interval) Monate ab dem Startmonat).
+ * Standard: nur der nächste Monat in der Kette (nicht alle Zukunftsmonate).
+ * `planning: true` — jeder gültige Fälligkeitsmonat (Apply-recurring / Planung).
  * @param {import('better-sqlite3-multiple-ciphers').Database} database
  * @param {string} month  YYYY-MM
+ * @param {{ planning?: boolean }} [options]
  */
-export function generateRecurringInstances(database, month) {
+export function generateRecurringInstances(database, month, { planning = false } = {}) {
   const [y, m] = month.split('-').map(Number);
   const monthStart = `${month}-01`;
   const monthEnd   = `${month}-31`;
 
-  // Alle Serien-Originale, die vor diesem Monat begonnen haben
   const originals = database.prepare(`
     SELECT * FROM budget_entries
     WHERE is_recurring = 1 AND recurrence_parent_id IS NULL
@@ -278,37 +273,28 @@ export function generateRecurringInstances(database, month) {
   `).all(month);
 
   for (const orig of originals) {
-    // Übersprungener Monat?
     const skipped = database.prepare(
       'SELECT 1 FROM budget_recurrence_skipped WHERE parent_id = ? AND month = ?'
     ).get(orig.id, month);
     if (skipped) continue;
 
-    // Instanz schon vorhanden?
     const existing = database.prepare(`
       SELECT id FROM budget_entries
       WHERE recurrence_parent_id = ? AND date BETWEEN ? AND ?
     `).get(orig.id, monthStart, monthEnd);
     if (existing) continue;
 
-    // Bei nicht-virtuellen Serien nur in Fälligkeitsmonaten erzeugen.
-    const interval = orig.recurrence_interval || 'monthly';
-    if (!orig.recurrence_virtual) {
-      const [oy, om] = orig.date.split('-').map(Number);
-      const monthsDiff = (y - oy) * 12 + (m - om);
-      if (monthsDiff < 1 || monthsDiff % monthsPerInterval(interval) !== 0) continue;
-    }
+    const latestYm = latestInstanceMonthStmt(database).get(orig.id)?.ym || null;
+    const shouldCreate = planning
+      ? shouldPlanMaterializeRecurring(orig, month)
+      : shouldAutoMaterializeRecurring(orig, month, latestYm);
+    if (!shouldCreate) continue;
 
-    // Datum berechnen: gleicher Tag, am letzten Tag des Monats gekappt
-    const origDay    = parseInt(orig.date.split('-')[2], 10);
-    const lastDay    = new Date(y, m, 0).getDate();
+    const origDay = parseInt(orig.date.split('-')[2], 10);
+    const lastDay = new Date(y, m, 0).getDate();
     const instanceDay = Math.min(origDay, lastDay);
     const instanceDate = `${month}-${String(instanceDay).padStart(2, '0')}`;
 
-    // Materialisierte Instanz erbt Eigentümer + Sichtbarkeit des Serien-Originals
-    // (#476/#505). Ohne das würde jede Instanz owner_id=NULL + visibility='shared'
-    // (Spalten-Default) bekommen: eine private Serie würde im Haushalt sichtbar und
-    // für die Eigentümer:in in scope=mine unsichtbar.
     database.prepare(`
       INSERT INTO budget_entries
         (title, amount, category, subcategory, date, is_recurring, recurrence_parent_id, created_by, owner_id, visibility)

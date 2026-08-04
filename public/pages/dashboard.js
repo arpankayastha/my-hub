@@ -20,6 +20,7 @@ import {
   wireDashboardProfileTool,
 } from '/components/profile-switcher.js';
 import { profileDisplayName } from '/utils/profile-context.js';
+import { vitalMetric } from '/utils/health-vitals.js';
 
 // Hält den AbortController des aktuellen FAB-Listeners - wird bei jedem render() erneuert.
 let _fabController = null;
@@ -518,6 +519,10 @@ function formatPoints(value) {
   return getNumberFormat().format(Number(value) || 0);
 }
 
+function fmtNum(value) {
+  return getNumberFormat({ maximumFractionDigits: 1 }).format(Number(value) || 0);
+}
+
 function widgetHeader(icon, title, count, linkHref, linkLabel) {
   linkLabel = linkLabel ?? t('dashboard.allLink');
   const badge = count != null
@@ -937,58 +942,95 @@ function renderRewardsWidget(rewards) {
 // Gesundheit-Widget (heutige Medikamenten-Dosen)
 // --------------------------------------------------------
 
+function formatVitalChip(v) {
+  const metric = vitalMetric(v.type);
+  if (!metric) return '';
+  const label = t(metric.labelKey);
+  let value = '';
+  if (v.type === 'bp' && v.value_num != null && v.value_num2 != null) {
+    value = `${fmtNum(v.value_num)}/${fmtNum(v.value_num2)}`;
+    if (v.value_num3 != null) value += ` · ${fmtNum(v.value_num3)}`;
+  } else if (v.value_num != null) {
+    value = fmtNum(v.value_num);
+  }
+  const unit = v.unit ? ` ${v.unit}` : '';
+  return `${label}: ${value}${unit}`;
+}
+
 function renderHealthWidget(health) {
-  if (!health?.hasMeds) {
+  const hasMeds = health?.hasMeds && (Number(health?.dosesTotal) > 0 || health?.nextDose);
+  const hasVitals = health?.hasVitals && health?.vitalsLatest?.length;
+  const hasCycle = health?.hasCycle;
+  const hasEvents = health?.upcomingEvents?.length > 0;
+  const hasAny = hasMeds || hasVitals || hasCycle || hasEvents;
+
+  if (!hasAny) {
     return `<div class="widget widget--health">
       ${widgetHeader('heart-pulse', t('nav.health'), null, '/health')}
       <div class="widget__empty">
         <i data-lucide="heart-pulse" class="empty-state__icon" aria-hidden="true"></i>
-        <div>${t('dashboard.healthNoMeds')}</div>
-        ${emptyStateCta('/health', t('health.meds.add'))}
+        <div>${t('dashboard.healthNoData')}</div>
+        ${emptyStateCta('/health', t('health.overview.title'))}
       </div>
     </div>`;
   }
 
-  const total = Number(health?.dosesTotal) || 0;
-  const taken = Number(health?.dosesTaken) || 0;
-  const lowStock = Number(health?.lowStockCount) || 0;
-  const pct = total > 0 ? Math.max(0, Math.min(1, taken / total)) : 0;
-  const allTaken = total > 0 && taken >= total;
+  const chips = [];
 
+  if (hasVitals) {
+    const lines = health.vitalsLatest.slice(0, 2).map((v) => esc(formatVitalChip(v))).join(' · ');
+    chips.push(`
+      <a class="health-widget__chip" href="/health/vitals" data-route="/health/vitals">
+        <i data-lucide="activity" aria-hidden="true"></i>
+        <span>${lines}</span>
+      </a>`);
+  }
+
+  if (hasMeds) {
+    const total = Number(health?.dosesTotal) || 0;
+    const taken = Number(health?.dosesTaken) || 0;
+    const medLine = total > 0
+      ? t('dashboard.healthDosesProgress', { taken, total })
+      : health?.nextDose
+        ? `${esc(health.nextDose.time)} · ${esc(health.nextDose.name)}`
+        : t('dashboard.healthGlanceNone');
+    chips.push(`
+      <a class="health-widget__chip" href="/health/meds" data-route="/health/meds">
+        <i data-lucide="pill" aria-hidden="true"></i>
+        <span>${medLine}</span>
+      </a>`);
+  }
+
+  if (hasCycle) {
+    const cycleLine = health.cycleNextPeriod
+      ? `${t('health.cycle.status.nextPeriod')}: ${formatDate(health.cycleNextPeriod)}`
+      : t('health.cycle.title');
+  const dayPart = health.cycleDay ? ` · ${t('health.cycle.ring.cycleDay', { day: health.cycleDay })}` : '';
+    chips.push(`
+      <a class="health-widget__chip" href="/health/cycle" data-route="/health/cycle">
+        <i data-lucide="droplet" aria-hidden="true"></i>
+        <span>${esc(cycleLine + dayPart)}</span>
+      </a>`);
+  }
+
+  if (hasEvents) {
+    const ev = health.upcomingEvents[0];
+    chips.push(`
+      <a class="health-widget__chip" href="/calendar" data-route="/calendar">
+        <i data-lucide="syringe" aria-hidden="true"></i>
+        <span>${esc(ev.title)} · ${formatDate(ev.start_datetime?.slice(0, 10))}</span>
+      </a>`);
+  }
+
+  const lowStock = Number(health?.lowStockCount) || 0;
   const lowChip = lowStock > 0
     ? `<div class="health-widget__refill"><i data-lucide="package" aria-hidden="true"></i><span>${t('dashboard.healthRefill', { count: lowStock })}</span></div>`
     : '';
 
-  let main;
-  if (total === 0) {
-    main = `<div class="health-widget__none">
-      <i data-lucide="coffee" class="health-widget__none-icon" aria-hidden="true"></i>
-      <span>${t('dashboard.healthNoDosesToday')}</span>
-    </div>`;
-  } else {
-    const status = allTaken
-      ? `<div class="health-widget__status health-widget__status--done"><i data-lucide="check" aria-hidden="true"></i>${t('dashboard.healthAllTaken')}</div>`
-      : health?.nextDose
-        ? `<div class="health-widget__next">
-            <span class="health-widget__next-time">${esc(health.nextDose.time)}</span>
-            <span class="health-widget__next-name">${esc(health.nextDose.name)}</span>
-          </div>`
-        : '';
-    main = `
-      <div class="health-widget__progress">
-        <div class="health-widget__bar" role="img" aria-label="${t('dashboard.healthDosesProgress', { taken, total })}">
-          <div class="health-widget__bar-fill${allTaken ? ' health-widget__bar-fill--done' : ''}" style="--dose-scale:${pct}"></div>
-        </div>
-        <div class="health-widget__count"><strong>${taken}</strong>/${total}</div>
-      </div>
-      ${status}
-    `;
-  }
-
   return `<div class="widget widget--health">
     ${widgetHeader('heart-pulse', t('nav.health'), null, '/health')}
     <div class="widget__body">
-      <div class="health-widget">${main}${lowChip}</div>
+      <div class="health-widget health-widget--multi">${chips.join('')}${lowChip}</div>
     </div>
   </div>`;
 }
@@ -1202,18 +1244,33 @@ function renderDashboardHeroGlance(data, currency) {
         <strong class="dashboard-hero__glance-value dashboard-hero__glance-value--${tone}">${formatBudgetCurrency(balance, currency)}</strong>
       </a>`);
   }
-  if (!window.myHub?.isModuleDisabled('health') && data?.health?.hasMeds) {
-    const total = Number(data.health.dosesTotal) || 0;
-    const taken = Number(data.health.dosesTaken) || 0;
-    const label = total > 0
-      ? t('dashboard.healthGlanceTaken', { taken, total })
-      : t('dashboard.healthGlanceNone');
-    items.push(`
+  if (!window.myHub?.isModuleDisabled('health') && data?.health) {
+    const h = data.health;
+    let label = t('dashboard.healthGlanceNone');
+    let icon = 'heart-pulse';
+    if (h.hasVitals && h.vitalsLatest?.length) {
+      icon = 'activity';
+      label = formatVitalChip(h.vitalsLatest[0]);
+    } else if (h.hasMeds) {
+      const total = Number(h.dosesTotal) || 0;
+      const taken = Number(h.dosesTaken) || 0;
+      icon = 'pill';
+      label = total > 0 ? t('dashboard.healthGlanceTaken', { taken, total }) : t('dashboard.healthGlanceNone');
+    } else if (h.hasCycle && h.cycleNextPeriod) {
+      icon = 'droplet';
+      label = `${t('health.cycle.status.nextPeriod')}: ${formatDate(h.cycleNextPeriod)}`;
+    } else if (h.upcomingEvents?.length) {
+      icon = 'syringe';
+      label = h.upcomingEvents[0].title;
+    }
+    if (h.hasVitals || h.hasMeds || h.hasCycle || h.upcomingEvents?.length) {
+      items.push(`
       <a class="dashboard-hero__glance dashboard-hero__glance--health" href="/health" data-route="/health">
-        <i data-lucide="pill" aria-hidden="true"></i>
+        <i data-lucide="${icon}" aria-hidden="true"></i>
         <span class="dashboard-hero__glance-label">${esc(t('dashboard.healthGlanceLabel'))}</span>
         <strong class="dashboard-hero__glance-value">${esc(label)}</strong>
       </a>`);
+    }
   }
   if (!items.length) return '';
   return `<div class="dashboard-hero__glance-row" role="list">${items.join('')}</div>`;

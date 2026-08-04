@@ -101,15 +101,28 @@ test('effectiveMonthly glättet den Periodenbetrag auf Monate', () => {
 // Nicht-virtuell: echte Kadenz
 // --------------------------------------------------------
 
-test('Monatlich erzeugt in jedem Folgemonat den vollen Betrag', () => {
+test('Monatlich erzeugt im nächsten Folgemonat den vollen Betrag', () => {
   const db = freshDb();
   const pid = insertParent(db, { amount: -950, date: '2026-01-15', interval: 'monthly' });
+  generateRecurringInstances(db, '2026-02');
+  const feb = instanceIn(db, pid, '2026-02');
+  assert(feb, 'Instanz für Februar vorhanden');
+  assert(feb.amount === -950, `Voller Betrag: ${feb.amount}`);
   generateRecurringInstances(db, '2026-03');
   const inst = instanceIn(db, pid, '2026-03');
   assert(inst, 'Instanz für März vorhanden');
   assert(inst.amount === -950, `Voller Betrag: ${inst.amount}`);
   assert(inst.date === '2026-03-15', `Gleicher Tag: ${inst.date}`);
   assert(inst.is_recurring === 0, 'Instanz ist kein Serien-Original');
+});
+
+test('Späterer Monat ohne Zwischenkette wird nicht automatisch erzeugt', () => {
+  const db = freshDb();
+  const pid = insertParent(db, { amount: -950, date: '2026-01-15', interval: 'monthly' });
+  generateRecurringInstances(db, '2026-03');
+  assert(!instanceIn(db, pid, '2026-03'), 'März ohne Februar bleibt leer');
+  generateRecurringInstances(db, '2026-03', { planning: true });
+  assert(instanceIn(db, pid, '2026-03'), 'Planen füllt März');
 });
 
 test('Jährlich erzeugt nur im Jahrestag-Monat', () => {
@@ -143,7 +156,7 @@ test('Virtuell jährlich erzeugt jeden Monat den geglätteten Anteil', () => {
   const pid = insertParent(db, {
     amount: -100, date: '2026-01-15', interval: 'yearly', virtual: 1, full: -1200,
   });
-  for (const month of ['2026-02', '2026-05', '2026-11']) {
+  for (const month of ['2026-02', '2026-03', '2026-04', '2026-05']) {
     generateRecurringInstances(db, month);
     const inst = instanceIn(db, pid, month);
     assert(inst, `Instanz für ${month}`);
@@ -156,7 +169,8 @@ test('Virtuell halbjährlich erzeugt auch in Nicht-Fälligkeitsmonaten', () => {
   const pid = insertParent(db, {
     amount: -100, date: '2026-01-10', interval: 'half_year', virtual: 1, full: -600,
   });
-  generateRecurringInstances(db, '2026-03'); // bei nicht-virtuell wäre das leer
+  generateRecurringInstances(db, '2026-02');
+  generateRecurringInstances(db, '2026-03');
   const inst = instanceIn(db, pid, '2026-03');
   assert(inst && inst.amount === -100, 'März hat geglätteten Anteil');
 });
@@ -168,18 +182,18 @@ test('Virtuell halbjährlich erzeugt auch in Nicht-Fälligkeitsmonaten', () => {
 test('Mehrfaches Generieren dupliziert nicht', () => {
   const db = freshDb();
   const pid = insertParent(db, { amount: -950, date: '2026-01-15', interval: 'monthly' });
-  generateRecurringInstances(db, '2026-03');
-  generateRecurringInstances(db, '2026-03');
-  const all = instances(db, pid).filter((e) => e.date.startsWith('2026-03'));
-  assert(all.length === 1, `Genau eine März-Instanz, erhalten ${all.length}`);
+  generateRecurringInstances(db, '2026-02');
+  generateRecurringInstances(db, '2026-02');
+  const all = instances(db, pid).filter((e) => e.date.startsWith('2026-02'));
+  assert(all.length === 1, `Genau eine Februar-Instanz, erhalten ${all.length}`);
 });
 
 test('Übersprungener Monat erzeugt keine Instanz', () => {
   const db = freshDb();
   const pid = insertParent(db, { amount: -950, date: '2026-01-15', interval: 'monthly' });
-  db.prepare('INSERT INTO budget_recurrence_skipped (parent_id, month) VALUES (?, ?)').run(pid, '2026-03');
-  generateRecurringInstances(db, '2026-03');
-  assert(!instanceIn(db, pid, '2026-03'), 'März bleibt leer (übersprungen)');
+  db.prepare('INSERT INTO budget_recurrence_skipped (parent_id, month) VALUES (?, ?)').run(pid, '2026-02');
+  generateRecurringInstances(db, '2026-02');
+  assert(!instanceIn(db, pid, '2026-02'), 'Februar bleibt leer (übersprungen)');
 });
 
 test('Startmonat selbst bekommt keine zusätzliche Instanz', () => {
@@ -238,7 +252,7 @@ test('PUT series: aktualisiert Parent und löscht Zukunfts-Kinder', () => {
   generateRecurringInstances(db, '2025-02');
   // Zukünftige Instanz im aktuellen oder späteren Monat (wird gelöscht)
   const future = '2030-01';
-  generateRecurringInstances(db, future);
+  generateRecurringInstances(db, future, { planning: true });
   const futureInst = instanceIn(db, pid, future);
   assert(futureInst, 'Zukünftige Instanz vorhanden');
 
