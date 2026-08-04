@@ -141,6 +141,14 @@ test('GET /export: schützt vor CSV-Formel-Injection (führendes =)', async () =
   assert.match(r.text, /"'=SUM\(A1:A9\)"/, 'gefährlicher Titel wird mit \' entschärft');
 });
 
+test('GET /export: income category label follows lang=en', async () => {
+  insertEntry({ title: 'Salary', amount: 3000, category: 'Erwerbseinkommen', date: '2031-04-10' });
+  const r = await call('GET', '/export?month=2031-04&lang=en');
+  assert.equal(r.status, 200);
+  assert.match(r.text, /Earned Income/);
+  assert.doesNotMatch(r.text, /Erwerbseinkommen/);
+});
+
 // ── GET / (Liste): Filter + Drilldown ────────────────────────────────────────────
 test('GET /: ungültiger Monat ohne loan_id → 400', async () => {
   const r = await call('GET', '/?month=nope');

@@ -546,7 +546,7 @@ function onBudgetMorePanelToggle(e) {
 }
 
 function budgetMonthToolbarMarkup(expensesOnly) {
-  const exportQuery = `month=${state.month}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
+  const exportQuery = `month=${state.month}&lang=${getLocale()}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
   return `
     <div class="month-hero__toolbar">
       <button class="month-hero__icon-btn${expensesOnly ? ' month-hero__icon-btn--active' : ''}"
@@ -767,7 +767,7 @@ function renderBody() {
   });
   _container.querySelector('#budget-manage-categories')?.addEventListener('click', openCategoryManager);
   _container.querySelector('#budget-csv-export')?.addEventListener('click', () => {
-    const q = `month=${state.month}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
+    const q = `month=${state.month}&lang=${getLocale()}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
     downloadApiFile(`/api/v1/budget/export?${q}`, `budget-${state.month}.csv`).catch(() => {});
   });
   _container.querySelector('#budget-copy-prev')?.addEventListener('click', () => copyFromPreviousMonth());
