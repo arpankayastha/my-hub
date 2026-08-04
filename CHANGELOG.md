@@ -2,6 +2,17 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.27] - 2026-08-04
+
+### Fixed
+- Budget shared mode: all household entries visible and editable; profile switch still scopes the view.
+- Dashboard widget layout stored per household profile (no longer overwrites every profile).
+
+### Changed
+- Settings shows app version; standalone changelog page removed (release notes remain in `changelog.md` for version checks).
+- Budget and Health month overview share the same hero layout: stat chips, compact icon toolbar, overflow menu for copy/recurring/categories/CSV.
+- Health overview quick navigation tabs are icon-only (labels in tooltips and screen readers).
+
 ## [1.1.26] - 2026-08-04
 
 ### Fixed
