@@ -1325,17 +1325,15 @@ button.health-med-card:hover {
 .health-overview__quick-tab {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
+  justify-content: center;
+  width: var(--target-md);
+  height: var(--target-md);
+  padding: 0;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-border-subtle);
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  white-space: nowrap;
 }
 
 .health-overview__quick-tab:hover,
@@ -1343,11 +1341,17 @@ button.health-med-card:hover {
   color: var(--color-text-primary);
   border-color: color-mix(in srgb, var(--module-health) 40%, var(--color-border));
   background: color-mix(in srgb, var(--module-health) 8%, var(--color-surface));
+  outline: none;
+}
+
+.health-overview__quick-tab:focus-visible {
+  outline: 2px solid var(--module-health);
+  outline-offset: 2px;
 }
 
 .health-overview__quick-tab svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 /* Karten-Masonry: unterschiedlich hohe Karten (kurze „Einnahmetreue" neben hoher

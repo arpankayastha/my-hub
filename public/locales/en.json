@@ -881,6 +881,7 @@
         "monthHero": {
             "transactions": "{{count}} transactions"
         },
+        "moreActions": "Month actions",
         "copyFromPrevMonth": "Copy from previous month",
         "copyFromPrevMonthHint": "Copy one-time entries from the previous month into this month",
         "copyFromPrevMonthDone": "Copied {count} entries from the previous month",

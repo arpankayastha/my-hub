@@ -890,6 +890,7 @@
         "monthHero": {
             "transactions": "{{count}} Transaktionen"
         },
+        "moreActions": "Monatsaktionen",
         "copyFromPrevMonth": "Vom Vormonat kopieren",
         "copyFromPrevMonthHint": "Einmalige Einträge vom Vormonat in diesen Monat kopieren",
         "copyFromPrevMonthDone": "{count} Einträge vom Vormonat kopiert",

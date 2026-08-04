@@ -65,7 +65,62 @@
 
 .budget-month-hero__head,
 .health-month-hero__head {
+  flex: 1;
+  min-width: 0;
+}
+
+.month-hero__head-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
   margin-bottom: var(--space-3);
+}
+
+.month-hero__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.month-hero__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--target-md);
+  height: var(--target-md);
+  padding: 0;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-subtle);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.month-hero__icon-btn:hover {
+  background: color-mix(in srgb, var(--module-accent) 12%, transparent);
+  color: var(--color-text-primary);
+}
+
+.month-hero__icon-btn--active {
+  background: color-mix(in srgb, var(--module-accent) 18%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--module-accent) 60%, transparent);
+  color: var(--color-text-primary);
+}
+
+.month-hero__icon-btn:focus-visible {
+  outline: 2px solid var(--module-accent, var(--color-accent));
+  outline-offset: 2px;
+}
+
+.month-hero__icon-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .budget-month-hero__title,
@@ -85,11 +140,106 @@
   color: var(--color-text-secondary);
 }
 
-.budget-month-hero__actions {
-  display: flex;
-  flex-wrap: wrap;
+/* Shared stat chips (Budget summary + Health overview) */
+.month-hero__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-2);
-  margin-top: var(--space-3);
+}
+
+.month-hero__stats--single {
+  grid-template-columns: 1fr;
+}
+
+.month-hero__stat {
+  padding: var(--space-3);
+  border-radius: var(--radius-glass-inner);
+  background: color-mix(in srgb, var(--module-accent) 6%, var(--glass-bg-card));
+  border: 1px solid var(--glass-border-subtle);
+  text-align: center;
+}
+
+.month-hero__stat-value {
+  display: block;
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.month-hero__stat-label {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  line-height: 1.3;
+}
+
+.month-hero__stat-trend {
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+
+/* Icon overflow menu (Budget month actions) */
+.icon-more-menu__panel {
+  position: fixed;
+  margin: 0;
+  inset: auto;
+  z-index: var(--z-dropdown);
+  min-width: 200px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-0h);
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.icon-more-menu__panel:popover-open {
+  display: flex;
+}
+
+.icon-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  min-height: var(--target-md);
+  transition: background-color var(--transition-fast);
+}
+
+.icon-menu-item:hover {
+  background-color: var(--color-surface-2);
+}
+
+.icon-menu-item:focus-visible {
+  background-color: var(--color-surface-2);
+  outline: 2px solid var(--module-accent, var(--color-accent));
+  outline-offset: -2px;
+}
+
+.icon-menu-item__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
 }
 
 /* Budget monthly flow bar (income vs expenses) */
@@ -154,52 +304,27 @@
   margin-bottom: var(--space-2);
 }
 
-.budget-month-hero .budget-summary {
-  margin-bottom: 0;
+.budget-month-hero .month-hero__stat-trend.budget-summary-card__trend {
+  justify-content: center;
 }
 
-/* Health monthly hero stat chips */
-.health-month-hero__stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
-}
-
-.health-month-hero__stat {
-  padding: var(--space-3);
-  border-radius: var(--radius-glass-inner);
-  background: color-mix(in srgb, var(--module-accent) 6%, var(--glass-bg-card));
-  border: 1px solid var(--glass-border-subtle);
-  text-align: center;
-}
-
-.health-month-hero__stat-value {
-  display: block;
-  font-size: var(--text-xl);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-primary);
-  line-height: 1.2;
-}
-
-.health-month-hero__stat-label {
-  display: block;
-  margin-top: var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-  line-height: 1.3;
-}
-
-.health-month-hero__stat-value--streak {
+.month-hero__stat-value--streak {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
 }
 
+.month-hero__stat--balance-positive .month-hero__stat-value {
+  color: var(--color-success);
+}
+
+.month-hero__stat--balance-negative .month-hero__stat-value {
+  color: var(--color-danger);
+}
+
 @media (max-width: 480px) {
-  .health-month-hero__stats {
+  .month-hero__stats {
     grid-template-columns: 1fr;
   }
 }

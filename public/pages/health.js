@@ -2911,27 +2911,29 @@ function overviewMonthHeroMarkup() {
     ? `${fmtNum(Math.round(a.rate * 100))}%`
     : t('health.overview.monthHero.noAdherence');
   const streakValue = streak > 0
-    ? `<span class="health-month-hero__stat-value health-month-hero__stat-value--streak"><i data-lucide="flame" class="icon-sm" aria-hidden="true"></i>${esc(fmtNum(streak))}</span>`
-    : `<span class="health-month-hero__stat-value">${esc(t('health.overview.monthHero.noAdherence'))}</span>`;
+    ? `<span class="month-hero__stat-value month-hero__stat-value--streak"><i data-lucide="flame" class="icon-sm" aria-hidden="true"></i>${esc(fmtNum(streak))}</span>`
+    : `<span class="month-hero__stat-value">${esc(t('health.overview.monthHero.noAdherence'))}</span>`;
 
   return `
     <section class="health-month-hero" aria-label="${esc(t('health.overview.monthHero.label'))}">
-      <div class="health-month-hero__head">
-        <h2 class="health-month-hero__title">${esc(monthLabel)}</h2>
-        <p class="health-month-hero__subtitle">${esc(t('health.overview.monthHero.subtitle'))}</p>
+      <div class="month-hero__head-row">
+        <div class="health-month-hero__head">
+          <h2 class="health-month-hero__title">${esc(monthLabel)}</h2>
+          <p class="health-month-hero__subtitle">${esc(t('health.overview.monthHero.subtitle'))}</p>
+        </div>
       </div>
-      <div class="health-month-hero__stats">
-        <div class="health-month-hero__stat">
-          <span class="health-month-hero__stat-value">${esc(adherenceValue)}</span>
-          <span class="health-month-hero__stat-label">${esc(t('health.overview.monthHero.adherence', { days: OVERVIEW_ADHERENCE_DAYS }))}</span>
+      <div class="month-hero__stats">
+        <div class="month-hero__stat">
+          <span class="month-hero__stat-value">${esc(adherenceValue)}</span>
+          <span class="month-hero__stat-label">${esc(t('health.overview.monthHero.adherence', { days: OVERVIEW_ADHERENCE_DAYS }))}</span>
         </div>
-        <div class="health-month-hero__stat">
-          <span class="health-month-hero__stat-value">${esc(fmtNum(pendingDue))}</span>
-          <span class="health-month-hero__stat-label">${esc(t('health.overview.monthHero.dueToday'))}</span>
+        <div class="month-hero__stat">
+          <span class="month-hero__stat-value">${esc(fmtNum(pendingDue))}</span>
+          <span class="month-hero__stat-label">${esc(t('health.overview.monthHero.dueToday'))}</span>
         </div>
-        <div class="health-month-hero__stat">
+        <div class="month-hero__stat">
           ${streakValue}
-          <span class="health-month-hero__stat-label">${esc(t('health.overview.monthHero.streak'))}</span>
+          <span class="month-hero__stat-label">${esc(t('health.overview.monthHero.streak'))}</span>
         </div>
       </div>
     </section>`;
@@ -2988,9 +2990,9 @@ function overviewQuickTabsMarkup() {
   return `
     <nav class="health-overview__quick-tabs" aria-label="${esc(t('health.overview.quickTabs'))}">
       ${tabs.map((tab) => `
-        <button type="button" class="health-overview__quick-tab" data-health-route="${esc(tab.route)}">
+        <button type="button" class="health-overview__quick-tab" data-health-route="${esc(tab.route)}"
+                aria-label="${esc(t(tab.labelKey))}" title="${esc(t(tab.labelKey))}">
           <i data-lucide="${esc(tab.icon)}" aria-hidden="true"></i>
-          <span>${esc(t(tab.labelKey))}</span>
         </button>`).join('')}
     </nav>`;
 }
