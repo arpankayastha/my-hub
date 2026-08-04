@@ -21,6 +21,7 @@ import { budgetCategoryLabel } from '/utils/category-labels.js';
 import { englishBudgetSubcategoryLabel } from '/utils/budget-category-defaults.js';
 import { appendCurrencyOptions } from '/settings/currency.js';
 import { wireHorizontalSwipe } from '/utils/horizontal-swipe.js';
+import { downloadApiFile } from '/utils/api-download.js';
 import {
   dashboardProfileToolMarkup,
   wireDashboardProfileTool,
@@ -359,7 +360,12 @@ export async function render(container, { user }) {
   setHtml(container, `
     <div class="budget-page">
       <div class="page-toolbar page-toolbar--wrap budget-nav">
-        <h1 class="page-toolbar__title">${t('budget.title')}</h1>
+        <div class="page-toolbar__title-row">
+          <h1 class="page-toolbar__title">${t('budget.title')}</h1>
+          <div class="page-toolbar__profile-tools">
+            ${dashboardProfileToolMarkup(user)}
+          </div>
+        </div>
         <div class="page-toolbar__center budget-nav__month">
           <button class="btn btn--icon" id="budget-prev" aria-label="${t('budget.prevMonth')}">
             <i data-lucide="chevron-left" aria-hidden="true"></i>
@@ -378,20 +384,18 @@ export async function render(container, { user }) {
           }).join('')}
         </div>` : ''}
         <div class="page-toolbar__actions">
-          <div class="page-toolbar__profile-tools">
-            ${dashboardProfileToolMarkup(user)}
-          </div>
           <div class="budget-tabs" role="tablist" aria-label="${t('budget.tabsLabel')}">
             ${[
               ...(user?.access_scope === 'split_guest' ? [] : [
                 ['budget',        t('budget.budgetTab')],
                 ['accounts',      t('budget.accountsTab')],
                 ['plan',          t('budget.planTab')],
+                ['split-expenses',  t('splitExpenses.tabLabel')],
                 ['subscriptions', t('subscriptions.tabLabel')],
                 ['loans',         t('budget.loansTab')],
                 ['reports',       t('budget.reportsTab')],
               ]),
-              ['split-expenses',  t('splitExpenses.tabLabel')],
+              ...(user?.access_scope === 'split_guest' ? [['split-expenses', t('splitExpenses.tabLabel')]] : []),
             ].map(([id, label]) => {
               const on = id === state.activeTab;
               return `<button class="sub-tab${on ? ' sub-tab--active' : ''}" id="budget-tab-${id}" type="button" role="tab" data-tab-id="${id}" aria-controls="budget-body" aria-selected="${on ? 'true' : 'false'}" tabindex="${on ? '0' : '-1'}"><span class="sub-tab__label">${label}</span></button>`;
@@ -542,7 +546,7 @@ function onBudgetMorePanelToggle(e) {
 }
 
 function budgetMonthToolbarMarkup(expensesOnly) {
-  const exportHref = `/api/v1/budget/export?month=${state.month}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
+  const exportQuery = `month=${state.month}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
   return `
     <div class="month-hero__toolbar">
       <button class="month-hero__icon-btn${expensesOnly ? ' month-hero__icon-btn--active' : ''}"
@@ -581,10 +585,10 @@ function budgetMonthToolbarMarkup(expensesOnly) {
           ${t('budget.manageCategories')}
         </button>
         ${state.entries.length ? `
-        <a href="${exportHref}" class="icon-menu-item" role="menuitem">
+        <button type="button" class="icon-menu-item" id="budget-csv-export" role="menuitem">
           <i data-lucide="download" class="icon-menu-item__icon" aria-hidden="true"></i>
           ${t('budget.csvExport')}
-        </a>` : ''}
+        </button>` : ''}
       </div>
     </div>`;
 }
@@ -762,6 +766,10 @@ function renderBody() {
     renderBody();
   });
   _container.querySelector('#budget-manage-categories')?.addEventListener('click', openCategoryManager);
+  _container.querySelector('#budget-csv-export')?.addEventListener('click', () => {
+    const q = `month=${state.month}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
+    downloadApiFile(`/api/v1/budget/export?${q}`, `budget-${state.month}.csv`).catch(() => {});
+  });
   _container.querySelector('#budget-copy-prev')?.addEventListener('click', () => copyFromPreviousMonth());
   _container.querySelector('#budget-apply-recurring')?.addEventListener('click', () => applyRecurringToMonth());
   _container.querySelector('#budget-clear-account-filter')?.addEventListener('click', async () => {

@@ -11,6 +11,7 @@ import {
 } from '../utils/budget-recurrence.js';
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const BUDGET_SAVINGS_KEY = '__savings__';
 
 export function ensureBudgetState(state) {
@@ -136,6 +137,40 @@ function enrichEntry(state, entry, findUser) {
     loan_title: null,
     loan_borrower: null,
   };
+}
+
+function resolveExportRange(query) {
+  const from = String(query.from || '').trim();
+  const to = String(query.to || '').trim();
+  if (DATE_RE.test(from) && DATE_RE.test(to)) return { from, to, month: from.slice(0, 7) };
+  const month = MONTH_RE.test(query.month || '') ? query.month : new Date().toISOString().slice(0, 7);
+  return { from: `${month}-01`, to: `${month}-31`, month };
+}
+
+function csvSafe(val) {
+  let s = String(val ?? '').replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return `"${s}"`;
+}
+
+function buildBudgetExportCsv(state, from, to, effectiveUserId, scope, authUserId, findUser) {
+  let rows = entriesInRange(state, from, to);
+  rows = filterEntriesForView(rows, effectiveUserId, scope, authUserId);
+  rows = rows.sort((a, b) => (a.date > b.date ? 1 : -1));
+  const header = 'Date,Title,Amount,Category,Subcategory,Recurring,Created by\n';
+  const body = rows.map((e) => {
+    const enriched = enrichEntry(state, e, findUser);
+    return [
+      e.date,
+      csvSafe(e.title),
+      Number(e.amount).toFixed(2),
+      e.category,
+      e.subcategory || '',
+      e.is_recurring ? 'Yes' : 'No',
+      csvSafe(enriched.creator_name),
+    ].join(',');
+  }).join('\n');
+  return header + body;
 }
 
 function listAccounts(state, includeArchived) {
@@ -937,7 +972,20 @@ export async function handleBudgetApi(method, parts, query, body, state, effecti
   }
 
   if (sub === 'export' && m === 'GET') {
-    return { data: '' };
+    const range = resolveExportRange(query);
+    const filename = DATE_RE.test(String(query.from || '')) && DATE_RE.test(String(query.to || ''))
+      ? `budget-${range.from}_${range.to}.csv`
+      : `budget-${query.month || range.month}.csv`;
+    const csv = buildBudgetExportCsv(
+      state, range.from, range.to, effectiveUserId, query.scope, authUserId, findUser,
+    );
+    return {
+      __export: {
+        body: csv,
+        filename,
+        mime: 'text/csv; charset=utf-8',
+      },
+    };
   }
 
   if (sub === 'categories') {

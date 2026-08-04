@@ -90,4 +90,8 @@ for (const icon of icons) {
   console.log(`  ✓ ${icon.name} (${icon.size}x${icon.size})`);
 }
 
+await sharp(join(ICONS_DIR, 'favicon-32.png'))
+  .toFile(join(root, 'public', 'favicon.ico'));
+console.log('  ✓ favicon.ico');
+
 console.log('\nIcons generated in public/icons/');

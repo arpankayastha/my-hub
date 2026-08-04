@@ -20,6 +20,7 @@ import {
 } from '/components/profile-switcher.js';
 import { t, formatDate, formatTime, getLocale, getNumberFormat } from '/i18n.js';
 import { esc } from '/utils/html.js';
+import { downloadApiFile } from '/utils/api-download.js';
 import { wireScrollFade, scheduleUndoableDelete } from '/utils/ux.js';
 import { toLocalDateKey, parseLocalDateKey, addLocalDays } from '/utils/date.js';
 import { openModal, closeModal, confirmModal, reportFieldError } from '/components/modal.js';
@@ -3239,10 +3240,10 @@ function overviewExportHref(area) {
 
 function exportButtonsMarkup() {
   return EXPORT_AREAS.map((e) => `
-    <a class="btn btn--secondary health-overview__export-btn" href="${esc(overviewExportHref(e.area))}"
-       download data-export-area="${esc(e.area)}">
+    <button type="button" class="btn btn--secondary health-overview__export-btn"
+            data-export-download="${esc(e.area)}">
       <i data-lucide="${esc(e.icon)}" class="icon-md" aria-hidden="true"></i>${esc(t(e.labelKey))}
-    </a>`).join('');
+    </button>`).join('');
 }
 
 function overviewExportMarkup() {
@@ -3270,6 +3271,17 @@ function rerenderExportButtons() {
   host.replaceChildren();
   host.insertAdjacentHTML('beforeend', exportButtonsMarkup());
   if (window.lucide) window.lucide.createIcons({ el: host });
+  wireOverviewExportButtons();
+}
+
+function wireOverviewExportButtons() {
+  overview.root?.querySelectorAll('[data-export-download]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const area = btn.dataset.exportDownload;
+      if (!area) return;
+      downloadApiFile(overviewExportHref(area), `health-${area}.csv`).catch(() => {});
+    });
+  });
 }
 
 function wireOverview() {
@@ -3298,6 +3310,8 @@ function wireOverview() {
   const toEl = overview.root.querySelector('#ov-export-to');
   fromEl?.addEventListener('change', () => { overview.exportRange.from = fromEl.value || null; rerenderExportButtons(); });
   toEl?.addEventListener('change', () => { overview.exportRange.to = toEl.value || null; rerenderExportButtons(); });
+
+  wireOverviewExportButtons();
 }
 
 // ========================================================
@@ -3868,12 +3882,11 @@ function cycleHistoryMarkup(own) {
 }
 
 function cycleFooterMarkup(own) {
-  const q = cycle.personId ? `?user_id=${encodeURIComponent(cycle.personId)}` : '';
   return `
     <div class="cycle-footer">
-      <a class="btn btn--ghost btn--sm" href="/api/v1/health/export/cycle${q}" download>
+      <button type="button" class="btn btn--ghost btn--sm" data-action="cycle-export-csv">
         <i data-lucide="download" aria-hidden="true"></i>${esc(t('health.cycle.export.csv'))}
-      </a>
+      </button>
       ${own ? `<button class="btn btn--ghost btn--sm" data-action="cycle-settings"><i data-lucide="settings-2" aria-hidden="true"></i>${esc(t('health.cycle.settings.open'))}</button>` : ''}
     </div>
     ${disclaimerMarkup()}`;
@@ -3903,6 +3916,10 @@ function wireCycle() {
   cycle.root.querySelector('[data-action="cycle-end-period"]')?.addEventListener('click', () => cycleEndPeriodToday());
   cycle.root.querySelector('[data-action="cycle-log-today"]')?.addEventListener('click', () => openDayLogModal(toLocalDateKey(new Date())));
   cycle.root.querySelector('[data-action="cycle-settings"]')?.addEventListener('click', () => openCycleSettingsModal());
+  cycle.root.querySelector('[data-action="cycle-export-csv"]')?.addEventListener('click', () => {
+    const q = cycle.personId ? `?user_id=${encodeURIComponent(cycle.personId)}` : '';
+    downloadApiFile(`/api/v1/health/export/cycle${q}`, 'health-cycle.csv').catch(() => {});
+  });
 }
 
 // Sichtbarkeit für ein Zyklus-Event vorauswählen: bestehender Wert gewinnt,

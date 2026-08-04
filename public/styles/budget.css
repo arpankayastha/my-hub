@@ -1238,10 +1238,15 @@
  *   statt den letzten Tab abzuschneiden.
  * -------------------------------------------------------- */
 @media (max-width: 640px) {
-  /* Tab-Leiste auf die verfügbare Zeilenbreite kappen (Toolbar-Seitenpadding
-   * abziehen), damit overflow-x:auto greift statt den letzten Tab zu kappen.
-   * Der Eltern-Container begrenzt die Breite nicht, daher viewport-relativ. */
-  .budget-tabs { max-width: calc(100vw - var(--space-8)); }
+  .budget-nav .page-toolbar__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .budget-tabs {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 

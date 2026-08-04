@@ -1,8 +1,18 @@
 /**
- * Intercepts fetch() for /api/v1 document preview/download in local mode.
+ * Intercepts fetch() for /api/v1 document preview/download and CSV exports in local mode.
  */
 
 import { handleLocalApi } from './handlers.js';
+
+function parseQuery(search) {
+  const q = {};
+  if (!search) return q;
+  for (const part of search.replace(/^\?/, '').split('&')) {
+    const [k, v] = part.split('=');
+    if (k) q[decodeURIComponent(k)] = decodeURIComponent(v || '');
+  }
+  return q;
+}
 
 function dataUrlToBlob(dataUrl) {
   const match = String(dataUrl).match(/^data:([^;,]+);base64,(.+)$/);
@@ -26,12 +36,27 @@ export function installLocalFetchInterceptor() {
     const pathAndQuery = url.slice(apiIdx + '/api/v1'.length);
     const qIdx = pathAndQuery.indexOf('?');
     const path = qIdx >= 0 ? pathAndQuery.slice(0, qIdx) : pathAndQuery;
-    const isBinary = /\/documents\/\d+\/(preview|download|thumbnail)$/.test(path);
+    const query = qIdx >= 0 ? parseQuery(pathAndQuery.slice(qIdx)) : {};
+    const isDocumentBinary = /\/documents\/\d+\/(preview|download|thumbnail)$/.test(path);
+    const isCsvExport = /^\/budget\/export/.test(path) || /^\/health\/export/.test(path);
 
-    if (!isBinary) return originalFetch(input, init);
+    if (!isDocumentBinary && !isCsvExport) return originalFetch(input, init);
 
     try {
-      const result = await handleLocalApi('GET', path.replace(/^\//, ''), null, {});
+      const result = await handleLocalApi('GET', path.replace(/^\//, ''), null, query);
+      if (result?.__export) {
+        const body = result.__export.body || '';
+        const blob = new Blob(['\ufeff' + body], {
+          type: result.__export.mime || 'text/csv;charset=utf-8',
+        });
+        const headers = new Headers();
+        headers.set('Content-Type', blob.type);
+        headers.set(
+          'Content-Disposition',
+          `attachment; filename="${result.__export.filename || 'export.csv'}"`,
+        );
+        return new Response(blob, { status: 200, headers });
+      }
       if (result?.__blob && result.content_data) {
         const blob = dataUrlToBlob(result.content_data);
         if (!blob) return new Response('Invalid content', { status: 500 });
