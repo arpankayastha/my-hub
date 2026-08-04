@@ -111,10 +111,23 @@ export function emptyState() {
   };
 }
 
+function normalizeLoadedState(stored) {
+  const defaults = emptyState();
+  const state = { ...defaults, ...stored };
+  for (const key of Object.keys(defaults)) {
+    if (Array.isArray(defaults[key]) && !Array.isArray(state[key])) {
+      state[key] = [];
+    }
+  }
+  const next = Number(state.nextId);
+  if (!Number.isFinite(next) || next < 1) state.nextId = defaults.nextId;
+  return state;
+}
+
 export async function loadState() {
   if (_state) return _state;
   const stored = await idbGet(STORE_KEY);
-  _state = stored && typeof stored === 'object' ? stored : emptyState();
+  _state = stored && typeof stored === 'object' ? normalizeLoadedState(stored) : emptyState();
   return _state;
 }
 
@@ -137,6 +150,9 @@ export function getState() {
 }
 
 export function nextId() {
+  if (!_state) _state = emptyState();
+  const cur = Number(_state.nextId);
+  if (!Number.isFinite(cur) || cur < 1) _state.nextId = 1;
   const id = _state.nextId;
   _state.nextId += 1;
   return id;

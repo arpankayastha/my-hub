@@ -255,6 +255,49 @@ function apiError(message, status) {
   return err;
 }
 
+const VITAL_TYPES = ['bp', 'glucose', 'weight', 'spo2', 'temp'];
+
+function normalizeMeasuredAt(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/);
+  return m ? `${m[1]}T${m[2]}:${m[3]}` : null;
+}
+
+function parseVitalNumber(val) {
+  if (val === undefined || val === null || val === '') return null;
+  const n = Number(val);
+  return Number.isFinite(n) ? n : null;
+}
+
+function validateVitalBody(body) {
+  const type = String(body?.type || '').trim();
+  if (!type) throw apiError('type is required.', 400);
+  if (!VITAL_TYPES.includes(type)) throw apiError('Invalid vital type.', 400);
+  const measuredAt = normalizeMeasuredAt(body?.measured_at);
+  if (!measuredAt) throw apiError('measured_at is required.', 400);
+  const valueNum = parseVitalNumber(body?.value_num);
+  if (valueNum === null) throw apiError('value_num is required.', 400);
+  const valueNum2 = parseVitalNumber(body?.value_num2);
+  const valueNum3 = parseVitalNumber(body?.value_num3);
+  if (type === 'bp' && valueNum2 === null) throw apiError('value_num2 is required for blood pressure.', 400);
+  const visibility = String(body?.visibility || 'private');
+  if (!VISIBILITIES.includes(visibility)) throw apiError('Invalid visibility.', 400);
+  const unit = body?.unit != null && body.unit !== '' ? String(body.unit).trim() : null;
+  const note = body?.note != null && body.note !== '' ? String(body.note).trim() : null;
+  return {
+    type,
+    value_num: valueNum,
+    value_num2: valueNum2,
+    value_num3: valueNum3,
+    unit,
+    measured_at: measuredAt,
+    note,
+    visibility,
+  };
+}
+
 function filterVitals(state, userId, query) {
   let rows = state.health_vitals.filter((v) => v.user_id === userId);
   if (query.user_id) {
@@ -281,18 +324,19 @@ export async function handleHealthApi(method, parts, query, body, state, userId)
       return { data: filterVitals(state, userId, query) };
     }
     if (m === 'POST' && !parts[2]) {
+      const vitalInput = validateVitalBody(body);
       const id = nextId();
       const vital = {
         id,
         user_id: userId,
-        type: body.type,
-        value_num: body.value_num ?? null,
-        value_num2: body.value_num2 ?? null,
-        value_num3: body.value_num3 ?? null,
-        unit: body.unit ?? null,
-        measured_at: body.measured_at,
-        note: body.note ?? null,
-        visibility: body.visibility || 'private',
+        type: vitalInput.type,
+        value_num: vitalInput.value_num,
+        value_num2: vitalInput.value_num2,
+        value_num3: vitalInput.value_num3,
+        unit: vitalInput.unit,
+        measured_at: vitalInput.measured_at,
+        note: vitalInput.note,
+        visibility: vitalInput.visibility,
         created_at: nowIso(),
         updated_at: nowIso(),
       };

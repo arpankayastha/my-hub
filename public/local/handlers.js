@@ -11,7 +11,7 @@ import {
   verifyPasswordSimple, AVATAR_COLORS,
 } from './seed.js';
 import { ensureBudgetState, handleBudgetApi, computeDashboardBudget } from './budget-handlers.js';
-import { handleHealthApi } from './health-handlers.js';
+import { ensureHealthState, handleHealthApi } from './health-handlers.js';
 import { handleSplitExpensesApi } from './split-expenses-handlers.js';
 import { handleBirthdaysApi } from './birthdays-handlers.js';
 import { handleContactsApi } from './contacts-handlers.js';
@@ -1271,4 +1271,5 @@ export async function initLocalStore() {
     const { resetState } = await import('./store.js');
     await resetState(createSeedState());
   }
+  ensureHealthState(state);
 }
