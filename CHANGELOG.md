@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.18] - 2026-08-04
+
+### Added
+- Liquid glass visual layer for Overview, Budget, and Health — frosted metric cards, richer typography, and module-tinted ambient backdrop (Forecast-inspired polish on the three flagship modules).
+
 ## [1.1.17] - 2026-08-02
 
 ### Added
