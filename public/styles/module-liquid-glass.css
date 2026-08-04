@@ -29,6 +29,54 @@ html[data-lg-module="health"] .lg-blob--2 {
   background: radial-gradient(circle, var(--module-health) 0%, transparent 70%);
 }
 
+html[data-lg-module="settings"] .lg-blob--2 {
+  background: radial-gradient(circle, var(--module-settings) 0%, transparent 70%);
+}
+
+html[data-lg-module="settings"] .settings-card {
+  background: var(--glass-bg-card);
+  border-color: var(--glass-border-subtle);
+  box-shadow:
+    var(--glass-shadow-md),
+    inset 0 1px 0 color-mix(in srgb, white calc(var(--lg-specular) * 80%), transparent);
+}
+
+html[data-lg-module="settings"] .settings-shell-header,
+html[data-lg-module="settings"] .settings-page--leaf .settings-shell-header {
+  background: var(--glass-bg-toolbar);
+  border-bottom-color: var(--glass-border-subtle);
+  box-shadow: var(--glass-shadow-sm);
+}
+
+html[data-lg-module="settings"] .settings-navigation-panel {
+  background: color-mix(in srgb, var(--glass-bg-card) 92%, transparent);
+  border-color: var(--glass-border-subtle);
+}
+
+/* ================================================================
+ * BUDGET — monthly hero polish
+ * ================================================================ */
+
+html[data-lg-module="budget"] .budget-month-hero {
+  border-color: color-mix(in srgb, var(--module-accent) 28%, var(--glass-border-subtle));
+}
+
+html[data-lg-module="budget"] .budget-month-hero__title {
+  font-size: var(--text-2xl);
+}
+
+/* ================================================================
+ * HEALTH — monthly hero polish
+ * ================================================================ */
+
+html[data-lg-module="health"] .health-month-hero {
+  border-color: color-mix(in srgb, var(--module-accent) 28%, var(--glass-border-subtle));
+}
+
+html[data-lg-module="health"] .health-month-hero__title {
+  font-size: var(--text-2xl);
+}
+
 /* ================================================================
  * OVERVIEW (Dashboard)
  * ================================================================ */

@@ -2959,6 +2959,54 @@ async function reloadOverview() {
   renderOverviewShell();
 }
 
+function overviewMonthHeroMarkup() {
+  const today = toLocalDateKey(new Date());
+  const monthLabel = new Intl.DateTimeFormat(getLocale(), { month: 'long', year: 'numeric' }).format(new Date());
+  const schedules = overviewAllSchedules();
+  const due = computeDueDoses(schedules, { from: today, to: today });
+  const pendingDue = due.filter((dose) => {
+    const log = overviewFindLog(dose);
+    return !log || (log.status !== 'taken' && log.status !== 'skipped');
+  }).length;
+
+  const from = addLocalDays(today, -(OVERVIEW_ADHERENCE_DAYS - 1));
+  const planned = computeDueDoses(schedules, { from, to: today }).length;
+  const logs = overviewAllLogs().filter((l) => {
+    const k = String(l.scheduled_at || l.taken_at || l.created_at || '').slice(0, 10);
+    return k >= from && k <= today;
+  });
+  const a = computeAdherence(logs, planned);
+  const streak = computeAdherenceStreak(schedules, overviewAllLogs(), { today });
+  const adherenceValue = a.rate !== null && a.taken > 0
+    ? `${fmtNum(Math.round(a.rate * 100))}%`
+    : t('health.overview.monthHero.noAdherence');
+  const streakValue = streak > 0
+    ? `<span class="health-month-hero__stat-value health-month-hero__stat-value--streak"><i data-lucide="flame" class="icon-sm" aria-hidden="true"></i>${esc(fmtNum(streak))}</span>`
+    : `<span class="health-month-hero__stat-value">${esc(t('health.overview.monthHero.noAdherence'))}</span>`;
+
+  return `
+    <section class="health-month-hero" aria-label="${esc(t('health.overview.monthHero.label'))}">
+      <div class="health-month-hero__head">
+        <h2 class="health-month-hero__title">${esc(monthLabel)}</h2>
+        <p class="health-month-hero__subtitle">${esc(t('health.overview.monthHero.subtitle'))}</p>
+      </div>
+      <div class="health-month-hero__stats">
+        <div class="health-month-hero__stat">
+          <span class="health-month-hero__stat-value">${esc(adherenceValue)}</span>
+          <span class="health-month-hero__stat-label">${esc(t('health.overview.monthHero.adherence', { days: OVERVIEW_ADHERENCE_DAYS }))}</span>
+        </div>
+        <div class="health-month-hero__stat">
+          <span class="health-month-hero__stat-value">${esc(fmtNum(pendingDue))}</span>
+          <span class="health-month-hero__stat-label">${esc(t('health.overview.monthHero.dueToday'))}</span>
+        </div>
+        <div class="health-month-hero__stat">
+          ${streakValue}
+          <span class="health-month-hero__stat-label">${esc(t('health.overview.monthHero.streak'))}</span>
+        </div>
+      </div>
+    </section>`;
+}
+
 function renderOverviewShell() {
   if (!overview.root?.isConnected) return;
   overview.root.replaceChildren();
@@ -2980,6 +3028,7 @@ function renderOverviewShell() {
   }
 
   overview.root.insertAdjacentHTML('beforeend', `
+    ${overviewMonthHeroMarkup()}
     <div class="health-persons" role="tablist" aria-label="${esc(t('health.overview.personsLabel'))}">
       ${personChipsMarkup(overview.members, overview.personId, overview.meId)}
     </div>

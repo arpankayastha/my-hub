@@ -869,6 +869,9 @@
         "expensesOnlyHint": "Show only expenses, hide income and balance",
         "hideAmounts": "Hide amounts",
         "hideAmountsHint": "Mask currency amounts on screen (sensitive data)",
+        "monthHero": {
+            "transactions": "{{count}} transactions"
+        },
         "copyFromPrevMonth": "Copy from previous month",
         "copyFromPrevMonthHint": "Copy one-time entries from the previous month into this month (recurring entries appear automatically)",
         "copyFromPrevMonthDone": "Copied {count} entries from the previous month",
@@ -3010,6 +3013,14 @@
             "loadError": "Couldn't load the overview",
             "loadErrorDesc": "Please try again.",
             "retry": "Try again",
+            "monthHero": {
+                "label": "Monthly overview",
+                "subtitle": "Your health at a glance this month",
+                "adherence": "{{days}}-day adherence",
+                "dueToday": "Due today",
+                "streak": "Day streak",
+                "noAdherence": "—"
+            },
             "dueToday": {
                 "title": "Due today"
             },
