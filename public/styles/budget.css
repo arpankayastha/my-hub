@@ -115,6 +115,35 @@
   border-color: var(--module-accent, var(--color-accent));
 }
 
+/* Month hero summary: three compact chips in one row (mobile too). */
+.budget-month-hero .month-hero__stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.budget-month-hero .month-hero__stat {
+  padding: var(--space-2) var(--space-1);
+  min-width: 0;
+}
+
+.budget-month-hero .month-hero__stat-value {
+  font-size: clamp(0.6875rem, 3vw, var(--text-base));
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budget-month-hero .month-hero__stat-label {
+  margin-top: var(--space-0h);
+  font-size: var(--text-2xs);
+  line-height: 1.2;
+}
+
+.budget-month-hero .month-hero__stat-trend {
+  display: none;
+}
+
 .budget-tabs {
   display: flex;
   align-items: center;
