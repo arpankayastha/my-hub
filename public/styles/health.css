@@ -1602,12 +1602,20 @@ button.health-med-card:hover {
   gap: var(--space-3);
 }
 
+.cycle-hero__ring-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 220px;
+}
+
 .cycle-ring {
   position: relative;
   width: 220px;
   height: 220px;
   flex: 0 0 auto;
-  margin-inline: auto;
 }
 
 .cycle-ring__svg { width: 100%; height: 100%; display: block; }
@@ -1640,7 +1648,66 @@ button.health-med-card:hover {
 .cycle-ring[data-phase="ovulation"] .cycle-ring__phase   { color: var(--cycle-ovulation); }
 
 .cycle-ring__day { font-size: var(--text-sm); color: var(--color-text-secondary); }
-.cycle-ring__status { font-size: var(--text-xs); font-weight: 600; color: var(--module-accent); margin-top: var(--space-0h); }
+.cycle-ring__started { font-size: var(--text-xs); color: var(--color-text-secondary); }
+.cycle-ring__status {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--module-accent);
+  margin-top: var(--space-0h);
+  text-wrap: balance;
+}
+
+/* Horizontale Zyklus-Timeline (Start → nächste Periode) */
+.cycle-timeline { width: 100%; max-width: 220px; }
+
+.cycle-timeline__track {
+  position: relative;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-border) 75%, transparent);
+  overflow: hidden;
+}
+
+.cycle-timeline__period {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: color-mix(in oklab, var(--cycle-period) 55%, transparent);
+}
+
+.cycle-timeline__ov,
+.cycle-timeline__now {
+  position: absolute;
+  top: 50%;
+  left: var(--cycle-pos, 0%);
+  transform: translate(-50%, -50%);
+  border-radius: var(--radius-full);
+}
+
+.cycle-timeline__ov {
+  width: 6px;
+  height: 6px;
+  background: var(--cycle-ovulation);
+  box-shadow: 0 0 0 2px var(--color-surface);
+}
+
+.cycle-timeline__now {
+  width: 10px;
+  height: 10px;
+  background: var(--module-health);
+  box-shadow: 0 0 0 2px var(--color-surface);
+}
+
+.cycle-timeline__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  font-size: var(--text-2xs);
+  color: var(--color-text-secondary);
+}
 
 .cycle-ring__now {
   transform-box: fill-box;
@@ -1887,9 +1954,23 @@ button.cycle-cal__day:not(:disabled):hover { background: var(--color-surface-2);
     transparent 1.5px 5px);
 }
 
+.cycle-cal__day.is-fertile.is-current {
+  background-color: color-mix(in oklab, var(--cycle-fertile) 18%, transparent);
+  background-image: none;
+}
+
+.cycle-cal__day.is-fertile.is-predicted {
+  background-color: color-mix(in oklab, var(--cycle-fertile) 8%, transparent);
+}
+
 .cycle-cal__day.is-ovulation {
   background: color-mix(in oklab, var(--cycle-ovulation) 20%, transparent);
   font-weight: 700;
+}
+
+.cycle-cal__day.is-ovulation.is-predicted {
+  background: color-mix(in oklab, var(--cycle-ovulation) 10%, transparent);
+  font-weight: 600;
 }
 .cycle-cal__day.is-ovulation::after {
   content: "";
@@ -1963,9 +2044,26 @@ button.cycle-cal__day:not(:disabled):hover { background: var(--color-surface-2);
     color-mix(in oklab, var(--cycle-fertile) 42%, transparent) 0 1.5px,
     transparent 1.5px 5px);
 }
+
+.cycle-legend__swatch.is-fertile.is-current {
+  background-color: color-mix(in oklab, var(--cycle-fertile) 18%, transparent);
+  background-image: none;
+}
+
+.cycle-legend__swatch.is-fertile.is-predicted {
+  background-color: color-mix(in oklab, var(--cycle-fertile) 8%, transparent);
+  background-image: repeating-linear-gradient(45deg,
+    color-mix(in oklab, var(--cycle-fertile) 42%, transparent) 0 1.5px,
+    transparent 1.5px 5px);
+}
 .cycle-legend__swatch.is-ovulation {
   background: color-mix(in oklab, var(--cycle-ovulation) 20%, transparent);
   border: 2px solid var(--cycle-ovulation);
+}
+
+.cycle-legend__swatch.is-ovulation.is-predicted {
+  background: color-mix(in oklab, var(--cycle-ovulation) 10%, transparent);
+  border: 2px dashed var(--cycle-ovulation);
 }
 .cycle-legend__swatch.is-today { box-shadow: inset 0 0 0 2px var(--module-accent); }
 

@@ -3550,6 +3550,7 @@ function cycleRingMarkup(prediction) {
   const ringAria = `${phaseLabel} · ${t('health.cycle.ring.cycleDay', { day: prediction.cycleDay })}`;
 
   return `
+    <div class="cycle-hero__ring-wrap">
     <div class="cycle-ring" data-phase="${esc(prediction.phase)}">
       <svg class="cycle-ring__svg" viewBox="0 0 220 220" role="img" aria-label="${esc(ringAria)}">
         <circle class="cycle-ring__track" cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke-width="${SW}" />
@@ -3558,8 +3559,38 @@ function cycleRingMarkup(prediction) {
       </svg>
       <div class="cycle-ring__center">
         <span class="cycle-ring__phase">${esc(phaseLabel)}</span>
-        <span class="cycle-ring__day">${esc(t('health.cycle.ring.cycleDay', { day: prediction.cycleDay }))}</span>
-        <span class="cycle-ring__status">${esc(`${t('health.cycle.status.nextPeriod')}: ${cycleCountdownText(prediction)}`)}</span>
+        <span class="cycle-ring__day">${esc(t('health.cycle.ring.cycleDay', { day: prediction.cycleDay }))} · ${esc(t('health.cycle.ring.of', { total: prediction.avgCycle }))}</span>
+        <span class="cycle-ring__started">${esc(t('health.cycle.status.periodStarted', { date: formatDate(prediction.lastStart) }))}</span>
+        <span class="cycle-ring__status">${esc(`${t('health.cycle.status.nextPeriod')}: ${formatDate(prediction.nextStart)} (${cycleCountdownText(prediction)})`)}</span>
+      </div>
+    </div>
+    ${cycleTimelineMarkup(prediction)}
+    </div>`;
+}
+
+function cycleTimelineMarkup(prediction) {
+  const total = prediction.avgCycle;
+  const periodEnd = Math.min(prediction.avgPeriod, total);
+  const periodPct = (periodEnd / total) * 100;
+  const currentPct = Math.min(100, Math.max(0, ((prediction.cycleDay - 0.5) / total) * 100));
+  let ovPct = null;
+  if (prediction.trackFertility && prediction.ovulationDate) {
+    const ovDay = total - prediction.lutealLength;
+    ovPct = Math.min(100, Math.max(0, ((ovDay - 0.5) / total) * 100));
+  }
+  const ovMarker = ovPct != null
+    ? `<span class="cycle-timeline__ov" style="--cycle-pos:${ovPct.toFixed(2)}%" title="${esc(t('health.cycle.status.ovulation'))}" aria-hidden="true"></span>`
+    : '';
+  return `
+    <div class="cycle-timeline" aria-hidden="true">
+      <div class="cycle-timeline__track">
+        <span class="cycle-timeline__period" style="width:${periodPct.toFixed(2)}%"></span>
+        ${ovMarker}
+        <span class="cycle-timeline__now" style="--cycle-pos:${currentPct.toFixed(2)}%"></span>
+      </div>
+      <div class="cycle-timeline__labels">
+        <span>${esc(formatDate(prediction.lastStart))}</span>
+        <span>${esc(formatDate(prediction.nextStart))}</span>
       </div>
     </div>`;
 }
@@ -3588,13 +3619,18 @@ function cycleStatsMarkup(prediction) {
   const stats = prediction.stats;
   const tiles = [];
 
-  // Nächste Periode: nur das Datum — der Countdown steht bereits im Ring-Zentrum,
-  // die Karte würde ihn sonst dublieren (Critique).
+  tiles.push(cycleStatCardMarkup({
+    icon: 'calendar',
+    labelKey: 'health.cycle.status.currentCycle',
+    value: t('health.cycle.ring.cycleDay', { day: prediction.cycleDay }),
+    sub: t('health.cycle.status.periodStarted', { date: formatDate(prediction.lastStart) }),
+  }));
+
   tiles.push(cycleStatCardMarkup({
     icon: 'calendar-heart',
     labelKey: 'health.cycle.status.nextPeriod',
     value: formatDate(prediction.nextStart),
-    sub: '',
+    sub: cycleCountdownText(prediction),
   }));
 
   if (prediction.trackFertility) {
@@ -3712,6 +3748,7 @@ function cycleCalendarMarkup(own) {
     if (c.isToday) cls.push('is-today');
     if (c.phase) cls.push(`is-${c.phase}`);
     if (c.predicted) cls.push('is-predicted');
+    if (c.currentCycle) cls.push('is-current');
     if (c.hasLog) cls.push('has-log');
     const flowAttr = c.flow ? ` data-flow="${esc(c.flow)}"` : '';
     const tag = own ? 'button' : 'div';
@@ -3744,8 +3781,9 @@ function cycleLegendMarkup() {
   const items = [
     { cls: 'is-menstruation', key: 'health.cycle.legend.period' },
     { cls: 'is-menstruation is-predicted', key: 'health.cycle.legend.predicted' },
-    { cls: 'is-fertile', key: 'health.cycle.legend.fertile' },
-    { cls: 'is-ovulation', key: 'health.cycle.legend.ovulation' },
+    { cls: 'is-fertile is-current', key: 'health.cycle.legend.fertileCurrent' },
+    { cls: 'is-fertile is-predicted', key: 'health.cycle.legend.fertilePredicted' },
+    { cls: 'is-ovulation is-current', key: 'health.cycle.legend.ovulation' },
     { cls: 'is-today', key: 'health.cycle.legend.today' },
   ];
   return `<div class="cycle-legend">${items.map((i) => `

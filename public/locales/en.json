@@ -3393,6 +3393,8 @@
                 "inDays": "in {{count}} days",
                 "overdue": "{{count}} days late",
                 "nextPeriod": "Next period",
+                "currentCycle": "Current cycle",
+                "periodStarted": "Started {{date}}",
                 "fertileWindow": "Fertile window",
                 "ovulation": "Ovulation",
                 "avgCycle": "Avg. cycle length",
@@ -3430,9 +3432,11 @@
                 "sun": "Sun"
             },
             "legend": {
-                "period": "Period",
-                "predicted": "Predicted",
+                "period": "Logged period",
+                "predicted": "Predicted period",
                 "fertile": "Fertile",
+                "fertileCurrent": "Fertile (this cycle)",
+                "fertilePredicted": "Fertile (predicted)",
                 "ovulation": "Ovulation",
                 "today": "Today",
                 "logged": "Entry"

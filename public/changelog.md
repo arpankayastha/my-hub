@@ -2,6 +2,15 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.26] - 2026-08-04
+
+### Fixed
+- Cycle calendar: no longer marks past dates as predicted period before your logged start; overdue predictions do not backfill red days you did not log.
+- Cycle calendar: fertile window and ovulation for the **current** cycle are shown correctly (not as next-month predictions).
+
+### Changed
+- Cycle page: clearer ring labels (cycle day, period start date, next period date), horizontal timeline bar, and improved legend (logged vs predicted vs current cycle).
+
 ## [1.1.25] - 2026-08-04
 
 ### Changed
