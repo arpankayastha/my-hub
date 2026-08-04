@@ -4,6 +4,11 @@
 
 import { saveState, nowIso, cfgGet } from './store.js';
 import { DEFAULT_BUDGET_CATEGORIES, DEFAULT_BUDGET_SUBCATEGORIES } from './budget-seed.js';
+import {
+  effectiveMonthly,
+  shouldAutoMaterializeRecurring,
+  shouldPlanMaterializeRecurring,
+} from '../utils/budget-recurrence.js';
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
 const BUDGET_SAVINGS_KEY = '__savings__';
@@ -444,14 +449,6 @@ function listCategoriesForManager(state) {
     }));
 }
 
-function monthsPerInterval(interval) {
-  return interval === 'yearly' ? 12 : interval === 'half_year' ? 6 : 1;
-}
-
-function effectiveMonthly(amount, interval) {
-  return Math.round((Number(amount || 0) / monthsPerInterval(interval)) * 100) / 100;
-}
-
 function resolveSeriesParent(state, entry) {
   const parentId = entry.recurrence_parent_id ?? (entry.is_recurring ? entry.id : null);
   if (!parentId) return null;
@@ -525,9 +522,45 @@ async function deleteEntrySeries(state, entryId, userId) {
   return { ok: true };
 }
 
-function generateRecurringInstances(state, month) {
-  if (!Array.isArray(state.budget_recurrence_skipped)) state.budget_recurrence_skipped = [];
+function latestInstanceMonth(state, parentId) {
+  let latest = null;
+  for (const e of state.budget_entries) {
+    if (e.recurrence_parent_id !== parentId) continue;
+    const ym = e.date.slice(0, 7);
+    if (!latest || ym > latest) latest = ym;
+  }
+  return latest;
+}
+
+function pushRecurringInstance(state, orig, month) {
   const [y, m] = month.split('-').map(Number);
+  const origDay = parseInt(orig.date.split('-')[2], 10);
+  const lastDay = new Date(y, m, 0).getDate();
+  const instanceDay = Math.min(origDay, lastDay);
+  const instanceDate = `${month}-${String(instanceDay).padStart(2, '0')}`;
+  state.budget_entries.push({
+    id: bumpId(state),
+    title: orig.title,
+    amount: orig.amount,
+    category: orig.category,
+    subcategory: orig.subcategory || '',
+    date: instanceDate,
+    is_recurring: 0,
+    recurrence_parent_id: orig.id,
+    recurrence_interval: null,
+    recurrence_virtual: 0,
+    recurrence_full_amount: null,
+    account_id: orig.account_id ?? null,
+    visibility: orig.visibility || 'shared',
+    created_by: orig.created_by,
+    owner_id: orig.owner_id ?? orig.created_by,
+    created_at: nowIso(),
+    updated_at: nowIso(),
+  });
+}
+
+function generateRecurringInstances(state, month, { planning = false } = {}) {
+  if (!Array.isArray(state.budget_recurrence_skipped)) state.budget_recurrence_skipped = [];
   const monthStart = `${month}-01`;
   const monthEnd = `${month}-31`;
 
@@ -548,38 +581,37 @@ function generateRecurringInstances(state, month) {
     );
     if (existing) continue;
 
-    const interval = orig.recurrence_interval || 'monthly';
-    if (!orig.recurrence_virtual) {
-      const [oy, om] = orig.date.split('-').map(Number);
-      const monthsDiff = (y - oy) * 12 + (m - om);
-      if (monthsDiff < 1 || monthsDiff % monthsPerInterval(interval) !== 0) continue;
-    }
+    const latestYm = latestInstanceMonth(state, orig.id);
+    const shouldCreate = planning
+      ? shouldPlanMaterializeRecurring(orig, month)
+      : shouldAutoMaterializeRecurring(orig, month, latestYm);
+    if (!shouldCreate) continue;
 
-    const origDay = parseInt(orig.date.split('-')[2], 10);
-    const lastDay = new Date(y, m, 0).getDate();
-    const instanceDay = Math.min(origDay, lastDay);
-    const instanceDate = `${month}-${String(instanceDay).padStart(2, '0')}`;
-
-    state.budget_entries.push({
-      id: bumpId(state),
-      title: orig.title,
-      amount: orig.amount,
-      category: orig.category,
-      subcategory: orig.subcategory || '',
-      date: instanceDate,
-      is_recurring: 0,
-      recurrence_parent_id: orig.id,
-      recurrence_interval: null,
-      recurrence_virtual: 0,
-      recurrence_full_amount: null,
-      account_id: orig.account_id ?? null,
-      visibility: orig.visibility || 'shared',
-      created_by: orig.created_by,
-      owner_id: orig.owner_id ?? orig.created_by,
-      created_at: nowIso(),
-      updated_at: nowIso(),
-    });
+    pushRecurringInstance(state, orig, month);
   }
+}
+
+function applyRecurringToMonth(state, month) {
+  const monthStart = `${month}-01`;
+  const monthEnd = `${month}-31`;
+  const beforeIds = new Set(
+    state.budget_entries
+      .filter((e) => e.recurrence_parent_id && e.date >= monthStart && e.date <= monthEnd)
+      .map((e) => e.id),
+  );
+  generateRecurringInstances(state, month, { planning: true });
+  let created = 0;
+  for (const e of state.budget_entries) {
+    if (
+      e.recurrence_parent_id
+      && e.date >= monthStart
+      && e.date <= monthEnd
+      && !beforeIds.has(e.id)
+    ) {
+      created += 1;
+    }
+  }
+  return created;
 }
 
 async function handleCategoriesRoute(m, tail, body, state) {
@@ -917,6 +949,14 @@ export async function handleBudgetApi(method, parts, query, body, state, effecti
     const toMonth = String(body.to_month || body.to || query.month || '').trim();
     const copied = await cloneMonthEntries(state, fromMonth, toMonth, effectiveUserId);
     return { data: { copied, from_month: fromMonth, to_month: toMonth } };
+  }
+
+  if (sub === 'apply-recurring' && m === 'POST') {
+    const toMonth = String(body.to_month || body.month || query.month || '').trim();
+    if (!MONTH_RE.test(toMonth)) throw apiError('month must be YYYY-MM', 400);
+    const created = applyRecurringToMonth(state, toMonth);
+    await saveState();
+    return { data: { created, to_month: toMonth } };
   }
 
   // GET/POST /budget — entries list or create

@@ -2,6 +2,14 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.26] - 2026-08-04
+
+### Changed
+- Budget recurring: rolls forward one month at a time; “Apply recurring here” for planning ahead; past instances stay unchanged on edits.
+- Budget statistics: filters stay visible on empty years; summary cards show zeros instead of trapping the page.
+- Category/subcategory inline modals: solid panel on glass (no transparency overlap).
+- Health: profile switcher aligned with Budget; quick-jump tabs on overview; dashboard health widget shows vitals, meds, cycle, and vaccination-style calendar events per profile.
+
 ## [1.1.25] - 2026-08-04
 
 ### Changed
