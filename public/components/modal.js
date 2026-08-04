@@ -750,6 +750,23 @@ export function validateAll(formContainer) {
  * bei der nächsten Eingabe im Feld selbst auf. Gibt immer false zurück, damit
  * Speicherpfade kompakt `return reportFieldError(...)` abbrechen können.
  */
+/**
+ * Find the submit button for a modal form. Footer actions are moved outside the
+ * <form> (modal.js) and linked via the HTML form attribute — not queryable from
+ * inside the form alone.
+ */
+export function modalFormSubmitButton(panel, form) {
+  if (!panel || !form) return null;
+  const id = form.id;
+  if (id && typeof panel.querySelectorAll === 'function') {
+    for (const btn of panel.querySelectorAll('button[type="submit"]')) {
+      if (btn.getAttribute?.('form') === id) return btn;
+    }
+  }
+  return panel.querySelector('.modal-panel__footer [type="submit"]')
+    ?? form.querySelector?.('[type="submit"]');
+}
+
 export function reportFieldError(input, message) {
   if (!input) return false;
   const group = (typeof input.closest === 'function' ? input.closest('.form-field') : null) ?? input.parentElement;

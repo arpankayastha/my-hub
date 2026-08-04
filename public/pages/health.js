@@ -23,7 +23,7 @@ import { esc } from '/utils/html.js';
 import { downloadApiFile } from '/utils/api-download.js';
 import { wireScrollFade, scheduleUndoableDelete } from '/utils/ux.js';
 import { toLocalDateKey, parseLocalDateKey, addLocalDays } from '/utils/date.js';
-import { openModal, closeModal, confirmModal, reportFieldError } from '/components/modal.js';
+import { openModal, closeModal, confirmModal, reportFieldError, modalFormSubmitButton } from '/components/modal.js';
 import { createPageFab, setPageFabAction } from '/utils/fab.js';
 import { computeVitalSeries, VITAL_METRICS, vitalMetric } from '/utils/health-vitals.js';
 import {
@@ -949,16 +949,16 @@ function openVitalModal(opts = {}) {
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const submitBtn = form.querySelector('[type="submit"]');
+        const submitBtn = modalFormSubmitButton(panel, form);
         const body = collectVitalBody(panel, typeSelect.value);
         if (!body) {
-          submitBtn.disabled = false;
+          if (submitBtn) submitBtn.disabled = false;
           // Fehler am Wertefeld statt als ortloser Toast (geteiltes Muster,
           // Critique P1): erstes Eingabefeld der Metrik markieren.
           reportFieldError(panel.querySelector('#vital-value-fields input'), t('health.vitals.invalidValue'));
           return;
         }
-        submitBtn.disabled = true;
+        if (submitBtn) submitBtn.disabled = true;
         try {
           await api.post('/health/vitals', body);
           await closeModal({ force: true });
@@ -972,7 +972,7 @@ function openVitalModal(opts = {}) {
           }
         } catch (err) {
           console.error('[Health] vitals save error:', err);
-          submitBtn.disabled = false;
+          if (submitBtn) submitBtn.disabled = false;
           const msg = err?.data?.error || err?.message;
           window.myHub?.showToast(msg && err?.status !== 0 ? msg : t('health.vitals.saveError'), 'danger');
         }
