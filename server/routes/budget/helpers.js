@@ -66,10 +66,11 @@ export function budgetFilter(req, alias, { scoped = true } = {}) {
   const mode = getBudgetMode();
   const me = viewerId(req);
   if (mode !== 'personal') {
-    if (!scoped) {
+    // Shared mode: all entries visible (legacy). Profile switch scopes to one member.
+    if (isProfileBudgetScope(req)) {
       return { clause: ` AND ${alias}.owner_id = ?`, params: [me] };
     }
-    return { clause: ` AND ${alias}.owner_id = ?`, params: [me] };
+    return { clause: '', params: [] };
   }
   const filterMode = 'personal';
   let clause = ` AND ${budgetVisibilityWhere(alias, '?', { mode: filterMode })}`;
@@ -82,8 +83,9 @@ export function budgetFilter(req, alias, { scoped = true } = {}) {
   return { clause, params };
 }
 
-/** Prüft Schreib-Berechtigung — Einträge gehören dem aktiven Haushaltsprofil (owner_id). */
+/** Schreib-Berechtigung: personal-Modus nur Owner/Ersteller; shared-Modus offen (Altverhalten). */
 export function mayEdit(req, row) {
+  if (getBudgetMode() !== 'personal') return true;
   return canEditEntry(row, { id: viewerId(req) });
 }
 
