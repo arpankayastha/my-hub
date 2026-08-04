@@ -14,6 +14,7 @@ import {
   generateRecurringInstances, RECURRENCE_INTERVAL_KEYS, effectiveMonthly,
   validCategoryKeys, defaultCategory, validateSubcategory, validateAccountRef,
   entryWithLoanMeta, refreshLoanStatus, fromBudgetAmount,
+  loadBudgetMeta, normalizeLang, budgetEntryExportLabels,
 } from './helpers.js';
 
 const log = createLogger('Budget');
@@ -157,6 +158,8 @@ router.get('/export', (req, res) => {
       ? `budget-${from}_${to}.csv`
       : `budget-${req.query.month || thisMonthLocalKey()}.csv`;
     const filter = budgetFilter(req, 'b');
+    const lang = normalizeLang(req.query.lang);
+    const { categoryLabel, subcategoryLabel } = budgetEntryExportLabels(loadBudgetMeta(), lang);
     const entries = db.get().prepare(`
       SELECT b.*, u.display_name AS creator_name
       FROM budget_entries b
@@ -180,8 +183,8 @@ router.get('/export', (req, res) => {
         // zerreißt). Punkt-Dezimal ist maschinenlesbar, überall parsebar und
         // deckt sich mit der region-abhängigen Anzeige für Punkt-Locales (#521).
         e.amount.toFixed(2),
-        e.category,
-        e.subcategory || '',
+        csvSafe(categoryLabel(e.category)),
+        e.subcategory ? csvSafe(subcategoryLabel(e.subcategory)) : '',
         e.is_recurring ? 'Yes' : 'No',
         csvSafe(e.creator_name),
       ].join(',')

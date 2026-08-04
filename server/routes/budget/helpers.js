@@ -233,17 +233,45 @@ export function budgetMessages(lang) {
   return LOCALE_CACHE.get(normalized);
 }
 
-export function localizedCategory(category, _lang) {
+export function localizedCategory(category, lang) {
+  const messages = budgetMessages(lang);
+  const labelKey = CATEGORY_LABEL_KEYS[category.key];
+  if (labelKey && isDefaultCategoryName(category.key, category.name) && messages[labelKey]) {
+    return { ...category, label: messages[labelKey] };
+  }
   return {
     ...category,
     label: englishBudgetCategoryLabel(category.key, category.name),
   };
 }
 
-export function localizedSubcategory(subcategory, _lang) {
+export function localizedSubcategory(subcategory, lang) {
+  const messages = budgetMessages(lang);
+  const labelKey = SUBCATEGORY_LABEL_KEYS[subcategory.key];
+  if (labelKey && isDefaultSubcategoryName(subcategory.key, subcategory.name) && messages[labelKey]) {
+    return { ...subcategory, label: messages[labelKey] };
+  }
   return {
     ...subcategory,
     label: englishBudgetSubcategoryLabel(subcategory.key, subcategory.name),
+  };
+}
+
+/** Localized category/subcategory labels for CSV export. */
+export function budgetEntryExportLabels(meta, lang) {
+  const categoryLabels = new Map();
+  for (const cat of [...meta.expenseCategories, ...meta.incomeCategories]) {
+    categoryLabels.set(cat.key, localizedCategory(cat, lang).label);
+  }
+  const subcategoryLabels = new Map();
+  for (const subs of Object.values(meta.expenseSubcategories)) {
+    for (const sub of subs) {
+      subcategoryLabels.set(sub.key, localizedSubcategory(sub, lang).label);
+    }
+  }
+  return {
+    categoryLabel: (key) => categoryLabels.get(key) ?? englishBudgetCategoryLabel(key, ''),
+    subcategoryLabel: (key) => subcategoryLabels.get(key) ?? englishBudgetSubcategoryLabel(key, ''),
   };
 }
 

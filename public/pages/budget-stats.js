@@ -296,7 +296,7 @@ function renderExport() {
   if (window.lucide) lucide.createIcons({ el: host });
   host.querySelector('#budget-stats-csv-export')?.addEventListener('click', () => {
     downloadApiFile(
-      `/api/v1/budget/export?from=${from}&to=${to}${scopeQuery()}`,
+      `/api/v1/budget/export?from=${from}&to=${to}&lang=${getLocale()}${scopeQuery()}`,
       `budget-${from}_${to}.csv`,
     ).catch(() => {});
   });

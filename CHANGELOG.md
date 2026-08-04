@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.31] - 2026-08-04
+
+### Fixed
+- Budget CSV export: category and subcategory columns use the app language (income categories no longer show German keys like `Erwerbseinkommen`).
+
 ## [1.1.30] - 2026-08-04
 
 ### Fixed
