@@ -115,6 +115,10 @@ const PAGE_MODULES = [
   '/pages/contacts.js',
   '/pages/birthdays.js',
   '/pages/budget.js',
+  '/pages/budget-stats.js',
+  '/pages/budget-plans.js',
+  '/pages/split-expenses.js',
+  '/pages/subscriptions.js',
   '/pages/documents.js',
   '/pages/rewards.js',
   '/pages/health.js',
@@ -123,6 +127,9 @@ const PAGE_MODULES = [
   '/pages/recipes.js',
   '/pages/pantry.js',
   '/components/category-manager.js',
+  '/components/profile-switcher.js',
+  '/settings/currency.js',
+  '/utils/horizontal-swipe.js',
   '/utils/sortable.js',
   '/vendor/sortablejs/sortable.esm.min.js',
   // libphonenumber-js: lazy im Kontaktmodul, aber vorab gecacht → Telefon-
@@ -315,6 +322,9 @@ function dispatchFetch(request, url) {
     url.pathname.includes('/pages/') ||
     url.pathname.includes('/settings/pages/') ||
     url.pathname.endsWith('/components/category-manager.js') ||
+    url.pathname.endsWith('/components/profile-switcher.js') ||
+    url.pathname.endsWith('/settings/currency.js') ||
+    url.pathname.endsWith('/utils/horizontal-swipe.js') ||
     url.pathname.endsWith('/utils/sortable.js') ||
     url.pathname.endsWith('/vendor/sortablejs/sortable.esm.min.js') ||
     url.pathname.includes('/vendor/libphonenumber/')
@@ -338,6 +348,7 @@ function dispatchFetch(request, url) {
 // --------------------------------------------------------
 async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
+  const path = new URL(request.url).pathname;
 
   try {
     const response = await fetch(request);
@@ -348,6 +359,15 @@ async function networkFirst(request, cacheName) {
   } catch {
     const cached = await cache.match(request);
     if (cached) return cached;
+
+    // Never serve SPA HTML as a JS/CSS module — that surfaces as
+    // "Failed to fetch dynamically imported module" in the console.
+    if (/\.(js|mjs|css)$/i.test(path)) {
+      return new Response('Offline', {
+        status: 503,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    }
 
     const shell = await cache.match('/index.html');
     if (shell) return shell;
