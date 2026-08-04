@@ -3323,6 +3323,7 @@
             "medsLogs": "Einnahmeprotokoll",
             "hint": "Lädt die Daten des gewählten Zeitraums als CSV-Datei herunter."
         },
+        "disclaimerSummary": "Medizinischer Hinweis",
         "disclaimer": "Nur zur persönlichen Dokumentation. Kein Ersatz für ärztliche Beratung, Diagnose oder Behandlung.",
         "readOnlyBanner": "Du siehst die Daten von {{name}} — nur Lesen.",
         "cycle": {

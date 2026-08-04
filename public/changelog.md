@@ -2,6 +2,11 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.25] - 2026-08-04
+
+### Changed
+- Entry modals (Budget, Health vitals): compact mobile layout, title+amount side-by-side, category row with icon add button, sticky Save/Cancel footer, collapsible medical notice.
+
 ## [1.1.24] - 2026-08-04
 
 ### Changed
