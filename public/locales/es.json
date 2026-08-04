@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} visitas este mes",
         "housekeepingUnpaid": "{{amount}} pendiente",
         "widgetError": "No se pudo cargar",
-        "savingsGoal": "Objetivo de ahorro"
+        "savingsGoal": "Objetivo de ahorro",
+        "heroSubtitle": "Tu hogar de un vistazo — toca una tarjeta abajo o personaliza los widgets."
     },
     "tasks": {
         "manageCategories": "Gestionar categorías",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Evolución en {{periods}} periodos · Ingresos {{income}} · Gastos {{expenses}} · Máximo {{peak}}",
         "statsDonutSummary": "{{count}} segmentos · Mayor: {{top}} ({{pct}} %) · Total {{total}}",
         "statsPointsLabel": "Valores de la curva",
-        "statsPointLabel": "{{period}}: ingresos {{income}}, gastos {{expenses}}"
+        "statsPointLabel": "{{period}}: ingresos {{income}}, gastos {{expenses}}",
+        "monthCalendarTitle": "Calendario del mes",
+        "monthCalendarClear": "Todos los días",
+        "dayFilterLabel": "Mostrando {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Mostrar la pestaña de ciclo",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Próximos recordatorios",
                 "empty": "Hoy no hay más tomas"
-            }
+            },
+            "heroTitle": "Resumen de salud",
+            "heroDue": "Para hoy",
+            "heroAdherence": "Adherencia 14 días",
+            "heroStreak": "Racha de días"
         },
         "vitals": {
             "title": "Constantes",

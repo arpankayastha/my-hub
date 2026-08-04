@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} látogatás e hónapban",
         "housekeepingUnpaid": "{{amount}} rendezendő",
         "widgetError": "Nem sikerült betölteni",
-        "savingsGoal": "Megtakarítási cél"
+        "savingsGoal": "Megtakarítási cél",
+        "heroSubtitle": "A családod egy pillantásban — érintsd meg egy kártyát alul vagy állítsd be a widgeteket."
     },
     "tasks": {
         "manageCategories": "Kategóriák kezelése",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Alakulás {{periods}} időszakon át · Bevétel {{income}} · Kiadás {{expenses}} · Csúcs {{peak}}",
         "statsDonutSummary": "{{count}} szelet · Legnagyobb: {{top}} ({{pct}} %) · Összesen {{total}}",
         "statsPointsLabel": "A trendgörbe értékei",
-        "statsPointLabel": "{{period}}: bevétel {{income}}, kiadás {{expenses}}"
+        "statsPointLabel": "{{period}}: bevétel {{income}}, kiadás {{expenses}}",
+        "monthCalendarTitle": "Havi naptár",
+        "monthCalendarClear": "Minden nap",
+        "dayFilterLabel": "Megjelenítve: {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Ciklus fül megjelenítése",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Következő emlékeztetők",
                 "empty": "Ma nincs több bevétel"
-            }
+            },
+            "heroTitle": "Egészség pillanatkép",
+            "heroDue": "Ma",
+            "heroAdherence": "14 napos betartás",
+            "heroStreak": "Napos sorozat"
         },
         "vitals": {
             "title": "Vitálértékek",

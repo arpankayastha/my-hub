@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "本月 {{count}} 次到访",
         "housekeepingUnpaid": "{{amount}} 待付",
         "widgetError": "无法加载",
-        "savingsGoal": "储蓄目标"
+        "savingsGoal": "储蓄目标",
+        "heroSubtitle": "家庭一览 — 点击下方卡片或自定义小组件。"
     },
     "tasks": {
         "manageCategories": "管理类别",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "{{periods}} 个时段走势 · 收入 {{income}} · 支出 {{expenses}} · 峰值 {{peak}}",
         "statsDonutSummary": "{{count}} 个分段 · 最大：{{top}}（{{pct}}%）· 合计 {{total}}",
         "statsPointsLabel": "走势曲线数值",
-        "statsPointLabel": "{{period}}：收入 {{income}}，支出 {{expenses}}"
+        "statsPointLabel": "{{period}}：收入 {{income}}，支出 {{expenses}}",
+        "monthCalendarTitle": "月历",
+        "monthCalendarClear": "显示全部日期",
+        "dayFilterLabel": "显示 {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "显示周期标签页",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "接下来的提醒",
                 "empty": "今日没有更多服药"
-            }
+            },
+            "heroTitle": "健康概览",
+            "heroDue": "今日待服",
+            "heroAdherence": "14 天依从",
+            "heroStreak": "连续天数"
         },
         "vitals": {
             "title": "生命体征",

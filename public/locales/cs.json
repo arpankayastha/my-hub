@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} návštěv tento měsíc",
         "housekeepingUnpaid": "{{amount}} k úhradě",
         "widgetError": "Nepodařilo se načíst",
-        "savingsGoal": "Cíl úspor"
+        "savingsGoal": "Cíl úspor",
+        "heroSubtitle": "Váš domov na jednom místě — klepněte na kartu níže nebo upravte widgety."
     },
     "tasks": {
         "manageCategories": "Spravovat kategorie",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Vývoj za {{periods}} období · Příjmy {{income}} · Výdaje {{expenses}} · Maximum {{peak}}",
         "statsDonutSummary": "{{count}} segmentů · Největší: {{top}} ({{pct}} %) · Celkem {{total}}",
         "statsPointsLabel": "Hodnoty křivky vývoje",
-        "statsPointLabel": "{{period}}: příjmy {{income}}, výdaje {{expenses}}"
+        "statsPointLabel": "{{period}}: příjmy {{income}}, výdaje {{expenses}}",
+        "monthCalendarTitle": "Měsíční kalendář",
+        "monthCalendarClear": "Všechny dny",
+        "dayFilterLabel": "Zobrazeno {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Zobrazit kartu cyklu",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Další připomenutí",
                 "empty": "Dnes už žádné další užití"
-            }
+            },
+            "heroTitle": "Zdravotní přehled",
+            "heroDue": "Dnes",
+            "heroAdherence": "14denní dodržování",
+            "heroStreak": "Série dní"
         },
         "vitals": {
             "title": "Vitální hodnoty",

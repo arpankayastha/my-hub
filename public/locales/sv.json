@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} besök denna månad",
         "housekeepingUnpaid": "{{amount}} obetalt",
         "widgetError": "Kunde inte laddas",
-        "savingsGoal": "Sparmål"
+        "savingsGoal": "Sparmål",
+        "heroSubtitle": "Ditt hem i korthet — tryck på en kort nedan eller anpassa widgetar."
     },
     "tasks": {
         "manageCategories": "Hantera kategorier",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Utveckling över {{periods}} perioder · Inkomster {{income}} · Utgifter {{expenses}} · Toppvärde {{peak}}",
         "statsDonutSummary": "{{count}} segment · Störst: {{top}} ({{pct}} %) · Totalt {{total}}",
         "statsPointsLabel": "Värden i trendkurvan",
-        "statsPointLabel": "{{period}}: inkomster {{income}}, utgifter {{expenses}}"
+        "statsPointLabel": "{{period}}: inkomster {{income}}, utgifter {{expenses}}",
+        "monthCalendarTitle": "Månadskalender",
+        "monthCalendarClear": "Alla dagar",
+        "dayFilterLabel": "Visar {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Visa cykelfliken",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Nästa påminnelser",
                 "empty": "Inga fler intag idag"
-            }
+            },
+            "heroTitle": "Hälsosnapshot",
+            "heroDue": "Idag",
+            "heroAdherence": "14-dagars följsamhet",
+            "heroStreak": "Dagsserie"
         },
         "vitals": {
             "title": "Vitalvärden",

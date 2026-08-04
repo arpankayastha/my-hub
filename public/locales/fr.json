@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} visites ce mois-ci",
         "housekeepingUnpaid": "{{amount}} à payer",
         "widgetError": "Impossible à charger",
-        "savingsGoal": "Objectif d’épargne"
+        "savingsGoal": "Objectif d’épargne",
+        "heroSubtitle": "Votre foyer en un coup d'œil — touchez une carte ci-dessous ou personnalisez les widgets."
     },
     "tasks": {
         "manageCategories": "Gérer les catégories",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Évolution sur {{periods}} périodes · Revenus {{income}} · Dépenses {{expenses}} · Maximum {{peak}}",
         "statsDonutSummary": "{{count}} segments · Le plus grand : {{top}} ({{pct}} %) · Total {{total}}",
         "statsPointsLabel": "Valeurs de la courbe",
-        "statsPointLabel": "{{period}} : revenus {{income}}, dépenses {{expenses}}"
+        "statsPointLabel": "{{period}} : revenus {{income}}, dépenses {{expenses}}",
+        "monthCalendarTitle": "Calendrier du mois",
+        "monthCalendarClear": "Tous les jours",
+        "dayFilterLabel": "Affichage : {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Afficher l’onglet cycle",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Prochains rappels",
                 "empty": "Plus aucune prise aujourd'hui"
-            }
+            },
+            "heroTitle": "Aperçu santé",
+            "heroDue": "À prendre aujourd'hui",
+            "heroAdherence": "Observance 14 jours",
+            "heroStreak": "Série de jours"
         },
         "vitals": {
             "title": "Constantes",

@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "今月 {{count}} 回訪問",
         "housekeepingUnpaid": "{{amount}} 未払い",
         "widgetError": "読み込めませんでした",
-        "savingsGoal": "貯蓄目標"
+        "savingsGoal": "貯蓄目標",
+        "heroSubtitle": "家庭の概要 — 下のカードをタップするかウィジェットをカスタマイズ。"
     },
     "tasks": {
         "manageCategories": "カテゴリーを管理",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "{{periods}} 期間の推移 · 収入 {{income}} · 支出 {{expenses}} · 最大 {{peak}}",
         "statsDonutSummary": "{{count}} セグメント · 最大: {{top}}（{{pct}}%）· 合計 {{total}}",
         "statsPointsLabel": "推移グラフの値",
-        "statsPointLabel": "{{period}}: 収入 {{income}}、支出 {{expenses}}"
+        "statsPointLabel": "{{period}}: 収入 {{income}}、支出 {{expenses}}",
+        "monthCalendarTitle": "月間カレンダー",
+        "monthCalendarClear": "全日表示",
+        "dayFilterLabel": "表示: {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "周期タブを表示",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "次のリマインダー",
                 "empty": "本日の服薬はこれ以上ありません"
-            }
+            },
+            "heroTitle": "健康スナップショット",
+            "heroDue": "本日の服用",
+            "heroAdherence": "14日間の遵守",
+            "heroStreak": "連続日数"
         },
         "vitals": {
             "title": "バイタル",

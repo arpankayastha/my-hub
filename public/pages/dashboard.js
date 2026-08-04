@@ -1187,6 +1187,7 @@ function renderDashboardOverview(user, editing = false) {
         <div class="dashboard-overview__heading">
           <span class="dashboard-overview__date">${dateLabel}</span>
           <h2 class="dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(profileDisplayName(user))}</h2>
+          <p class="dashboard-overview__subtitle">${esc(t('dashboard.heroSubtitle'))}</p>
         </div>
         <div class="dashboard-overview__tools">
           ${editing ? `

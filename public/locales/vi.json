@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} lượt tháng này",
         "housekeepingUnpaid": "Còn nợ {{amount}}",
         "widgetError": "Không thể tải",
-        "savingsGoal": "Mục tiêu tiết kiệm"
+        "savingsGoal": "Mục tiêu tiết kiệm",
+        "heroSubtitle": "Gia đình trong một nhìn — chạm thẻ bên dưới hoặc tùy chỉnh widget."
     },
     "tasks": {
         "manageCategories": "Quản lý danh mục",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Diễn biến qua {{periods}} kỳ · Thu nhập {{income}} · Chi tiêu {{expenses}} · Cao nhất {{peak}}",
         "statsDonutSummary": "{{count}} phần · Lớn nhất: {{top}} ({{pct}} %) · Tổng {{total}}",
         "statsPointsLabel": "Giá trị đường xu hướng",
-        "statsPointLabel": "{{period}}: thu nhập {{income}}, chi tiêu {{expenses}}"
+        "statsPointLabel": "{{period}}: thu nhập {{income}}, chi tiêu {{expenses}}",
+        "monthCalendarTitle": "Lịch tháng",
+        "monthCalendarClear": "Tất cả ngày",
+        "dayFilterLabel": "Hiển thị {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Hiện tab chu kỳ",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Nhắc nhở tiếp theo",
                 "empty": "Hôm nay không còn lần dùng thuốc nào"
-            }
+            },
+            "heroTitle": "Tóm tắt sức khỏe",
+            "heroDue": "Hôm nay",
+            "heroAdherence": "Tuân thủ 14 ngày",
+            "heroStreak": "Chuỗi ngày"
         },
         "vitals": {
             "title": "Chỉ số sinh tồn",

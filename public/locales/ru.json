@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} визитов в этом месяце",
         "housekeepingUnpaid": "{{amount}} к оплате",
         "widgetError": "Не удалось загрузить",
-        "savingsGoal": "Цель накоплений"
+        "savingsGoal": "Цель накоплений",
+        "heroSubtitle": "Ваш дом одним взглядом — нажмите на карточку ниже или настройте виджеты."
     },
     "tasks": {
         "manageCategories": "Управление категориями",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Динамика за {{periods}} периодов · Доходы {{income}} · Расходы {{expenses}} · Максимум {{peak}}",
         "statsDonutSummary": "Сегментов: {{count}} · Наибольший: {{top}} ({{pct}} %) · Всего {{total}}",
         "statsPointsLabel": "Значения кривой",
-        "statsPointLabel": "{{period}}: доходы {{income}}, расходы {{expenses}}"
+        "statsPointLabel": "{{period}}: доходы {{income}}, расходы {{expenses}}",
+        "monthCalendarTitle": "Календарь месяца",
+        "monthCalendarClear": "Все дни",
+        "dayFilterLabel": "Показано {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Показать вкладку цикла",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Следующие напоминания",
                 "empty": "На сегодня приёмов больше нет"
-            }
+            },
+            "heroTitle": "Обзор здоровья",
+            "heroDue": "На сегодня",
+            "heroAdherence": "Соблюдение 14 дней",
+            "heroStreak": "Серия дней"
         },
         "vitals": {
             "title": "Показатели",

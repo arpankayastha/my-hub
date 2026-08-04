@@ -21,6 +21,7 @@ import { budgetCategoryLabel } from '/utils/category-labels.js';
 import { englishBudgetSubcategoryLabel } from '/utils/budget-category-defaults.js';
 import { appendCurrencyOptions } from '/settings/currency.js';
 import { wireHorizontalSwipe } from '/utils/horizontal-swipe.js';
+import { aggregateEntriesByDay, renderMonthCalendarHtml } from '/utils/budget-month-calendar.js';
 import '/components/category-manager.js';
 
 // --------------------------------------------------------
@@ -187,6 +188,7 @@ let state = {
   scope:       'mine',        // Ansichts-Filter im personal-Modus: 'mine' | 'household'
   expensesOnly: false,        // Anzeige „Nur Ausgaben" (#504): Einnahmen+Saldo ausblenden
   hideAmounts: false,         // Beträge maskieren (sensible Daten)
+  dayFilter: null,            // YYYY-MM-DD — Forecast-style day filter from month calendar
   meta:        { expenseCategories: [], incomeCategories: [], expenseSubcategories: {} },
 };
 let _container = null;
@@ -421,6 +423,7 @@ export async function render(container, { user }) {
 
 async function goMonth(delta) {
   if (!tabCaps().month) return;
+  state.dayFilter = null;
   await loadMonth(addMonths(state.month, delta));
   renderBody();
   updateLabel();
@@ -440,6 +443,7 @@ function wireNav() {
   _container.querySelector('#budget-today').addEventListener('click', async () => {
     const today = new Date();
     const m = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    state.dayFilter = null;
     if (m === state.month) return;
     await loadMonth(m);
     renderBody();
@@ -617,6 +621,8 @@ function renderBody() {
       ${expensesOnly ? expensesCard : incomeCard + expensesCard + balanceCard}
     </div>
 
+    ${renderMonthCalendarSection()}
+
     <!-- Kategorie-Balken -->
     ${s.byCategory.length ? `
     <div class="budget-chart-section">
@@ -632,6 +638,7 @@ function renderBody() {
       <div class="budget-list-header">
         <div>
           <span class="budget-list-header__title">${t('budget.transactions')}</span>
+          ${state.dayFilter ? `<span class="budget-list-header__filter">${esc(t('budget.dayFilterLabel', { date: formatDate(state.dayFilter) }))}</span>` : ''}
           ${state.accountFilterId ? `
           <button class="budget-account-chip" id="budget-clear-account-filter" type="button"
                   aria-label="${t('budget.clearAccountFilter')}">
@@ -675,6 +682,7 @@ function renderBody() {
     renderBody();
   });
   _container.querySelector('#budget-manage-categories')?.addEventListener('click', openCategoryManager);
+  wireMonthCalendar();
   _container.querySelector('#budget-clear-account-filter')?.addEventListener('click', async () => {
     state.accountFilterId = null;
     await loadMonth(state.month);
@@ -782,8 +790,43 @@ function renderCategoryBars(byCategory) {
   }).join('');
 }
 
+function entriesForList() {
+  if (!state.dayFilter) return state.entries;
+  return state.entries.filter((e) => String(e.date || '').slice(0, 10) === state.dayFilter);
+}
+
+function renderMonthCalendarSection() {
+  const today = toLocalDateKey(new Date());
+  const dayTotals = aggregateEntriesByDay(state.entries);
+  return renderMonthCalendarHtml(state.month, dayTotals, {
+    selectedDay: state.dayFilter,
+    today,
+    title: t('budget.monthCalendarTitle'),
+    clearLabel: t('budget.monthCalendarClear'),
+    locale: getLocale(),
+  });
+}
+
+function wireMonthCalendar() {
+  const root = _container.querySelector('.budget-month-calendar');
+  if (!root) return;
+  root.querySelectorAll('[data-budget-day]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const day = btn.dataset.budgetDay;
+      state.dayFilter = state.dayFilter === day ? null : day;
+      vibrate(8);
+      renderBody();
+    });
+  });
+  _container.querySelector('#budget-day-clear')?.addEventListener('click', () => {
+    state.dayFilter = null;
+    renderBody();
+  });
+}
+
 function renderEntries() {
-  if (!state.entries.length) {
+  const rows = entriesForList();
+  if (!rows.length) {
     return `<div class="empty-state">
       <svg class="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
         <line x1="12" y1="1" x2="12" y2="23"/>
@@ -799,7 +842,7 @@ function renderEntries() {
     </div>`;
   }
 
-  return state.entries.map((e) => {
+  return rows.map((e) => {
     const isIncome  = e.amount > 0;
     const amtClass  = isIncome ? 'budget-entry__amount--income' : 'budget-entry__amount--expenses';
     const indClass  = isIncome ? 'budget-entry__indicator--income' : 'budget-entry__indicator--expenses';

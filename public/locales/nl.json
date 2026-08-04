@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} bezoeken deze maand",
         "housekeepingUnpaid": "{{amount}} openstaand",
         "widgetError": "Kon niet worden geladen",
-        "savingsGoal": "Spaardoel"
+        "savingsGoal": "Spaardoel",
+        "heroSubtitle": "Je huishouden in één oogopslag — tik op een kaart hieronder of pas widgets aan."
     },
     "tasks": {
         "manageCategories": "Categorieën beheren",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Verloop over {{periods}} perioden · Inkomsten {{income}} · Uitgaven {{expenses}} · Piek {{peak}}",
         "statsDonutSummary": "{{count}} segmenten · Grootste: {{top}} ({{pct}} %) · Totaal {{total}}",
         "statsPointsLabel": "Waarden van de trendlijn",
-        "statsPointLabel": "{{period}}: inkomsten {{income}}, uitgaven {{expenses}}"
+        "statsPointLabel": "{{period}}: inkomsten {{income}}, uitgaven {{expenses}}",
+        "monthCalendarTitle": "Maandkalender",
+        "monthCalendarClear": "Alle dagen",
+        "dayFilterLabel": "Weergave {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Cyclustabblad tonen",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Volgende herinneringen",
                 "empty": "Vandaag geen innames meer"
-            }
+            },
+            "heroTitle": "Gezondheidsoverzicht",
+            "heroDue": "Vandaag",
+            "heroAdherence": "14-dagen trouw",
+            "heroStreak": "Dagenreeks"
         },
         "vitals": {
             "title": "Vitale waarden",

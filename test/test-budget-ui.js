@@ -412,4 +412,25 @@ test('liquid glass stylesheet wires for Overview, Budget, and Health', () => {
   assert.match(lg, /data-lg-module="dashboard"/);
   assert.match(lg, /data-lg-module="budget"/);
   assert.match(lg, /data-lg-module="health"/);
+  assert.match(lg, /budget-month-calendar/);
+  assert.match(lg, /health-overview-hero/);
+  assert.match(lg, /dashboard-overview__subtitle/);
+});
+
+test('Phase 1 keys existieren in jeder Locale', () => {
+  const keys = [
+    'dashboard.heroSubtitle',
+    'budget.monthCalendarTitle', 'budget.monthCalendarClear', 'budget.dayFilterLabel',
+    'health.overview.heroTitle', 'health.overview.heroDue',
+    'health.overview.heroAdherence', 'health.overview.heroStreak',
+  ];
+  const files = readdirSync(new URL('../public/locales/', import.meta.url)).filter((f) => f.endsWith('.json'));
+  for (const file of files) {
+    const data = JSON.parse(read(`../public/locales/${file}`));
+    for (const key of keys) {
+      const value = key.split('.').reduce((v, part) => (v != null ? v[part] : undefined), data);
+      assert.equal(typeof value, 'string', `${file}: ${key} fehlt`);
+      assert.ok(value.trim().length > 0, `${file}: ${key} ist leer`);
+    }
+  }
 });

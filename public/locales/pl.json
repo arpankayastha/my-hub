@@ -203,7 +203,8 @@
         "housekeepingVisitsMonth": "{{count}} wizyt w tym miesiącu",
         "housekeepingUnpaid": "{{amount}} do zapłaty",
         "widgetError": "Nie udało się załadować",
-        "savingsGoal": "Cel oszczędności"
+        "savingsGoal": "Cel oszczędności",
+        "heroSubtitle": "Twój dom w pigułce — dotknij karty poniżej lub dostosuj widżety."
     },
     "tasks": {
         "manageCategories": "Zarządzaj kategoriami",
@@ -1180,7 +1181,10 @@
         "statsTrendSummary": "Przebieg w {{periods}} okresach · Przychody {{income}} · Wydatki {{expenses}} · Maksimum {{peak}}",
         "statsDonutSummary": "{{count}} segmentów · Największy: {{top}} ({{pct}} %) · Razem {{total}}",
         "statsPointsLabel": "Wartości krzywej trendu",
-        "statsPointLabel": "{{period}}: przychody {{income}}, wydatki {{expenses}}"
+        "statsPointLabel": "{{period}}: przychody {{income}}, wydatki {{expenses}}",
+        "monthCalendarTitle": "Kalendarz miesiąca",
+        "monthCalendarClear": "Wszystkie dni",
+        "dayFilterLabel": "Widok: {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Pokaż kartę cyklu",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Kolejne przypomnienia",
                 "empty": "Brak kolejnych dawek na dziś"
-            }
+            },
+            "heroTitle": "Podsumowanie zdrowia",
+            "heroDue": "Na dziś",
+            "heroAdherence": "Regularność 14 dni",
+            "heroStreak": "Seria dni"
         },
         "vitals": {
             "title": "Parametry życiowe",

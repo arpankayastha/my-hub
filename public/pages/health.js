@@ -2959,6 +2959,37 @@ async function reloadOverview() {
   renderOverviewShell();
 }
 
+function overviewHeroMarkup() {
+  const today = toLocalDateKey(new Date());
+  const due = computeDueDoses(overviewAllSchedules(), { from: today, to: today }).length;
+  const from = addLocalDays(today, -(OVERVIEW_ADHERENCE_DAYS - 1));
+  const schedules = overviewAllSchedules();
+  const planned = computeDueDoses(schedules, { from, to: today }).length;
+  const logs = overviewAllLogs().filter((l) => {
+    const k = String(l.scheduled_at || l.taken_at || l.created_at || '').slice(0, 10);
+    return k >= from && k <= today;
+  });
+  const a = computeAdherence(logs, planned);
+  const streak = computeAdherenceStreak(schedules, overviewAllLogs(), { today });
+  const pct = a.rate != null && a.taken > 0 ? `${Math.round(a.rate * 100)}%` : '—';
+
+  return `
+    <section class="health-overview-hero" aria-label="${esc(t('health.overview.heroTitle'))}">
+      <div class="health-overview-hero__stat">
+        <span class="health-overview-hero__value">${esc(fmtNum(due))}</span>
+        <span class="health-overview-hero__label">${esc(t('health.overview.heroDue'))}</span>
+      </div>
+      <div class="health-overview-hero__stat">
+        <span class="health-overview-hero__value">${esc(pct)}</span>
+        <span class="health-overview-hero__label">${esc(t('health.overview.heroAdherence'))}</span>
+      </div>
+      <div class="health-overview-hero__stat">
+        <span class="health-overview-hero__value">${esc(fmtNum(streak))}</span>
+        <span class="health-overview-hero__label">${esc(t('health.overview.heroStreak'))}</span>
+      </div>
+    </section>`;
+}
+
 function renderOverviewShell() {
   if (!overview.root?.isConnected) return;
   overview.root.replaceChildren();
@@ -2980,6 +3011,7 @@ function renderOverviewShell() {
   }
 
   overview.root.insertAdjacentHTML('beforeend', `
+    ${overviewHeroMarkup()}
     <div class="health-persons" role="tablist" aria-label="${esc(t('health.overview.personsLabel'))}">
       ${personChipsMarkup(overview.members, overview.personId, overview.meId)}
     </div>

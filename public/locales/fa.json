@@ -203,7 +203,8 @@
         "housekeepingVisitsMonth": "{{count}} بازدید این ماه",
         "housekeepingUnpaid": "{{amount}} پرداخت‌نشده",
         "widgetError": "بارگذاری نشد",
-        "savingsGoal": "هدف پس‌انداز"
+        "savingsGoal": "هدف پس‌انداز",
+        "heroSubtitle": "خانه‌تان در یک نگاه — روی کارت پایین بزنید یا ویجت‌ها را سفارشی کنید."
     },
     "tasks": {
         "manageCategories": "مدیریت دسته‌ها",
@@ -1180,7 +1181,10 @@
         "statsTrendSummary": "روند در {{periods}} بازه · درآمد {{income}} · هزینه {{expenses}} · بیشینه {{peak}}",
         "statsDonutSummary": "{{count}} بخش · بزرگ‌ترین: {{top}} ({{pct}} %) · مجموع {{total}}",
         "statsPointsLabel": "مقادیر نمودار روند",
-        "statsPointLabel": "{{period}}: درآمد {{income}}، هزینه {{expenses}}"
+        "statsPointLabel": "{{period}}: درآمد {{income}}، هزینه {{expenses}}",
+        "monthCalendarTitle": "تقویم ماه",
+        "monthCalendarClear": "همه روزها",
+        "dayFilterLabel": "نمایش {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "نمایش برگهٔ چرخه",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "یادآورهای بعدی",
                 "empty": "امروز مصرف دیگری نیست"
-            }
+            },
+            "heroTitle": "خلاصه سلامت",
+            "heroDue": "امروز",
+            "heroAdherence": "پایبندی ۱۴ روز",
+            "heroStreak": "زنجیره روزها"
         },
         "vitals": {
             "title": "علائم حیاتی",

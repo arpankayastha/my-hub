@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "Bu ay {{count}} ziyaret",
         "housekeepingUnpaid": "{{amount}} ödenmemiş",
         "widgetError": "Yüklenemedi",
-        "savingsGoal": "Tasarruf hedefi"
+        "savingsGoal": "Tasarruf hedefi",
+        "heroSubtitle": "Eviniz bir bakışta — aşağıdaki karta dokunun veya widget'ları özelleştirin."
     },
     "tasks": {
         "manageCategories": "Kategorileri yönet",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "{{periods}} dönemlik seyir · Gelir {{income}} · Gider {{expenses}} · Zirve {{peak}}",
         "statsDonutSummary": "{{count}} dilim · En büyüğü: {{top}} (%{{pct}}) · Toplam {{total}}",
         "statsPointsLabel": "Eğri değerleri",
-        "statsPointLabel": "{{period}}: gelir {{income}}, gider {{expenses}}"
+        "statsPointLabel": "{{period}}: gelir {{income}}, gider {{expenses}}",
+        "monthCalendarTitle": "Ay takvimi",
+        "monthCalendarClear": "Tüm günler",
+        "dayFilterLabel": "Gösterilen {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Döngü sekmesini göster",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Sonraki hatırlatmalar",
                 "empty": "Bugün başka kullanım yok"
-            }
+            },
+            "heroTitle": "Sağlık özeti",
+            "heroDue": "Bugün",
+            "heroAdherence": "14 günlük uyum",
+            "heroStreak": "Gün serisi"
         },
         "vitals": {
             "title": "Yaşamsal değerler",

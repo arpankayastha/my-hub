@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} زيارة هذا الشهر",
         "housekeepingUnpaid": "{{amount}} مستحقة",
         "widgetError": "تعذّر التحميل",
-        "savingsGoal": "هدف الادخار"
+        "savingsGoal": "هدف الادخار",
+        "heroSubtitle": "منزلك في لمحة — انقر على بطاقة أدناه أو خصّص الأدوات."
     },
     "tasks": {
         "manageCategories": "إدارة الفئات",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "التطور عبر {{periods}} فترات · الدخل {{income}} · المصروفات {{expenses}} · الذروة {{peak}}",
         "statsDonutSummary": "{{count}} أجزاء · الأكبر: {{top}} ({{pct}} %) · الإجمالي {{total}}",
         "statsPointsLabel": "قيم منحنى التطور",
-        "statsPointLabel": "{{period}}: الدخل {{income}}، المصروفات {{expenses}}"
+        "statsPointLabel": "{{period}}: الدخل {{income}}، المصروفات {{expenses}}",
+        "monthCalendarTitle": "تقويم الشهر",
+        "monthCalendarClear": "كل الأيام",
+        "dayFilterLabel": "عرض {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "إظهار علامة تبويب الدورة",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "التذكيرات التالية",
                 "empty": "لا مزيد من الجرعات اليوم"
-            }
+            },
+            "heroTitle": "لمحة الصحة",
+            "heroDue": "اليوم",
+            "heroAdherence": "التزام 14 يوم",
+            "heroStreak": "سلسلة الأيام"
         },
         "vitals": {
             "title": "المؤشرات الحيوية",

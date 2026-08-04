@@ -203,7 +203,8 @@
         "housekeepingVisitsMonth": "{{count}} kunjungan bulan ini",
         "housekeepingUnpaid": "{{amount}} belum dibayar",
         "widgetError": "Tidak dapat dimuat",
-        "savingsGoal": "Target tabungan"
+        "savingsGoal": "Target tabungan",
+        "heroSubtitle": "Rumah tangga dalam sekejap — ketuk kartu di bawah atau sesuaikan widget."
     },
     "tasks": {
         "manageCategories": "Kelola kategori",
@@ -1180,7 +1181,10 @@
         "statsTrendSummary": "Tren selama {{periods}} periode · Pemasukan {{income}} · Pengeluaran {{expenses}} · Puncak {{peak}}",
         "statsDonutSummary": "{{count}} segmen · Terbesar: {{top}} ({{pct}} %) · Total {{total}}",
         "statsPointsLabel": "Nilai kurva tren",
-        "statsPointLabel": "{{period}}: pemasukan {{income}}, pengeluaran {{expenses}}"
+        "statsPointLabel": "{{period}}: pemasukan {{income}}, pengeluaran {{expenses}}",
+        "monthCalendarTitle": "Kalender bulan",
+        "monthCalendarClear": "Semua hari",
+        "dayFilterLabel": "Menampilkan {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Tampilkan tab siklus",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Pengingat berikutnya",
                 "empty": "Tidak ada minum obat lagi hari ini"
-            }
+            },
+            "heroTitle": "Ringkasan kesehatan",
+            "heroDue": "Hari ini",
+            "heroAdherence": "Kepatuhan 14 hari",
+            "heroStreak": "Rangkaian hari"
         },
         "vitals": {
             "title": "Tanda vital",

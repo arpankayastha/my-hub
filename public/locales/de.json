@@ -203,7 +203,8 @@
         "housekeepingVisitsMonth": "{{count}} Besuche im Monat",
         "housekeepingUnpaid": "{{amount}} offen",
         "widgetError": "Konnte nicht geladen werden",
-        "savingsGoal": "Sparziel"
+        "savingsGoal": "Sparziel",
+        "heroSubtitle": "Dein Haushalt im Überblick — tippe auf eine Karte unten oder passe Widgets an."
     },
     "tasks": {
         "manageCategories": "Kategorien verwalten",
@@ -1187,7 +1188,10 @@
         "statsTrendSummary": "Verlauf über {{periods}} Zeitabschnitte · Einnahmen {{income}} · Ausgaben {{expenses}} · Höchstwert {{peak}}",
         "statsDonutSummary": "{{count}} Segmente · Größtes: {{top}} ({{pct}} %) · Gesamt {{total}}",
         "statsPointsLabel": "Werte der Trendkurve",
-        "statsPointLabel": "{{period}}: Einnahmen {{income}}, Ausgaben {{expenses}}"
+        "statsPointLabel": "{{period}}: Einnahmen {{income}}, Ausgaben {{expenses}}",
+        "monthCalendarTitle": "Monatskalender",
+        "monthCalendarClear": "Alle Tage anzeigen",
+        "dayFilterLabel": "Anzeige: {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Zyklus-Tab anzeigen",
@@ -3010,7 +3014,11 @@
             "reminders": {
                 "title": "Nächste Erinnerungen",
                 "empty": "Heute keine weiteren Einnahmen"
-            }
+            },
+            "heroTitle": "Gesundheits-Snapshot",
+            "heroDue": "Heute fällig",
+            "heroAdherence": "14-Tage-Treue",
+            "heroStreak": "Tage-Serie"
         },
         "vitals": {
             "title": "Vitalwerte",

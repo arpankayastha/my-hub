@@ -203,7 +203,8 @@
         "housekeepingVisitsMonth": "이번 달 {{count}}회 방문",
         "housekeepingUnpaid": "{{amount}} 미결제",
         "widgetError": "불러올 수 없습니다",
-        "savingsGoal": "저축 목표"
+        "savingsGoal": "저축 목표",
+        "heroSubtitle": "가정 한눈에 — 아래 카드를 탭하거나 위젯을 설정하세요."
     },
     "tasks": {
         "manageCategories": "카테고리 관리",
@@ -1180,7 +1181,10 @@
         "statsTrendSummary": "{{periods}}개 기간 추이 · 수입 {{income}} · 지출 {{expenses}} · 최고 {{peak}}",
         "statsDonutSummary": "{{count}}개 구간 · 최대: {{top}}({{pct}}%) · 합계 {{total}}",
         "statsPointsLabel": "추이 그래프 값",
-        "statsPointLabel": "{{period}}: 수입 {{income}}, 지출 {{expenses}}"
+        "statsPointLabel": "{{period}}: 수입 {{income}}, 지출 {{expenses}}",
+        "monthCalendarTitle": "월간 달력",
+        "monthCalendarClear": "전체 날짜",
+        "dayFilterLabel": "표시: {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "주기 탭 표시",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "다음 알림",
                 "empty": "오늘 남은 복용 없음"
-            }
+            },
+            "heroTitle": "건강 스냅샷",
+            "heroDue": "오늘 복용",
+            "heroAdherence": "14일 순응",
+            "heroStreak": "연속 일수"
         },
         "vitals": {
             "title": "생체 신호",

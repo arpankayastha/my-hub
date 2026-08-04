@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} візитів цього місяця",
         "housekeepingUnpaid": "{{amount}} до сплати",
         "widgetError": "Не вдалося завантажити",
-        "savingsGoal": "Ціль заощаджень"
+        "savingsGoal": "Ціль заощаджень",
+        "heroSubtitle": "Ваш дім одним поглядом — торкніться картки нижче або налаштуйте віджети."
     },
     "tasks": {
         "manageCategories": "Керування категоріями",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Динаміка за {{periods}} періодів · Доходи {{income}} · Витрати {{expenses}} · Максимум {{peak}}",
         "statsDonutSummary": "Сегментів: {{count}} · Найбільший: {{top}} ({{pct}} %) · Разом {{total}}",
         "statsPointsLabel": "Значення кривої",
-        "statsPointLabel": "{{period}}: доходи {{income}}, витрати {{expenses}}"
+        "statsPointLabel": "{{period}}: доходи {{income}}, витрати {{expenses}}",
+        "monthCalendarTitle": "Календар місяця",
+        "monthCalendarClear": "Усі дні",
+        "dayFilterLabel": "Показано {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Показати вкладку циклу",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Наступні нагадування",
                 "empty": "На сьогодні прийомів більше немає"
-            }
+            },
+            "heroTitle": "Огляд здоров'я",
+            "heroDue": "На сьогодні",
+            "heroAdherence": "Дотримання 14 днів",
+            "heroStreak": "Серія днів"
         },
         "vitals": {
             "title": "Показники",

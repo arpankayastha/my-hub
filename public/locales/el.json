@@ -191,7 +191,8 @@
         "housekeepingVisitsMonth": "{{count}} επισκέψεις αυτόν τον μήνα",
         "housekeepingUnpaid": "{{amount}} οφειλόμενα",
         "widgetError": "Δεν ήταν δυνατή η φόρτωση",
-        "savingsGoal": "Στόχος αποταμίευσης"
+        "savingsGoal": "Στόχος αποταμίευσης",
+        "heroSubtitle": "Το νοικοκυριό σας με μια ματιά — πατήστε μια κάρτα παρακάτω ή προσαρμόστε widgets."
     },
     "tasks": {
         "manageCategories": "Διαχείριση κατηγοριών",
@@ -1168,7 +1169,10 @@
         "statsTrendSummary": "Εξέλιξη σε {{periods}} περιόδους · Έσοδα {{income}} · Έξοδα {{expenses}} · Μέγιστο {{peak}}",
         "statsDonutSummary": "{{count}} τμήματα · Μεγαλύτερο: {{top}} ({{pct}} %) · Σύνολο {{total}}",
         "statsPointsLabel": "Τιμές της καμπύλης",
-        "statsPointLabel": "{{period}}: έσοδα {{income}}, έξοδα {{expenses}}"
+        "statsPointLabel": "{{period}}: έσοδα {{income}}, έξοδα {{expenses}}",
+        "monthCalendarTitle": "Ημερολόγιο μήνα",
+        "monthCalendarClear": "Όλες οι ημέρες",
+        "dayFilterLabel": "Εμφάνιση {{date}}"
     },
     "settings": {
         "healthCycleEnableLabel": "Εμφάνιση καρτέλας κύκλου",
@@ -3003,7 +3007,11 @@
             "reminders": {
                 "title": "Επόμενες υπενθυμίσεις",
                 "empty": "Καμία άλλη λήψη για σήμερα"
-            }
+            },
+            "heroTitle": "Στιγμιότυπο υγείας",
+            "heroDue": "Σήμερα",
+            "heroAdherence": "Συμμόρφωση 14 ημερών",
+            "heroStreak": "Σειρά ημερών"
         },
         "vitals": {
             "title": "Ζωτικά σημεία",
