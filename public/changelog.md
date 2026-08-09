@@ -2,6 +2,12 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.35] - 2026-08-09
+
+### Fixed
+- Note delete asks for confirmation.
+- Each secret note unlocks on its own; other secret notes stay hidden.
+
 ## [1.1.34] - 2026-08-09
 
 ### Added

@@ -776,7 +776,7 @@
         "filterKindLabel": "Note type",
         "groupSecret": "Secret notes",
         "secretLockedPlaceholder": "Unlock to view",
-        "lockVault": "Lock sensitive content",
+        "lockVault": "Lock all secret notes",
         "unlockVault": "Unlock sensitive content"
     },
     "contacts": {
@@ -3669,6 +3669,7 @@
         "unlockDetail": "Budget amounts and secret notes are shown only after you unlock.",
         "unlockFailed": "Wrong PIN.",
         "setupPinTitle": "Set up lock",
-        "setupPinDetail": "Choose a PIN. Fingerprint unlock can be added when your device supports it."
+        "setupPinDetail": "Choose a PIN. Fingerprint unlock can be added when your device supports it.",
+        "unlockNoteDetail": "Only this note will be shown. Other secret notes stay hidden."
     }
 }

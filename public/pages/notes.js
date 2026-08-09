@@ -5,12 +5,13 @@
  */
 
 import { api } from '/api.js';
-import { openModal as openSharedModal, closeModal, btnError, advancedSection, reportFieldError } from '/components/modal.js';
+import { openModal as openSharedModal, closeModal, confirmModal, btnError, advancedSection, reportFieldError } from '/components/modal.js';
 import { stagger, vibrate, scheduleUndoableDelete } from '/utils/ux.js';
 import {
-  isSensitiveUnlocked,
-  toggleSensitiveLock,
-  ensureSensitiveUnlocked,
+  isSecretNoteUnlocked,
+  hasUnlockedSecretNotes,
+  lockAllSecretNotes,
+  unlockSecretNote,
 } from '/utils/sensitive-vault.js';
 import { t } from '/i18n.js';
 import { esc, renderMarkdownLight } from '/utils/html.js';
@@ -49,7 +50,7 @@ function isNoteSecret(note) {
 }
 
 function noteContentVisible(note) {
-  return !isNoteSecret(note) || isSensitiveUnlocked();
+  return !isNoteSecret(note) || isSecretNoteUnlocked(note.id);
 }
 
 // --------------------------------------------------------
@@ -74,9 +75,9 @@ export async function render(container, { user }) {
         <h1 class="page-toolbar__title">${t('notes.title')}</h1>
         ${renderPageSearch({ id: 'notes-search', label: t('notes.searchPlaceholder'), placeholder: t('notes.searchPlaceholder'), value: state.filterQuery, clearLabel: t('common.searchClear'), className: 'notes-toolbar__search' })}
         <button type="button" class="btn btn--icon notes-vault-toggle" id="notes-vault-toggle"
-                aria-pressed="${isSensitiveUnlocked() ? 'false' : 'true'}"
-                aria-label="${isSensitiveUnlocked() ? t('notes.lockVault') : t('notes.unlockVault')}">
-          <i data-lucide="${isSensitiveUnlocked() ? 'lock-open' : 'lock'}" class="icon-md" aria-hidden="true"></i>
+                aria-pressed="${hasUnlockedSecretNotes() ? 'true' : 'false'}"
+                aria-label="${t('notes.lockVault')}">
+          <i data-lucide="${hasUnlockedSecretNotes() ? 'lock-open' : 'lock'}" class="icon-md" aria-hidden="true"></i>
         </button>
         <button class="btn btn--primary toolbar-new-btn" id="notes-add-btn">
           <i data-lucide="plus" class="icon-md" aria-hidden="true"></i>
@@ -116,8 +117,8 @@ export async function render(container, { user }) {
     const card = e.target.closest('.note-card[data-id]');
     if (card) {
       const note = state.notes.find((n) => n.id === parseInt(card.dataset.id, 10));
-      if (note && isNoteSecret(note) && !isSensitiveUnlocked()) {
-        const ok = await ensureSensitiveUnlocked();
+      if (note && isNoteSecret(note) && !isSecretNoteUnlocked(note.id)) {
+        const ok = await unlockSecretNote(note.id);
         if (!ok) return;
         updateVaultToggle();
         renderGrid();
@@ -136,8 +137,8 @@ export async function render(container, { user }) {
   _container.querySelector('#notes-add-btn').addEventListener('click', addHandler);
   _container.querySelector('#fab-new-note').addEventListener('click', addHandler);
 
-  _container.querySelector('#notes-vault-toggle')?.addEventListener('click', async () => {
-    await toggleSensitiveLock();
+  _container.querySelector('#notes-vault-toggle')?.addEventListener('click', () => {
+    lockAllSecretNotes();
     updateVaultToggle();
     renderGrid();
   });
@@ -159,11 +160,11 @@ export async function render(container, { user }) {
 function updateVaultToggle() {
   const btn = _container?.querySelector('#notes-vault-toggle');
   if (!btn) return;
-  const unlocked = isSensitiveUnlocked();
-  btn.setAttribute('aria-pressed', unlocked ? 'false' : 'true');
-  btn.setAttribute('aria-label', unlocked ? t('notes.lockVault') : t('notes.unlockVault'));
+  const anyUnlocked = hasUnlockedSecretNotes();
+  btn.setAttribute('aria-pressed', anyUnlocked ? 'true' : 'false');
+  btn.setAttribute('aria-label', t('notes.lockVault'));
   const icon = btn.querySelector('[data-lucide]');
-  if (icon) icon.setAttribute('data-lucide', unlocked ? 'lock-open' : 'lock');
+  if (icon) icon.setAttribute('data-lucide', anyUnlocked ? 'lock-open' : 'lock');
   if (window.lucide) lucide.createIcons({ el: btn });
 }
 
@@ -244,7 +245,7 @@ function visibleNotes() {
     if (state.filterKind === 'regular' && isNoteSecret(n)) return false;
     if (!q) return true;
     const titleMatch = (n.title || '').toLowerCase().includes(q);
-    if (isNoteSecret(n) && !isSensitiveUnlocked()) return titleMatch;
+    if (isNoteSecret(n) && !isSecretNoteUnlocked(n.id)) return titleMatch;
     return titleMatch || (n.content || '').toLowerCase().includes(q);
   });
 }
@@ -835,6 +836,12 @@ async function togglePin(id) {
 }
 
 async function deleteNote(id) {
+  const confirmed = await confirmModal(t('notes.deleteConfirm'), {
+    danger: true,
+    confirmLabel: t('common.delete'),
+  });
+  if (!confirmed) return;
+
   closeModal({ force: true });
   const note = state.notes.find((n) => n.id === id);
   state.notes = state.notes.filter((n) => n.id !== id);
