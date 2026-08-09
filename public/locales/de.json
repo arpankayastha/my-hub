@@ -23,6 +23,9 @@
         "errorOccurred": "Etwas ist schiefgelaufen.",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten.",
         "errorDetails": "Technische Details",
+        "errorCopy": "Fehlerbericht kopieren",
+        "errorCopied": "Kopiert",
+        "errorCopyFailed": "Kopieren fehlgeschlagen — Text unten markieren und manuell kopieren",
         "errorGeneric": "Ein Fehler ist aufgetreten.",
         "updateAvailable": "Update verfügbar - lade neu..",
         "titleRequired": "Titel ist erforderlich",
@@ -106,6 +109,8 @@
     },
     "dashboard": {
         "title": "Übersicht",
+        "heroSubtitle": "Dein Haushalt im Überblick",
+        "widgetsTitle": "Module",
         "greetingMorning": "Guten Morgen, {{name}}",
         "greetingDay": "Guten Tag, {{name}}",
         "greetingEvening": "Guten Abend, {{name}}",
@@ -191,8 +196,12 @@
         "noRewards": "Noch keine Belohnungen eingerichtet",
         "rewardsPending": "{{count}} zu bestätigen",
         "healthNoMeds": "Noch keine Medikamente",
+        "healthNoData": "Noch keine Gesundheitsdaten für dieses Profil",
         "healthNoDosesToday": "Heute keine Dosen fällig",
         "healthAllTaken": "Alle Dosen genommen",
+        "healthGlanceLabel": "Medikamente heute",
+        "healthGlanceTaken": "{{taken}}/{{total}} genommen",
+        "healthGlanceNone": "Keine Dosen heute",
         "healthDosesProgress": "{{taken}} von {{total}} Dosen genommen",
         "healthRefill": "{{count}} nachbestellen",
         "housekeepingNone": "Keine Haushaltshilfe erfasst",
@@ -889,11 +898,19 @@
         "expensesOnlyHint": "Nur Ausgaben anzeigen, Einnahmen und Saldo ausblenden",
         "hideAmounts": "Beträge verbergen",
         "hideAmountsHint": "Geldbeträge auf dem Bildschirm maskieren (sensible Daten)",
+        "monthHero": {
+            "transactions": "{{count}} Transaktionen"
+        },
+        "moreActions": "Monatsaktionen",
         "copyFromPrevMonth": "Vom Vormonat kopieren",
-        "copyFromPrevMonthHint": "Einmalige Einträge vom Vormonat in diesen Monat kopieren (wiederkehrende erscheinen automatisch)",
+        "copyFromPrevMonthHint": "Einmalige Einträge vom Vormonat in diesen Monat kopieren",
         "copyFromPrevMonthDone": "{count} Einträge vom Vormonat kopiert",
         "copyFromPrevMonthEmpty": "Nichts zu kopieren — im Vormonat keine einmaligen Einträge oder sie existieren hier bereits",
-        "recurringAutoHint": "Wiederkehrende Einträge werden automatisch erzeugt, wenn du einen künftigen Monat öffnest.",
+        "applyRecurring": "Wiederkehrende hier anwenden",
+        "applyRecurringHint": "Diesen Monat mit wiederkehrenden Budgetzeilen füllen (für Vorausplanung)",
+        "applyRecurringDone": "{count} wiederkehrende Einträge in diesen Monat übernommen",
+        "applyRecurringEmpty": "Keine wiederkehrenden Einträge für diesen Monat",
+        "recurringAutoHint": "Wiederkehrende Einträge werden nur für den nächsten Monat fortgeschrieben, wenn du ihn öffnest. „Wiederkehrende hier anwenden“ plant weiter voraus.",
         "byCategory": "Nach Kategorie",
         "chartSummary": "{{count}} Kategorien · Größte: {{top}} ({{pct}} %)",
         "transactions": "Transaktionen",
@@ -1226,6 +1243,7 @@
         "rewardsDefaultPointsRebased": "{{count}} Aufgaben aktualisiert.",
         "rewardsDefaultPointsRebased_one": "{{count}} Aufgabe aktualisiert.",
         "title": "Einstellungen",
+        "appVersion": "Version {{version}}",
         "navigationLabel": "Einstellungsnavigation",
         "searchLabel": "Einstellungen durchsuchen",
         "searchResults": "{{count}} Einstellungen gefunden",
@@ -2999,6 +3017,15 @@
             "loadError": "Übersicht konnte nicht geladen werden",
             "loadErrorDesc": "Bitte versuche es erneut.",
             "retry": "Erneut versuchen",
+            "quickTabs": "Bereich springen",
+            "monthHero": {
+                "label": "Monatsübersicht",
+                "subtitle": "Deine Gesundheit im Überblick diesen Monat",
+                "adherence": "{{days}}-Tage-Treue",
+                "dueToday": "Heute fällig",
+                "streak": "Tage in Folge",
+                "noAdherence": "—"
+            },
             "dueToday": {
                 "title": "Heute fällig"
             },
@@ -3315,6 +3342,7 @@
             "medsLogs": "Einnahmeprotokoll",
             "hint": "Lädt die Daten des gewählten Zeitraums als CSV-Datei herunter."
         },
+        "disclaimerSummary": "Medizinischer Hinweis",
         "disclaimer": "Nur zur persönlichen Dokumentation. Kein Ersatz für ärztliche Beratung, Diagnose oder Behandlung.",
         "readOnlyBanner": "Du siehst die Daten von {{name}} — nur Lesen.",
         "cycle": {
@@ -3362,6 +3390,8 @@
                 "inDays": "in {{count}} Tagen",
                 "overdue": "{{count}} Tage überfällig",
                 "nextPeriod": "Nächste Periode",
+                "currentCycle": "Aktueller Zyklus",
+                "periodStarted": "Begonnen {{date}}",
                 "fertileWindow": "Fruchtbares Fenster",
                 "ovulation": "Eisprung",
                 "avgCycle": "Ø Zykluslänge",
@@ -3399,9 +3429,11 @@
                 "sun": "So"
             },
             "legend": {
-                "period": "Periode",
-                "predicted": "Vorhergesagt",
+                "period": "Erfasste Periode",
+                "predicted": "Vorhergesagte Periode",
                 "fertile": "Fruchtbar",
+                "fertileCurrent": "Fruchtbar (dieser Zyklus)",
+                "fertilePredicted": "Fruchtbar (vorhergesagt)",
                 "ovulation": "Eisprung",
                 "today": "Heute",
                 "logged": "Eintrag"

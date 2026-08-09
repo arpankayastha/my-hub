@@ -791,13 +791,13 @@
  * ================================================================ */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    /* Neutral-Skala — tiefer warm (Option A) */
-    --_neutral-50:  #141413;
-    --_neutral-100: #1A1A18;
-    --_neutral-150: #222220;
-    --_neutral-200: #2A2A28;
-    --_neutral-250: #333331;
-    --_neutral-300: #3D3D3A;
+    /* Neutral-Skala — true black dark UI */
+    --_neutral-50:  #000000;
+    --_neutral-100: #000000;
+    --_neutral-150: #0a0a0a;
+    --_neutral-200: #111111;
+    --_neutral-250: #181818;
+    --_neutral-300: #222222;
     --_neutral-400: #636360;
     --_neutral-500: #8E8D89;
     --_neutral-600: #AEADB0;
@@ -806,26 +806,19 @@
     --_neutral-900: #F5F4F1;
     --_neutral-950: #FAFAF8;
 
-    --_color-surface:          #222220;
-    --_color-surface-3:        #2A2A28;
-    --_color-surface-elevated: #2A2A28;
-    --_color-surface-hover:    #333331;
-    --_color-surface-work:     #242422;
-    --_color-surface-raised:   #2E2E2B;
-    --_color-surface-glass:    rgba(34, 34, 32, 0.78);
+    --_color-surface:          #0c0c0c;
+    --_color-surface-3:        #111111;
+    --_color-surface-elevated: #141414;
+    --_color-surface-hover:    #1a1a1a;
+    --_color-surface-work:     #080808;
+    --_color-surface-raised:   #161616;
+    --_color-surface-glass:    rgba(10, 10, 10, 0.62);
 
-    /* Kanten: im Dark eigenständig gesetzt statt aus der Neutral-Rampe
-     * abgeleitet. Die Rampe liegt hier so dicht an --color-surface (#222220),
-     * dass --color-border-subtle exakt DIE FLÄCHENFARBE traf - eine Kartenkante
-     * in der Farbe ihrer eigenen Fläche (1.00:1). Karten, Listenzeilen und
-     * Formfelder hatten damit im Dark faktisch keine Begrenzung; gemessen
-     * Critique 2026-07-29 an .recipe-card, .pantry-row und .quick-add__qty.
-     * Ratios gegen --color-surface; gegen --color-bg (#1A1A18) jeweils höher. */
-    --color-border-subtle: #3A3A37;  /* 1.40:1 - Trenner, ruhige Kartenkante */
-    --color-border:        #4A4A46;  /* 1.79:1 - Standardkante, Formfelder */
-    --color-border-strong: #6B6B68;  /* 2.98:1 - Hover, betonte Rahmen */
+    --color-border-subtle: #1c1c1c;
+    --color-border:        #2a2a2a;
+    --color-border-strong: #404040;
 
-    --_sidebar-bg:           #141413;
+    --_sidebar-bg:           #000000;
     --_sidebar-shadow-light: rgba(255, 255, 255, 0.04);
     --_sidebar-shadow-dark:  rgba(0, 0, 0, 0.4);
 
@@ -946,13 +939,13 @@
 }
 
 [data-theme="dark"] {
-    /* Neutral-Skala — tiefer warm (Option A) */
-    --_neutral-50:  #141413;
-    --_neutral-100: #1A1A18;
-    --_neutral-150: #222220;
-    --_neutral-200: #2A2A28;
-    --_neutral-250: #333331;
-    --_neutral-300: #3D3D3A;
+    /* Neutral-Skala — true black dark UI */
+    --_neutral-50:  #000000;
+    --_neutral-100: #000000;
+    --_neutral-150: #0a0a0a;
+    --_neutral-200: #111111;
+    --_neutral-250: #181818;
+    --_neutral-300: #222222;
     --_neutral-400: #636360;
     --_neutral-500: #8E8D89;
     --_neutral-600: #AEADB0;   /* WCAG AA: 7.14:1 auf #222220 */
@@ -962,27 +955,20 @@
     --_neutral-950: #FAFAF8;
 
     /* Semantische Aliase folgen automatisch via var(--neutral-*) */
-    --_color-surface:          #222220;
-    --_color-surface-3:        #2A2A28;
-    --_color-surface-elevated: #2A2A28;
-    --_color-surface-hover:    #333331;
-    --_color-surface-work:     #242422;
-    --_color-surface-raised:   #2E2E2B;
-    --_color-surface-glass:    rgba(34, 34, 32, 0.78);
+    --_color-surface:          #0c0c0c;
+    --_color-surface-3:        #111111;
+    --_color-surface-elevated: #141414;
+    --_color-surface-hover:    #1a1a1a;
+    --_color-surface-work:     #080808;
+    --_color-surface-raised:   #161616;
+    --_color-surface-glass:    rgba(10, 10, 10, 0.62);
 
-    /* Kanten: im Dark eigenständig gesetzt statt aus der Neutral-Rampe
-     * abgeleitet. Die Rampe liegt hier so dicht an --color-surface (#222220),
-     * dass --color-border-subtle exakt DIE FLÄCHENFARBE traf - eine Kartenkante
-     * in der Farbe ihrer eigenen Fläche (1.00:1). Karten, Listenzeilen und
-     * Formfelder hatten damit im Dark faktisch keine Begrenzung; gemessen
-     * Critique 2026-07-29 an .recipe-card, .pantry-row und .quick-add__qty.
-     * Ratios gegen --color-surface; gegen --color-bg (#1A1A18) jeweils höher. */
-    --color-border-subtle: #3A3A37;  /* 1.40:1 - Trenner, ruhige Kartenkante */
-    --color-border:        #4A4A46;  /* 1.79:1 - Standardkante, Formfelder */
-    --color-border-strong: #6B6B68;  /* 2.98:1 - Hover, betonte Rahmen */
+    --color-border-subtle: #1c1c1c;
+    --color-border:        #2a2a2a;
+    --color-border-strong: #404040;
 
     /* Sidebar */
-    --_sidebar-bg:           #141413;
+    --_sidebar-bg:           #000000;
     --_sidebar-shadow-light: rgba(255, 255, 255, 0.04);
     --_sidebar-shadow-dark:  rgba(0, 0, 0, 0.4);
 

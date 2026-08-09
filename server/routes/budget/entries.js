@@ -14,10 +14,69 @@ import {
   generateRecurringInstances, RECURRENCE_INTERVAL_KEYS, effectiveMonthly,
   validCategoryKeys, defaultCategory, validateSubcategory, validateAccountRef,
   entryWithLoanMeta, refreshLoanStatus, fromBudgetAmount,
+  loadBudgetMeta, normalizeLang, budgetEntryExportLabels,
 } from './helpers.js';
 
 const log = createLogger('Budget');
 const router = express.Router();
+
+function cloneMonthEntries(database, fromMonth, toMonth, userId) {
+  if (!MONTH_RE.test(fromMonth) || !MONTH_RE.test(toMonth)) {
+    throw Object.assign(new Error('month must be YYYY-MM'), { status: 400 });
+  }
+  if (fromMonth === toMonth) {
+    throw Object.assign(new Error('Source and target month must differ.'), { status: 400 });
+  }
+  const from = `${fromMonth}-01`;
+  const to = `${fromMonth}-31`;
+  const sources = database.prepare(`
+    SELECT * FROM budget_entries
+    WHERE date BETWEEN ? AND ?
+      AND recurrence_parent_id IS NULL
+      AND is_recurring = 0
+  `).all(from, to);
+  const [ty, tm] = toMonth.split('-').map(Number);
+  const lastDay = new Date(ty, tm, 0).getDate();
+  let copied = 0;
+  const insert = database.prepare(`
+    INSERT INTO budget_entries
+      (title, amount, category, subcategory, date, account_id, is_recurring,
+       created_by, owner_id, visibility)
+    VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)
+  `);
+  for (const src of sources) {
+    const day = Math.min(parseInt(src.date.slice(8, 10), 10), lastDay);
+    const newDate = `${toMonth}-${String(day).padStart(2, '0')}`;
+    const dup = database.prepare(`
+      SELECT 1 FROM budget_entries
+      WHERE date = ? AND title = ? AND amount = ? AND category = ?
+    `).get(newDate, src.title, src.amount, src.category);
+    if (dup) continue;
+    insert.run(
+      src.title,
+      src.amount,
+      src.category,
+      src.subcategory || '',
+      newDate,
+      src.account_id ?? null,
+      userId,
+      src.owner_id ?? src.created_by ?? userId,
+      src.visibility || 'shared',
+    );
+    copied += 1;
+  }
+  return copied;
+}
+
+function countRecurringApplied(database, month) {
+  const monthStart = `${month}-01`;
+  const monthEnd = `${month}-31`;
+  return database.prepare(`
+    SELECT COUNT(*) AS n FROM budget_entries
+    WHERE recurrence_parent_id IS NOT NULL
+      AND date BETWEEN ? AND ?
+  `).get(monthStart, monthEnd).n;
+}
 
 /**
  * GET /api/v1/budget/summary
@@ -99,6 +158,8 @@ router.get('/export', (req, res) => {
       ? `budget-${from}_${to}.csv`
       : `budget-${req.query.month || thisMonthLocalKey()}.csv`;
     const filter = budgetFilter(req, 'b');
+    const lang = normalizeLang(req.query.lang);
+    const { categoryLabel, subcategoryLabel } = budgetEntryExportLabels(loadBudgetMeta(), lang);
     const entries = db.get().prepare(`
       SELECT b.*, u.display_name AS creator_name
       FROM budget_entries b
@@ -122,8 +183,8 @@ router.get('/export', (req, res) => {
         // zerreißt). Punkt-Dezimal ist maschinenlesbar, überall parsebar und
         // deckt sich mit der region-abhängigen Anzeige für Punkt-Locales (#521).
         e.amount.toFixed(2),
-        e.category,
-        e.subcategory || '',
+        csvSafe(categoryLabel(e.category)),
+        e.subcategory ? csvSafe(subcategoryLabel(e.subcategory)) : '',
         e.is_recurring ? 'Yes' : 'No',
         csvSafe(e.creator_name),
       ].join(',')
@@ -202,6 +263,45 @@ router.get('/', (req, res) => {
 
     const entries = db.get().prepare(sql).all(...params);
     res.json({ data: entries });
+  } catch (err) {
+    log.error('', err);
+    res.status(500).json({ error: 'Internal error', code: 500 });
+  }
+});
+
+/**
+ * POST /api/v1/budget/clone-month
+ * Copy one-time entries from a source month into a target month.
+ * Body: { from_month, to_month }
+ */
+router.post('/clone-month', (req, res) => {
+  try {
+    const fromMonth = String(req.body.from_month || req.body.from || '').trim();
+    const toMonth = String(req.body.to_month || req.body.to || '').trim();
+    const copied = cloneMonthEntries(db.get(), fromMonth, toMonth, viewerId(req));
+    res.json({ data: { copied, from_month: fromMonth, to_month: toMonth } });
+  } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message, code: 400 });
+    log.error('', err);
+    res.status(500).json({ error: 'Internal error', code: 500 });
+  }
+});
+
+/**
+ * POST /api/v1/budget/apply-recurring
+ * Materialize recurring series into a target month (planning ahead).
+ * Body: { to_month }
+ */
+router.post('/apply-recurring', (req, res) => {
+  try {
+    const toMonth = String(req.body.to_month || req.body.month || '').trim();
+    if (!MONTH_RE.test(toMonth)) {
+      return res.status(400).json({ error: 'month must be YYYY-MM', code: 400 });
+    }
+    const before = countRecurringApplied(db.get(), toMonth);
+    generateRecurringInstances(db.get(), toMonth, { planning: true });
+    const after = countRecurringApplied(db.get(), toMonth);
+    res.json({ data: { created: after - before, to_month: toMonth } });
   } catch (err) {
     log.error('', err);
     res.status(500).json({ error: 'Internal error', code: 500 });
@@ -369,7 +469,8 @@ router.put('/:id/series', (req, res) => {
 
 /**
  * DELETE /api/v1/budget/:id/series
- * Löscht das Serien-Original und alle zugehörigen Instanzen.
+ * Beendet die Serie ab dem aktuellen Monat: künftige Instanzen werden entfernt,
+ * vergangene Monate bleiben als Historie erhalten.
  * Response: 204 No Content
  */
 router.delete('/:id/series', (req, res) => {
@@ -382,9 +483,22 @@ router.delete('/:id/series', (req, res) => {
     const parentId = entry.recurrence_parent_id ?? (entry.is_recurring ? entry.id : null);
     if (!parentId) return res.status(400).json({ error: 'Not a recurring entry.', code: 400 });
 
+    const parent = db.get().prepare('SELECT * FROM budget_entries WHERE id = ?').get(parentId);
+    if (!parent) return res.status(404).json({ error: 'Series parent not found', code: 404 });
+
+    const cutoff = new Date().toISOString().slice(0, 7) + '-01';
+
     db.get().transaction(() => {
-      db.get().prepare('DELETE FROM budget_entries WHERE recurrence_parent_id = ?').run(parentId);
-      db.get().prepare('DELETE FROM budget_entries WHERE id = ?').run(parentId);
+      db.get().prepare(`
+        DELETE FROM budget_entries WHERE recurrence_parent_id = ? AND date >= ?
+      `).run(parentId, cutoff);
+      if (parent.date >= cutoff) {
+        db.get().prepare('DELETE FROM budget_entries WHERE id = ?').run(parentId);
+      } else {
+        db.get().prepare(`
+          UPDATE budget_entries SET is_recurring = 0, recurrence_rule = NULL WHERE id = ?
+        `).run(parentId);
+      }
     })();
 
     res.status(204).end();

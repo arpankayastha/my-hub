@@ -1872,6 +1872,8 @@ test('route failures expose a localized recoverable alert instead of raw technic
 
   assert.match(router, /function renderError\(container,\s*err\)[\s\S]*state\.setAttribute\(['"]role['"],\s*['"]alert['"]\)/);
   assert.match(router, /desc\.textContent\s*=\s*friendlyError\(err\)/);
+  assert.match(router, /copyErrorReport|errorCopy/);
+  assert.match(router, /buildErrorReport\(err\)/);
   assert.match(router, /state\.focus\(\{\s*preventScroll:\s*true\s*\}\)/);
   assert.match(router, /Failed to fetch\|NetworkError\|Load failed/i);
   assert.match(router, /return t\(['"]common\.errorServer['"]\)/);
@@ -3604,11 +3606,14 @@ test('der neutralisierte Modal-Footer ist eine Klasse, kein Inline-Style', () =>
   assert.deepEqual(offenders, [], 'Modal-Footer inline neutralisiert — modal-panel__footer--plain verwenden');
 
   const layout = read('../public/styles/layout.css');
+  const modalJs = read('../public/components/modal.js');
   assert.match(
     layout,
     /\.modal-panel__footer\.modal-panel__footer--plain\s*\{/,
     'die --plain-Variante braucht Spezifität (0,2,0), sonst gewinnt die Basisregel',
   );
+  assert.match(modalJs, /modal-panel__footer--actions/);
+  assert.match(modalJs, /modal-actions.*pop\(\)/);
 });
 
 // Vier Primitives standen für dieselbe Boolean-Entscheidung nebeneinander:

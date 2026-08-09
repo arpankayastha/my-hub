@@ -11,7 +11,7 @@ import {
   verifyPasswordSimple, AVATAR_COLORS,
 } from './seed.js';
 import { ensureBudgetState, handleBudgetApi, computeDashboardBudget } from './budget-handlers.js';
-import { handleHealthApi } from './health-handlers.js';
+import { ensureHealthState, handleHealthApi } from './health-handlers.js';
 import { handleSplitExpensesApi } from './split-expenses-handlers.js';
 import { handleBirthdaysApi } from './birthdays-handlers.js';
 import { handleContactsApi } from './contacts-handlers.js';
@@ -286,7 +286,7 @@ function preferencesData(userId) {
     week_start: cfgGet('week_start') ?? 'monday',
     region: cfgGet('region') || null,
     app_name: cfgGet('app_name') ?? 'My Hub',
-    dashboard_widgets: parseJson(cfgGet('dashboard_widgets') ?? '[]', []),
+    dashboard_widgets: parseJson(cfgUserGet('dashboard_widgets', userId) ?? cfgGet('dashboard_widgets') ?? '[]', []),
     disabled_modules: parseDisabledModules(cfgGet('disabled_modules')),
     module_order: parseModuleOrder(cfgUserGet('module_order', userId) ?? cfgGet('module_order')),
     mobile_nav_order: parseMobileNavOrder(cfgUserGet('mobile_nav_order', userId)),
@@ -628,7 +628,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
   const effectiveUserId = effectiveAuthUserId();
 
   if (resource === 'preferences' && parts.length === 1) {
-    if (m === 'GET') return { data: preferencesData(userId) };
+    if (m === 'GET') return { data: preferencesData(effectiveUserId) };
     if (m === 'PUT') {
       const user = findUser(userId);
       if (body.visible_meal_types !== undefined) {
@@ -641,7 +641,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
       if (body.region !== undefined) cfgSet('region', body.region || '');
       if (body.app_name !== undefined) cfgSet('app_name', body.app_name);
       if (body.dashboard_widgets !== undefined) {
-        cfgSet('dashboard_widgets', JSON.stringify(body.dashboard_widgets));
+        cfgUserSet('dashboard_widgets', effectiveUserId, JSON.stringify(body.dashboard_widgets));
       }
       if (body.disabled_modules !== undefined) {
         if (user?.role !== 'admin') throw apiError('Admin access required.', 403);
@@ -675,7 +675,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
         cfgUserSet('calendar_default_assign_me', userId, body.calendar_default_assign_me ? '1' : '0');
       }
       await saveState();
-      return { data: preferencesData(userId) };
+      return { data: preferencesData(effectiveUserId) };
     }
   }
 
@@ -1273,4 +1273,5 @@ export async function initLocalStore() {
     const { resetState } = await import('./store.js');
     await resetState(createSeedState());
   }
+  ensureHealthState(state);
 }

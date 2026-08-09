@@ -2,7 +2,7 @@
 
 All notable changes to **My Hub** (this personal fork).
 
-## [1.1.18] - 2026-08-09
+## [1.1.34] - 2026-08-09
 
 ### Added
 - **Board: secret notes** — mark notes as secret (advanced options). Content stays blurred until you unlock with PIN or device fingerprint, same flow as revealing budget amounts.
@@ -12,136 +12,88 @@ All notable changes to **My Hub** (this personal fork).
 - Recurring-payment delete dialog: full-width stacked buttons on mobile so choices are not clipped.
 - Board note cards: aligned expand/delete action buttons.
 
-## [1.1.17] - 2026-08-02
-
-### Added
-- Budget month view: swipe left/right on the content area to change months (Budget and Plan tabs).
-
-## [1.1.16] - 2026-08-01
+## [1.1.33] - 2026-08-04
 
 ### Fixed
-- Personal → Account → My Profile save on GitHub Pages / local mode (`PATCH /auth/me/profile` and password change were missing from the local API).
+- Budget Statistics tab scrolls again (expense shares and full report reachable on mobile).
+- Health Cycle page: cleaner hero card, readable stat tiles, split ring labels, and improved mobile layout for today actions and calendar legend.
 
-## [1.1.15] - 2026-07-30
+## [1.1.32] - 2026-08-04
 
 ### Fixed
-- Household profile isolation: each profile (Arpan, Ranjan, Wifey, …) sees only their own budget, board notes, and assigned tasks — including the admin’s own profile in shared budget mode.
-- Profile switch now stores explicit self context so the default admin profile no longer shows other members’ data.
-- Health profile switch uses the same context API.
+- Health vitals modal: Save works again when the footer button sits outside the form (fixes “An unexpected error occurred” on submit).
+
+## [1.1.31] - 2026-08-04
+
+### Fixed
+- Budget CSV export: category and subcategory columns use the app language (income categories no longer show German keys like `Erwerbseinkommen`).
+- Health vitals: saving measurements works again in local/PWA mode (normalized IndexedDB `nextId`, validated POST body, reliable datetime read from the datepicker).
+- Health vitals: a successful save no longer shows a generic error when the follow-up refresh fails.
+
+## [1.1.30] - 2026-08-04
+
+### Fixed
+- Budget recurring: deleting an entire series keeps past months and only removes current/future instances (series ends instead of wiping history).
+- Budget recurring: new series no longer auto-fill when browsing future months; use “Apply recurring here” to plan ahead.
+
+## [1.1.29] - 2026-08-04
 
 ### Changed
-- Overview quick-actions (+): Budget, Health, and Board only (removed Task, Shopping, Calendar).
+- Budget month summary (income / expenses / balance): compact three-column row on mobile instead of stacked full-width tiles.
 
-## [1.1.14] - 2026-07-30
-
-### Fixed
-- Profile switch now scopes budget to the selected member even when household budget mode is **shared** (no more cumulative totals across profiles).
-- Budget list, summary, and dashboard widget filter by `owner_id` while acting as another household member.
-
-## [1.1.13] - 2026-07-30
+## [1.1.28] - 2026-08-04
 
 ### Fixed
-- Profile switch now scopes dashboard budget widget and greeting to the selected household member (local + server).
-- Save/edit family members in local/GitHub Pages mode (`PATCH /auth/users/:id` was missing → “Not found”).
-- Local user lookup uses numeric id matching so `acting_as` resolves reliably after context switch.
-
-## [1.1.12] - 2026-07-30
+- CSV export (Budget, Health, Statistics): downloads use the GitHub Pages base path and work in local/PWA mode instead of 404 on `github.io/api/...`.
+- Split expenses on GitHub Pages: groups persist in IndexedDB; group creation modal survives partial load failures.
+- Budget mobile tabs: full-width scroll row so Split is reachable; Split tab moved earlier in the list.
+- PWA icons regenerated from the current hub logo; apple-touch icon points to the correct asset.
 
 ### Changed
-- Household profile switcher moved from the More sheet to the Overview header (users icon beside widget customize). Opens a high-contrast member picker modal on mobile and desktop.
+- Budget header: profile switcher beside the module title (aligned with Health tab bar layout).
 
-## [1.1.11] - 2026-07-30
-
-### Added
-- Household profile switcher in mobile More sheet (PWA).
-
-### Removed
-- Budget “Copy from previous month” button.
-
-## [1.1.10] - 2026-07-30
+## [1.1.27] - 2026-08-04
 
 ### Fixed
-- Health page crash: restore missing `fromAppUrl` import (broken in 1.1.8).
-
-## [1.1.9] - 2026-07-30
-
-### Fixed
-- App stuck on loading screen after 1.1.8 (duplicate `isValidFamilyRole` broke module load on GitHub Pages).
-
-## [1.1.8] - 2026-07-30
-
-### Added
-- Household profile switcher for admins (manage each member's budget and health without re-login).
-- Extended family roles (spouse, wife, husband, mother, father, son, daughter, sibling).
-- Optional biometric lock when switching profiles (Settings → Account).
-
-## [1.1.7] - 2026-07-30
-
-### Fixed
-- Budget category names always use English labels again (income and expenses), regardless of region (e.g. Hindi India / INR) or UI language. Custom renames still work.
-
-## [1.1.6] - 2026-07-30
-
-### Fixed
-- Budget income categories show in the selected language (Hindi etc.) instead of German default names.
-- Category rename still works: only user-changed names override locale labels.
+- Budget shared mode: all household entries visible and editable; profile switch still scopes the view.
+- Dashboard widget layout stored per household profile (no longer overwrites every profile).
 
 ### Changed
-- Hindi locale: more budget expense category and subcategory labels translated.
+- Settings shows app version; standalone changelog page removed (release notes remain in `changelog.md` for version checks).
+- Budget and Health month overview share the same hero layout: stat chips, compact icon toolbar, overflow menu for copy/recurring/categories/CSV.
+- Health overview quick navigation tabs are icon-only (labels in tooltips and screen readers).
 
-## [1.1.5] - 2026-07-30
-
-### Fixed
-- Budget category rename now updates the displayed name (custom names no longer overridden by locale defaults).
-- Local/GitHub Pages mode: personal budget scopes (mine vs household) and per-member entry ownership.
-
-### Added
-- Personal budget mode in local storage: each family member can track private income/expenses; shared entries appear in the household view (enable in Settings → Budget mode).
-
-## [1.1.4] - 2026-07-30
+## [1.1.26] - 2026-08-04
 
 ### Fixed
-- Budget tab scrolling after hide-amount controls were added.
-- Recurring amount updates no longer change past months (series update keeps historical instances).
-- Dashboard budget widget respects hide-amounts preference.
+- Cycle calendar: no longer marks past dates as predicted period before your logged start; overdue predictions do not backfill red days you did not log.
+- Cycle calendar: fertile window and ovulation for the **current** cycle are shown correctly (not as next-month predictions).
 
 ### Changed
-- Hide amounts toggle is now an eye icon only (no text label).
+- Budget recurring: rolls forward one month at a time; “Apply recurring here” for planning ahead; past instances stay unchanged on edits.
+- Budget statistics: filters stay visible on empty years; summary cards show zeros instead of trapping the page.
+- Category/subcategory inline modals: solid panel on glass (no transparency overlap).
+- Health: profile switcher aligned with Budget; quick-jump tabs on overview; dashboard health widget shows vitals, meds, cycle, and vaccination-style calendar events per profile.
+- Cycle page: clearer ring labels (cycle day, period start date, next period date), horizontal timeline bar, and improved legend (logged vs predicted vs current cycle).
 
-## [1.1.3] - 2026-07-30
-
-### Added
-- Budget: hide/show amounts toggle for sensitive figures on screen.
-- Budget: “Copy from previous month” for one-time entries.
-- Local mode: full budget category/subcategory CRUD.
-- Local mode: recurring budget entries auto-materialize in future months.
-- Local mode: add family members from Settings → Administration → Family roles.
-
-### Fixed
-- Budget subcategory creation failed on GitHub Pages (missing local API routes).
-- Add member from system settings failed in local mode.
-
-## [1.1.2] - 2026-07-30
-
-### Added
-- Sapphire blue branding and hub-and-spoke logo (sidebar, login, PWA icons).
-
-### Fixed
-- Datepicker class name broken after My Hub rebrand (`MyHubDatepicker`).
-
-## [1.1.1] - 2026-07-30
-
-### Fixed
-- Repair `MyHubDatepicker` JavaScript identifier after bulk rebrand rename.
-
-## [1.1.0] - 2026-07-30
+## [1.1.25] - 2026-08-04
 
 ### Changed
-- Rebrand to **My Hub** (display name, PWA, locales, internal identifiers).
-- GitHub Pages base path: `/my-hub/`.
-- Browser-only IndexedDB build for personal family management.
+- Entry modals (Budget, Health vitals): compact mobile layout, title+amount side-by-side, category row with icon add button, sticky Save/Cancel footer, collapsible medical notice.
 
-## [1.0.0] - 2026-07-30
+## [1.1.24] - 2026-08-04
+
+### Changed
+- Route error page: full-width readable report panel (version, URL, time, stack), one-click copy, mobile-friendly layout.
+
+## [1.1.23] - 2026-08-04
 
 ### Added
-- Initial personal family planner on GitHub Pages with local storage.
+- Household profile switcher on Budget and Health (same users icon as Overview).
+- Overview hero glance chips for monthly budget balance and today's med adherence.
+- Budget and Health widgets shown by default on Overview.
+
+### Changed
+- Dark glass cards are more translucent on black so ambient blobs read stronger.
+- Mobile PWA layout for category manager and budget entry modal (stacked forms, touch targets, sheet-style inline modals).
+- Service worker precaches Budget page dependencies and profile-switcher; avoids serving SPA HTML when a JS module fetch fails offline (fixes spurious "Failed to fetch dynamically imported module" on Budget).

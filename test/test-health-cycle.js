@@ -15,7 +15,7 @@ const {
   MOOD_TYPES, moodType,
   PHASE,
   daysBetween, sortPeriodsAsc, cycleGaps, periodLengths,
-  cycleStats, predictCycle, buildCycleCalendar, cycleRing, pregnancyInfo,
+  cycleStats, predictCycle, buildCycleCalendar, cycleRing, pregnancyInfo, cycleAnchorStart,
 } = await import('../public/utils/health-cycle.js');
 
 // Baut eine Historie aus Startdaten mit fester Periodenlänge (Tage).
@@ -205,14 +205,53 @@ test('buildCycleCalendar: geloggte + vorhergesagte Periode, Eisprung, Flow, heut
   assert.equal(at('2026-06-02').flow, 'heavy');
   assert.equal(at('2026-06-02').hasLog, true);
   assert.equal(at('2026-06-15').isToday, true);
-  // Eisprung des Folgezyklus: nextStart 06-29 − 14 = 06-15.
+  // Eisprung des aktuellen Zyklus: nextStart 06-29 − 14 = 06-15.
   assert.equal(at('2026-06-15').phase, PHASE.OVULATION);
-  assert.equal(at('2026-06-15').predicted, true);
-  // Vorhergesagte Periode ab 06-29.
+  assert.equal(at('2026-06-15').predicted, false);
+  assert.equal(at('2026-06-15').currentCycle, true);
+  // Vorhergesagte Periode ab 06-29 (Zukunft).
   assert.equal(at('2026-06-29').phase, PHASE.MENSTRUATION);
   assert.equal(at('2026-06-29').predicted, true);
   // Fruchtbares Fenster (06-10..06-15) enthält 06-11.
   assert.equal(at('2026-06-11').phase, PHASE.FERTILE);
+  assert.equal(at('2026-06-11').currentCycle, true);
+});
+
+test('buildCycleCalendar: keine vorhergesagte Periode vor Periodenstart oder in der Vergangenheit', () => {
+  const hist = [{ id: 1, start_date: '2026-07-06', end_date: '2026-07-10' }];
+  const cal = buildCycleCalendar('2026-08-15', {
+    periods: hist,
+    todayKey: '2026-08-04',
+    weekStartsOn: 1,
+    settings: { cycle_length_avg: 26 },
+  });
+  const flat = cal.weeks.flat();
+  const at = (k) => flat.find((c) => c.dateKey === k);
+
+  // Überfällige Vorhersage (26-Tage-Zyklus → erwartet 01.08.) — Tage davor nicht rot.
+  assert.equal(at('2026-08-01').phase, null);
+  assert.equal(at('2026-08-02').phase, null);
+  assert.equal(at('2026-08-03').phase, null);
+
+  // Periode ab 03.08. geloggt → nur ab Starttag Menstruation.
+  const logged = buildCycleCalendar('2026-08-15', {
+    periods: [...hist, { id: 2, start_date: '2026-08-03', end_date: null }],
+    todayKey: '2026-08-04',
+    weekStartsOn: 1,
+    settings: { cycle_length_avg: 26 },
+  });
+  const flat2 = logged.weeks.flat();
+  const at2 = (k) => flat2.find((c) => c.dateKey === k);
+  assert.equal(at2('2026-08-01').phase, null);
+  assert.equal(at2('2026-08-02').phase, null);
+  assert.equal(at2('2026-08-03').phase, PHASE.MENSTRUATION);
+  assert.equal(at2('2026-08-03').predicted, false);
+});
+
+test('cycleAnchorStart: jüngster Start ≤ heute', () => {
+  const hist = periods(['2026-07-06', '2026-08-03'], 5);
+  assert.equal(cycleAnchorStart(hist, '2026-08-04'), '2026-08-03');
+  assert.equal(cycleAnchorStart(hist, '2026-07-15'), '2026-07-06');
 });
 
 // --------------------------------------------------------

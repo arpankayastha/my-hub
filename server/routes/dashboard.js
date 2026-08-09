@@ -284,12 +284,7 @@ router.get('/', (req, res) => {
     result.rewards = { standings: [], participantCount: 0, pending: 0 };
   }
 
-  // Gesundheit: heute fällige Dosen der EIGENEN Medikamente (private wie familiensichtbare)
-  // plus Nachbestell-Hinweis. Das Dashboard ist strikt persönlich: fremde Medikamente
-  // erscheinen nie, auch nicht mit visibility='family' (Issue #592); geteilte Medikamente
-  // bleiben der Health-Seite vorbehalten. Fälligkeit inline berechnet (days_mask, Zeitraum,
-  // Log-Status), da public/utils/health-meds.js browser-Pfade importiert und serverseitig
-  // nicht ladbar ist.
+  // Gesundheit: Medikamente, Vitalwerte und Zyklus-Snapshot für das Profil-Kontext.
   try {
     const meds = d.prepare(`
       SELECT id, name, stock_qty, refill_threshold
@@ -335,6 +330,60 @@ router.get('/', (req, res) => {
         else if (!nextDose || time < nextDose.time) nextDose = { name: med.name, time };
       }
     }
+
+    const vitalsRows = d.prepare(`
+      SELECT type, value_num, value_num2, value_num3, unit, measured_at
+      FROM health_vitals
+      WHERE user_id = ?
+      ORDER BY measured_at DESC
+      LIMIT 40
+    `).all(profileUserId);
+    const vitalsLatest = [];
+    const seenVital = new Set();
+    for (const row of vitalsRows) {
+      if (seenVital.has(row.type)) continue;
+      seenVital.add(row.type);
+      vitalsLatest.push({
+        type: row.type,
+        value_num: row.value_num,
+        value_num2: row.value_num2,
+        value_num3: row.value_num3,
+        unit: row.unit,
+        measured_at: row.measured_at,
+      });
+    }
+
+    let cycleNextPeriod = null;
+    let cycleDay = null;
+    const lastPeriod = d.prepare(`
+      SELECT start_date FROM cycle_periods
+      WHERE user_id = ? ORDER BY start_date DESC LIMIT 1
+    `).get(profileUserId);
+    const cycleSettings = d.prepare(`
+      SELECT cycle_length_avg, period_length_avg FROM cycle_settings WHERE user_id = ?
+    `).get(profileUserId);
+    if (lastPeriod?.start_date) {
+      const avgCycle = Number(cycleSettings?.cycle_length_avg) || 28;
+      const start = new Date(`${lastPeriod.start_date}T12:00:00`);
+      const next = new Date(start);
+      next.setDate(next.getDate() + avgCycle);
+      const nextKey = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+      const todayDate = new Date(`${todayLocalKey}T12:00:00`);
+      cycleNextPeriod = nextKey;
+      const periodStart = new Date(`${lastPeriod.start_date}T12:00:00`);
+      cycleDay = Math.max(1, Math.round((todayDate - periodStart) / 86400000) + 1);
+    }
+
+  const upcomingHealthEvents = d.prepare(`
+      SELECT title, start_datetime, icon
+      FROM calendar_events
+      WHERE assigned_to = ? OR created_by = ?
+        AND start_datetime >= ?
+        AND (icon = 'syringe' OR title LIKE '%🎂%' OR title LIKE '%vaccin%' OR title LIKE '%impf%')
+      ORDER BY start_datetime ASC
+      LIMIT 3
+    `).all(profileUserId, profileUserId, todayStr);
+
     result.health = {
       hasMeds: meds.length > 0,
       dosesTotal,
@@ -342,10 +391,19 @@ router.get('/', (req, res) => {
       dosesSkipped,
       nextDose,
       lowStockCount,
+      hasVitals: vitalsLatest.length > 0,
+      vitalsLatest,
+      hasCycle: Boolean(lastPeriod?.start_date),
+      cycleNextPeriod,
+      cycleDay,
+      upcomingEvents: upcomingHealthEvents,
     };
   } catch (err) {
     log.error('health error:', err.message);
-    result.health = { hasMeds: false, dosesTotal: 0, dosesTaken: 0, dosesSkipped: 0, nextDose: null, lowStockCount: 0 };
+    result.health = {
+      hasMeds: false, dosesTotal: 0, dosesTaken: 0, dosesSkipped: 0, nextDose: null, lowStockCount: 0,
+      hasVitals: false, vitalsLatest: [], hasCycle: false, cycleNextPeriod: null, cycleDay: null, upcomingEvents: [],
+    };
   }
 
   // Haushaltshilfe: Anwesenheitsstatus (offene Sitzung), Besuche im laufenden Monat,

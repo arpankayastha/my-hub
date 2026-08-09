@@ -23,6 +23,9 @@
         "errorOccurred": "Something went wrong.",
         "unexpectedError": "An unexpected error occurred.",
         "errorDetails": "Technical details",
+        "errorCopy": "Copy error report",
+        "errorCopied": "Copied",
+        "errorCopyFailed": "Could not copy — select the text below and copy manually",
         "errorGeneric": "An error occurred.",
         "updateAvailable": "Update available - reload the page to get the latest version.",
         "titleRequired": "Title is required",
@@ -97,6 +100,8 @@
     },
     "dashboard": {
         "title": "Overview",
+        "heroSubtitle": "Your household at a glance",
+        "widgetsTitle": "Modules",
         "greetingMorning": "Good morning, {{name}}",
         "greetingDay": "Good afternoon, {{name}}",
         "greetingEvening": "Good evening, {{name}}",
@@ -182,8 +187,12 @@
         "noRewards": "No rewards set up yet",
         "rewardsPending": "{{count}} to approve",
         "healthNoMeds": "No medications yet",
+        "healthNoData": "No health data for this profile yet",
         "healthNoDosesToday": "No doses due today",
         "healthAllTaken": "All doses taken",
+        "healthGlanceLabel": "Meds today",
+        "healthGlanceTaken": "{{taken}}/{{total}} taken",
+        "healthGlanceNone": "No doses today",
         "healthDosesProgress": "{{taken}} of {{total}} doses taken",
         "healthRefill": "{{count}} to reorder",
         "housekeepingNone": "No housekeeper recorded",
@@ -880,11 +889,19 @@
         "expensesOnlyHint": "Show only expenses, hide income and balance",
         "hideAmounts": "Hide amounts",
         "hideAmountsHint": "Mask currency amounts on screen (sensitive data)",
+        "monthHero": {
+            "transactions": "{{count}} transactions"
+        },
+        "moreActions": "Month actions",
         "copyFromPrevMonth": "Copy from previous month",
-        "copyFromPrevMonthHint": "Copy one-time entries from the previous month into this month (recurring entries appear automatically)",
+        "copyFromPrevMonthHint": "Copy one-time entries from the previous month into this month",
         "copyFromPrevMonthDone": "Copied {count} entries from the previous month",
         "copyFromPrevMonthEmpty": "Nothing to copy — previous month has no one-time entries or they already exist here",
-        "recurringAutoHint": "Recurring entries are created automatically when you open a future month.",
+        "applyRecurring": "Apply recurring here",
+        "applyRecurringHint": "Fill this month with your recurring budget lines (for planning ahead)",
+        "applyRecurringDone": "Applied {count} recurring entries to this month",
+        "applyRecurringEmpty": "No recurring entries to apply for this month",
+        "recurringAutoHint": "Recurring entries roll forward one month at a time when you open the next month. Use “Apply recurring here” to plan further ahead.",
         "byCategory": "By category",
         "chartSummary": "{{count}} categories · Largest: {{top}} ({{pct}}%)",
         "transactions": "Transactions",
@@ -1217,6 +1234,7 @@
         "rewardsDefaultPointsRebased": "{{count}} tasks updated.",
         "rewardsDefaultPointsRebased_one": "{{count}} task updated.",
         "title": "Settings",
+        "appVersion": "Version {{version}}",
         "tabGeneral": "General",
         "tabMeals": "Meals",
         "tabBudget": "Budget",
@@ -3021,6 +3039,15 @@
             "loadError": "Couldn't load the overview",
             "loadErrorDesc": "Please try again.",
             "retry": "Try again",
+            "quickTabs": "Jump to section",
+            "monthHero": {
+                "label": "Monthly overview",
+                "subtitle": "Your health at a glance this month",
+                "adherence": "{{days}}-day adherence",
+                "dueToday": "Due today",
+                "streak": "Day streak",
+                "noAdherence": "—"
+            },
             "dueToday": {
                 "title": "Due today"
             },
@@ -3337,6 +3364,7 @@
             "medsLogs": "Dose log",
             "hint": "Downloads the selected date range as a CSV file."
         },
+        "disclaimerSummary": "Medical notice",
         "disclaimer": "For personal record-keeping only. Not a substitute for professional medical advice, diagnosis or treatment.",
         "readOnlyBanner": "You are viewing {{name}}’s data — read-only.",
         "cycle": {
@@ -3384,6 +3412,8 @@
                 "inDays": "in {{count}} days",
                 "overdue": "{{count}} days late",
                 "nextPeriod": "Next period",
+                "currentCycle": "Current cycle",
+                "periodStarted": "Started {{date}}",
                 "fertileWindow": "Fertile window",
                 "ovulation": "Ovulation",
                 "avgCycle": "Avg. cycle length",
@@ -3421,9 +3451,11 @@
                 "sun": "Sun"
             },
             "legend": {
-                "period": "Period",
-                "predicted": "Predicted",
+                "period": "Logged period",
+                "predicted": "Predicted period",
                 "fertile": "Fertile",
+                "fertileCurrent": "Fertile (this cycle)",
+                "fertilePredicted": "Fertile (predicted)",
                 "ovulation": "Ovulation",
                 "today": "Today",
                 "logged": "Entry"

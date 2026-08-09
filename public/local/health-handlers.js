@@ -255,6 +255,49 @@ function apiError(message, status) {
   return err;
 }
 
+const VITAL_TYPES = ['bp', 'glucose', 'weight', 'spo2', 'temp'];
+
+function normalizeMeasuredAt(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})/);
+  return m ? `${m[1]}T${m[2]}:${m[3]}` : null;
+}
+
+function parseVitalNumber(val) {
+  if (val === undefined || val === null || val === '') return null;
+  const n = Number(val);
+  return Number.isFinite(n) ? n : null;
+}
+
+function validateVitalBody(body) {
+  const type = String(body?.type || '').trim();
+  if (!type) throw apiError('type is required.', 400);
+  if (!VITAL_TYPES.includes(type)) throw apiError('Invalid vital type.', 400);
+  const measuredAt = normalizeMeasuredAt(body?.measured_at);
+  if (!measuredAt) throw apiError('measured_at is required.', 400);
+  const valueNum = parseVitalNumber(body?.value_num);
+  if (valueNum === null) throw apiError('value_num is required.', 400);
+  const valueNum2 = parseVitalNumber(body?.value_num2);
+  const valueNum3 = parseVitalNumber(body?.value_num3);
+  if (type === 'bp' && valueNum2 === null) throw apiError('value_num2 is required for blood pressure.', 400);
+  const visibility = String(body?.visibility || 'private');
+  if (!VISIBILITIES.includes(visibility)) throw apiError('Invalid visibility.', 400);
+  const unit = body?.unit != null && body.unit !== '' ? String(body.unit).trim() : null;
+  const note = body?.note != null && body.note !== '' ? String(body.note).trim() : null;
+  return {
+    type,
+    value_num: valueNum,
+    value_num2: valueNum2,
+    value_num3: valueNum3,
+    unit,
+    measured_at: measuredAt,
+    note,
+    visibility,
+  };
+}
+
 function filterVitals(state, userId, query) {
   let rows = state.health_vitals.filter((v) => v.user_id === userId);
   if (query.user_id) {
@@ -281,18 +324,19 @@ export async function handleHealthApi(method, parts, query, body, state, userId)
       return { data: filterVitals(state, userId, query) };
     }
     if (m === 'POST' && !parts[2]) {
+      const vitalInput = validateVitalBody(body);
       const id = nextId();
       const vital = {
         id,
         user_id: userId,
-        type: body.type,
-        value_num: body.value_num ?? null,
-        value_num2: body.value_num2 ?? null,
-        value_num3: body.value_num3 ?? null,
-        unit: body.unit ?? null,
-        measured_at: body.measured_at,
-        note: body.note ?? null,
-        visibility: body.visibility || 'private',
+        type: vitalInput.type,
+        value_num: vitalInput.value_num,
+        value_num2: vitalInput.value_num2,
+        value_num3: vitalInput.value_num3,
+        unit: vitalInput.unit,
+        measured_at: vitalInput.measured_at,
+        note: vitalInput.note,
+        visibility: vitalInput.visibility,
         created_at: nowIso(),
         updated_at: nowIso(),
       };
@@ -451,6 +495,89 @@ export async function handleHealthApi(method, parts, query, body, state, userId)
   if (sub === 'cycle') {
     const cycleResult = await handleCycleApi(m, parts, query, body, state, userId);
     if (cycleResult !== null) return cycleResult;
+  }
+
+  if (sub === 'export' && parts[2] && m === 'GET') {
+    const area = parts[2];
+    const from = String(query.from || '').trim();
+    const to = String(query.to || '').trim();
+    const targetUser = query.user_id ? Number(query.user_id) : userId;
+    const dateOk = /^\d{4}-\d{2}-\d{2}$/;
+    const inRange = (key) => {
+      if (!dateOk.test(from) || !dateOk.test(to)) return true;
+      const k = String(key || '').slice(0, 10);
+      return k >= from && k <= to;
+    };
+    const csvCell = (value) => {
+      let s = value === null || value === undefined ? '' : String(value);
+      s = s.replace(/"/g, '""');
+      if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+      return `"${s}"`;
+    };
+    const toCsv = (header, rows) => {
+      const head = header.map(csvCell).join(',');
+      const body = rows.map((r) => r.map(csvCell).join(',')).join('\n');
+      return body ? `${head}\n${body}` : head;
+    };
+    let csv = '';
+    if (area === 'vitals') {
+      const rows = state.health_vitals
+        .filter((v) => v.user_id === targetUser)
+        .filter((v) => inRange(v.measured_at))
+        .sort((a, b) => String(a.measured_at).localeCompare(String(b.measured_at)));
+      csv = toCsv(
+        ['measured_at', 'type', 'value_num', 'value_num2', 'value_num3', 'unit', 'note', 'visibility'],
+        rows.map((r) => [r.measured_at, r.type, r.value_num, r.value_num2, r.value_num3, r.unit, r.note, r.visibility]),
+      );
+    } else if (area === 'activities') {
+      const rows = state.health_activities
+        .filter((a) => a.user_id === targetUser)
+        .filter((a) => inRange(a.performed_at))
+        .sort((a, b) => String(a.performed_at).localeCompare(String(b.performed_at)));
+      csv = toCsv(
+        ['performed_at', 'type', 'duration_min', 'distance_km', 'intensity', 'calories', 'note', 'visibility'],
+        rows.map((r) => [r.performed_at, r.type, r.duration_min, r.distance_km, r.intensity, r.calories, r.note, r.visibility]),
+      );
+    } else if (area === 'labs') {
+      const rows = state.health_lab_reports
+        .filter((r) => r.user_id === targetUser)
+        .filter((r) => inRange(r.report_date))
+        .sort((a, b) => String(a.report_date).localeCompare(String(b.report_date)));
+      csv = toCsv(
+        ['report_date', 'lab_name', 'note', 'visibility'],
+        rows.map((r) => [r.report_date, r.lab_name, r.note, r.visibility]),
+      );
+    } else if (area === 'meds-logs') {
+      const medIds = state.health_medications.filter((m) => m.user_id === targetUser).map((m) => m.id);
+      const rows = state.health_medication_logs
+        .filter((l) => medIds.includes(l.medication_id))
+        .filter((l) => inRange(l.scheduled_at || l.taken_at))
+        .sort((a, b) => String(a.scheduled_at || '').localeCompare(String(b.scheduled_at || '')));
+      const medName = (id) => state.health_medications.find((m) => m.id === id)?.name || '';
+      csv = toCsv(
+        ['scheduled_at', 'medication', 'status', 'taken_at', 'dose_qty', 'note'],
+        rows.map((r) => [r.scheduled_at, medName(r.medication_id), r.status, r.taken_at, r.dose_qty, r.note]),
+      );
+    } else if (area === 'cycle') {
+      const rows = (state.cycle_periods || [])
+        .filter((p) => p.user_id === targetUser)
+        .filter((p) => inRange(p.start_date))
+        .sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
+      csv = toCsv(
+        ['start_date', 'end_date', 'note', 'visibility'],
+        rows.map((r) => [r.start_date, r.end_date, r.note, r.visibility]),
+      );
+    } else {
+      throw apiError('Not found.', 404);
+    }
+    const suffix = dateOk.test(from) && dateOk.test(to) ? `-${from}_${to}` : '';
+    return {
+      __export: {
+        body: csv,
+        filename: `health-${area}${suffix}.csv`,
+        mime: 'text/csv; charset=utf-8',
+      },
+    };
   }
 
   return null;

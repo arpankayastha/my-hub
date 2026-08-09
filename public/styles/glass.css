@@ -784,8 +784,16 @@ html.navigating .app-content *::after {
     var(--color-bg);
 }
 
+/* Default: translucent scroll surface so shell gradient + blobs breathe through.
+ * Flagship routes (data-lg-module) go fully transparent in liquid-glass-motion.css. */
 .app-content {
-  background-color: var(--color-bg);
+  background-color: color-mix(in srgb, var(--color-bg) 88%, transparent);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .app-content {
+    background-color: var(--color-bg);
+  }
 }
 
 /* ================================================================
@@ -968,21 +976,21 @@ html.navigating .app-content *::after {
 }
 .lg-blob--2 {
   width: 38vw; height: 38vw; top: 30%; right: 2%;
-  background: radial-gradient(circle, var(--module-shopping) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--active-module-accent, var(--color-accent)) 55%, var(--module-shopping)) 0%, transparent 72%);
   animation-delay: -8s;
-  opacity: calc(var(--lg-blob-opacity) * 0.7);
+  opacity: calc(var(--lg-blob-opacity) * 0.75);
 }
 .lg-blob--3 {
   width: 40vw; height: 40vw; bottom: -10%; left: 22%;
-  background: radial-gradient(circle, var(--module-tasks) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--active-module-accent, var(--color-accent)) 40%, var(--module-tasks)) 0%, transparent 72%);
   animation-delay: -14s;
-  opacity: calc(var(--lg-blob-opacity) * 0.6);
+  opacity: calc(var(--lg-blob-opacity) * 0.65);
 }
 .lg-blob--4 {
   width: 30vw; height: 30vw; top: 45%; left: 0%;
-  background: radial-gradient(circle, var(--module-meals) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--active-module-accent, var(--color-accent)) 30%, var(--module-meals)) 0%, transparent 72%);
   animation-delay: -19s;
-  opacity: calc(var(--lg-blob-opacity) * 0.5);
+  opacity: calc(var(--lg-blob-opacity) * 0.55);
 }
 
 /* translate-only: bewusst KEIN scale(). Ein Skalierungswechsel würde den

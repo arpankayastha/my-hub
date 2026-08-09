@@ -9,6 +9,7 @@ import express from 'express';
 import * as db from '../db.js';
 import * as holidays from '../services/holidays.js';
 import { str, MAX_SHORT } from '../middleware/validate.js';
+import { actingUserIdFromSession } from '../profile-context.js';
 
 const log = createLogger('Preferences');
 
@@ -143,6 +144,18 @@ function cfgUserSet(key, userId, value) {
   cfgSet(userCfgKey(key, userId), value);
 }
 
+/** Effective household profile (admin context switch) for per-profile prefs. */
+function preferencesProfileUserId(req) {
+  return actingUserIdFromSession(req.session, req.authUserId);
+}
+
+/** Per-profile layout; falls back to legacy household-wide config. */
+function readDashboardWidgets(profileUserId) {
+  const perUser = cfgUserGet('dashboard_widgets', profileUserId);
+  if (perUser != null && perUser !== '') return parseWidgetConfig(perUser);
+  return parseWidgetConfig(cfgGet('dashboard_widgets'));
+}
+
 // Per-User-Wetter-Override lesen (null je Feld = erbt Haushalt).
 function weatherUserOverride(userId) {
   const autoRaw = cfgUserGet('weather_auto_locate', userId);
@@ -253,7 +266,7 @@ router.get('/', (req, res) => {
     const timeFormat = VALID_TIME_FORMATS.includes(cfgGet('time_format')) ? cfgGet('time_format') : DEFAULT_TIME_FORMAT;
     const weekStart = VALID_WEEK_STARTS.includes(cfgGet('week_start')) ? cfgGet('week_start') : DEFAULT_WEEK_START;
     const appName = cfgGet('app_name') ?? DEFAULT_APP_NAME;
-    const dashboardWidgets = parseWidgetConfig(cfgGet('dashboard_widgets'));
+    const dashboardWidgets = readDashboardWidgets(preferencesProfileUserId(req));
     const disabledModules = parseDisabledModules(cfgGet('disabled_modules'));
     const moduleOrder = parseModuleOrder(cfgUserGet('module_order', req.authUserId) ?? cfgGet('module_order'));
     const mobileNavOrder = parseMobileNavOrder(cfgUserGet('mobile_nav_order', req.authUserId));
@@ -392,7 +405,7 @@ router.put('/', (req, res) => {
       if (normalized === null) {
         return res.status(400).json({ error: 'dashboard_widgets enthält ungültige Einträge', code: 400 });
       }
-      cfgSet('dashboard_widgets', JSON.stringify(normalized));
+      cfgUserSet('dashboard_widgets', preferencesProfileUserId(req), JSON.stringify(normalized));
     }
 
     if (disabled_modules !== undefined) {
@@ -683,7 +696,7 @@ router.put('/', (req, res) => {
     const savedTimeFormat = VALID_TIME_FORMATS.includes(cfgGet('time_format')) ? cfgGet('time_format') : DEFAULT_TIME_FORMAT;
     const savedWeekStart = VALID_WEEK_STARTS.includes(cfgGet('week_start')) ? cfgGet('week_start') : DEFAULT_WEEK_START;
     const savedAppName = cfgGet('app_name') ?? DEFAULT_APP_NAME;
-    const savedWidgets = parseWidgetConfig(cfgGet('dashboard_widgets'));
+    const savedWidgets = readDashboardWidgets(preferencesProfileUserId(req));
     const savedDisabledModules = parseDisabledModules(cfgGet('disabled_modules'));
     const savedModuleOrder = parseModuleOrder(cfgUserGet('module_order', req.authUserId) ?? cfgGet('module_order'));
     const savedMobileNavOrder = parseMobileNavOrder(cfgUserGet('mobile_nav_order', req.authUserId));

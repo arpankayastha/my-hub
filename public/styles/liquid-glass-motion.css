@@ -1,0 +1,157 @@
+/**
+ * Modul: Liquid Glass — Phase 4 (motion & ambient interaction)
+ * Zweck: Unified enter motion, card hover lift, ambient visibility on glass routes.
+ * Abhängigkeiten: tokens.css, glass.css, app-glass-surfaces.css
+ */
+
+/* Visible ambient wash on flagship routes */
+html[data-lg-module] {
+  --app-backdrop-accent-strength: 5.5%;
+  --app-backdrop-secondary-strength: 2.8%;
+  --lg-blob-opacity: 0.38;
+  --lg-specular: 0.36;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) html[data-lg-module],
+  [data-theme="dark"] html[data-lg-module] {
+    --lg-blob-opacity: 0.54;
+    --lg-specular: 0.42;
+    --glass-bg-card: rgba(18, 18, 16, 0.34);
+    --glass-bg-card-hover: rgba(32, 32, 30, 0.48);
+    --glass-border-subtle: rgba(255, 255, 255, 0.15);
+    --glass-bg-toolbar: rgba(24, 24, 22, 0.52);
+  }
+}
+
+/* Let living backdrop shine through scroll content (shell gradient + blobs) */
+html[data-lg-module] .app-content {
+  background-color: transparent;
+}
+
+@keyframes lg-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lg-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+html[data-lg-module] .budget-month-hero,
+html[data-lg-module] .health-month-hero,
+html[data-lg-module] .dashboard-overview,
+html[data-lg-module] .dashboard-masthead:not(.dashboard-masthead--slim) {
+  animation: lg-hero-in 0.42s var(--ease-glass, cubic-bezier(0.22, 1, 0.36, 1)) backwards;
+}
+
+html[data-lg-module] .dashboard .widget-wrapper {
+  animation: lg-rise-in 0.38s var(--ease-glass, cubic-bezier(0.22, 1, 0.36, 1)) backwards;
+}
+
+html[data-lg-module] .dashboard .widget-wrapper:nth-child(1) { animation-delay: 0.03s; }
+html[data-lg-module] .dashboard .widget-wrapper:nth-child(2) { animation-delay: 0.06s; }
+html[data-lg-module] .dashboard .widget-wrapper:nth-child(3) { animation-delay: 0.09s; }
+html[data-lg-module] .dashboard .widget-wrapper:nth-child(4) { animation-delay: 0.12s; }
+html[data-lg-module] .dashboard .widget-wrapper:nth-child(5) { animation-delay: 0.15s; }
+html[data-lg-module] .dashboard .widget-wrapper:nth-child(6) { animation-delay: 0.18s; }
+html[data-lg-module] .dashboard .widget-wrapper:nth-child(n + 7) { animation-delay: 0.21s; }
+
+html[data-lg-module] .health-overview__card {
+  animation: lg-rise-in 0.36s var(--ease-glass, cubic-bezier(0.22, 1, 0.36, 1)) backwards;
+}
+
+html[data-lg-module] .health-overview__card:nth-child(1) { animation-delay: 0.05s; }
+html[data-lg-module] .health-overview__card:nth-child(2) { animation-delay: 0.1s; }
+html[data-lg-module] .health-overview__card:nth-child(3) { animation-delay: 0.15s; }
+html[data-lg-module] .health-overview__card:nth-child(4) { animation-delay: 0.2s; }
+html[data-lg-module] .health-overview__card:nth-child(n + 5) { animation-delay: 0.25s; }
+
+/* Page enter: no opaque flash behind transitioning content */
+html[data-lg-module].navigating .app-content,
+html[data-lg-module] .page-transition {
+  background-color: transparent;
+}
+
+/* Unified interactive lift — one recipe, all flagship surfaces */
+html[data-lg-module] :is(
+  .dashboard .widget,
+  .budget-summary-card,
+  .budget-chart-section,
+  .budget-list-section,
+  .budget-entry,
+  .health-overview__card,
+  .health-metric-card,
+  .health-month-hero__stat,
+  .settings-card
+) {
+  transition:
+    transform 0.22s var(--ease-glass, cubic-bezier(0.22, 1, 0.36, 1)),
+    box-shadow 0.22s var(--ease-glass, cubic-bezier(0.22, 1, 0.36, 1)),
+    border-color 0.22s ease;
+}
+
+@media (hover: hover) {
+  html[data-lg-module] :is(
+    .dashboard .widget,
+    .budget-summary-card,
+    .budget-chart-section,
+    .budget-list-section,
+    .budget-entry,
+    .health-overview__card,
+    .health-metric-card,
+    .health-month-hero__stat,
+    .settings-card
+  ):hover {
+    transform: translateY(-2px);
+    box-shadow:
+      var(--glass-shadow-lg),
+      inset 0 1px 0 color-mix(in srgb, white calc(var(--lg-specular) * 100%), transparent),
+      0 12px 32px color-mix(in srgb, var(--active-module-accent, var(--module-accent)) 12%, transparent);
+    border-color: color-mix(in srgb, var(--active-module-accent, var(--module-accent)) 32%, var(--glass-border-subtle));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-lg-module] .budget-month-hero,
+  html[data-lg-module] .health-month-hero,
+  html[data-lg-module] .dashboard-overview,
+  html[data-lg-module] .dashboard-masthead:not(.dashboard-masthead--slim),
+  html[data-lg-module] .dashboard .widget-wrapper,
+  html[data-lg-module] .health-overview__card {
+    animation: none;
+  }
+
+  html[data-lg-module] :is(
+    .dashboard .widget,
+    .budget-summary-card,
+    .budget-chart-section,
+    .budget-list-section,
+    .budget-entry,
+    .health-overview__card,
+    .health-metric-card,
+    .health-month-hero__stat,
+    .settings-card
+  ):hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-lg-module] .app-content {
+    background-color: var(--color-bg);
+  }
+}

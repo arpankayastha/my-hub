@@ -12,11 +12,11 @@ test('default income category shows English, not German stored name', () => {
   assert.equal(label, 'Earned Income');
 });
 
-test('default income is English even when translate would return Hindi', () => {
+test('default income uses locale when translate is provided', () => {
   const label = budgetCategoryLabel('Erwerbseinkommen', 'Erwerbseinkommen', (key) =>
     key === 'budget.catEarnedIncome' ? 'कमाई आय' : key,
   );
-  assert.equal(label, 'Earned Income');
+  assert.equal(label, 'कमाई आय');
 });
 
 test('renamed category keeps custom name', () => {

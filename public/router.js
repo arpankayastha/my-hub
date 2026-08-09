@@ -130,6 +130,40 @@ function updateThemeColorForRoute(route) {
 // Dynamisches Stylesheet-Loading pro Seitenmodul
 // --------------------------------------------------------
 let activePageStyle = null;
+let activeLiquidGlassStyle = null;
+
+const LIQUID_GLASS_MODULES = new Set(['dashboard', 'budget', 'health', 'settings']);
+const LIQUID_GLASS_HREF = '/styles/module-liquid-glass.css';
+
+function loadLiquidGlassStyle(moduleName) {
+  if (!LIQUID_GLASS_MODULES.has(moduleName)) {
+    if (activeLiquidGlassStyle) {
+      activeLiquidGlassStyle.remove();
+      activeLiquidGlassStyle = null;
+    }
+    delete document.documentElement.dataset.lgModule;
+    return Promise.resolve();
+  }
+
+  document.documentElement.dataset.lgModule = moduleName;
+
+  if (activeLiquidGlassStyle?.getAttribute('href') === LIQUID_GLASS_HREF) {
+    return Promise.resolve();
+  }
+
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = LIQUID_GLASS_HREF;
+
+  const ready = new Promise((resolve) => {
+    link.onload = resolve;
+    link.onerror = resolve;
+  });
+
+  document.head.appendChild(link);
+  activeLiquidGlassStyle = link;
+  return ready;
+}
 
 function loadPageStyle(moduleName, routeStyle = null) {
   if (!moduleName && !routeStyle) return { ready: Promise.resolve(), cleanup: () => {} };
@@ -203,6 +237,14 @@ function prefetchRoute(path) {
     link.as = 'style';
     link.href = assetUrl(cssHref);
     document.head.appendChild(link);
+  }
+  if (route.module && LIQUID_GLASS_MODULES.has(route.module) && !_prefetchedStyles.has(LIQUID_GLASS_HREF)) {
+    _prefetchedStyles.add(LIQUID_GLASS_HREF);
+    const lg = document.createElement('link');
+    lg.rel = 'prefetch';
+    lg.as = 'style';
+    lg.href = LIQUID_GLASS_HREF;
+    document.head.appendChild(lg);
   }
 }
 
@@ -892,15 +934,6 @@ function buildMoreSheetBody() {
     },
   }));
   system.appendChild(moreActionEl({
-    labelKey: 'nav.changelog',
-    icon: 'history',
-    className: 'more-item--changelog',
-    onClick: () => {
-      if (window._closeMoreSheet) window._closeMoreSheet({ restoreFocus: false });
-      showChangelogModal();
-    },
-  }));
-  system.appendChild(moreActionEl({
     labelKey: 'settings.logout',
     icon: 'log-out',
     className: 'more-item--logout',
@@ -935,6 +968,7 @@ async function renderPage(route, previousPath = null) {
     const [module] = await Promise.all([
       importPage(route.page),
       style.ready,
+      loadLiquidGlassStyle(route.thirdPartyModule ? null : route.module),
     ]);
 
     if (typeof module.render !== 'function') {
@@ -1230,15 +1264,9 @@ async function renderAppShell(container) {
       className: 'nav-item--help',
       onClick: () => showHelpModal(),
     }),
-    sidebarActionEl({
-      labelKey: 'nav.changelog',
-      icon: 'history',
-      className: 'nav-item--changelog',
-      onClick: () => showChangelogModal(),
-    }),
     // Abmelden als terminale Aktion: bricht in eine eigene, volle Zeile unter
-    // Hilfe/Änderungen (CSS: flex-wrap + border-top). Monochrom wie die
-    // Geschwister — Danger-Rot erscheint erst im Confirm.
+    // Hilfe (CSS: flex-wrap + border-top). Monochrom wie die Geschwister —
+    // Danger-Rot erscheint erst im Confirm.
     sidebarActionEl({
       labelKey: 'settings.logout',
       icon: 'log-out',
@@ -1574,139 +1602,6 @@ function showHelpModal() {
   overlay.appendChild(panel);
   document.body.appendChild(overlay);
   if (window.lucide) window.lucide.createIcons({ el: panel });
-}
-
-function versionText(value) {
-  return String(value || '').trim() || t('changelog.unknownVersion');
-}
-
-function versionKey(value) {
-  return String(value || '').trim().replace(/^v/i, '').toLowerCase();
-}
-
-function renderChangelogStatus(panel, message, tone = 'muted') {
-  const status = panel.querySelector('#changelog-status');
-  if (!status) return;
-  status.hidden = false;
-  status.className = `changelog-status changelog-status--${tone}`;
-  status.textContent = message;
-}
-
-function appendReleaseSection(parent, section) {
-  const block = document.createElement('section');
-  block.className = 'changelog-section';
-
-  const title = document.createElement('h4');
-  title.className = 'changelog-section__title';
-  title.textContent = section.title || t('changelog.changes');
-  block.appendChild(title);
-
-  const list = document.createElement('ul');
-  list.className = 'changelog-section__list';
-  for (const item of Array.isArray(section.items) ? section.items : []) {
-    const li = document.createElement('li');
-    li.textContent = String(item || '');
-    list.appendChild(li);
-  }
-  block.appendChild(list);
-  parent.appendChild(block);
-}
-
-function appendReleaseCard(parent, release, currentVersion) {
-  const isCurrent = Boolean(versionKey(release.version))
-    && versionKey(release.version) === versionKey(currentVersion);
-  const card = document.createElement('article');
-  card.className = `changelog-release${isCurrent ? ' changelog-release--current' : ''}`;
-
-  const header = document.createElement('div');
-  header.className = 'changelog-release__header';
-  const title = document.createElement('h3');
-  title.className = 'changelog-release__version';
-  title.textContent = versionText(release.version);
-  header.appendChild(title);
-
-  if (isCurrent) {
-    const badge = document.createElement('span');
-    badge.className = 'changelog-release__badge';
-    badge.textContent = t('changelog.currentBadge');
-    header.appendChild(badge);
-  }
-  card.appendChild(header);
-
-  const sections = Array.isArray(release.sections) ? release.sections : [];
-  if (sections.length) {
-    for (const section of sections) appendReleaseSection(card, section);
-  } else {
-    const empty = document.createElement('p');
-    empty.className = 'changelog-release__empty';
-    empty.textContent = t('changelog.noReleaseNotes');
-    card.appendChild(empty);
-  }
-  parent.appendChild(card);
-}
-
-function renderChangelog(panel, payload) {
-  const data = payload?.data ?? {};
-  const currentVersion = data.current_version;
-  const latestVersion = data.latest_version;
-  const releases = Array.isArray(data.releases) ? data.releases : [];
-
-  panel.querySelector('#changelog-current-version').textContent = versionText(currentVersion);
-  panel.querySelector('#changelog-latest-version').textContent = versionText(latestVersion);
-
-  const note = panel.querySelector('#changelog-version-note');
-  note.textContent = data.current_in_releases
-    ? t('changelog.currentFound')
-    : t('changelog.currentMissing');
-  note.classList.toggle('changelog-version-note--warning', !data.current_in_releases);
-
-  const status = panel.querySelector('#changelog-status');
-  if (status) status.hidden = true;
-
-  const list = panel.querySelector('#changelog-list');
-  list.replaceChildren();
-  if (!releases.length) {
-    renderChangelogStatus(panel, t('changelog.empty'), 'muted');
-    return;
-  }
-
-  const fragment = document.createDocumentFragment();
-  for (const release of releases) appendReleaseCard(fragment, release, currentVersion);
-  list.appendChild(fragment);
-}
-
-function showChangelogModal() {
-  openModal({
-    title: t('changelog.title'),
-    size: 'xl',
-    content: `
-      <div class="changelog-modal">
-        <div class="changelog-summary" aria-live="polite">
-          <div class="changelog-summary__item">
-            <span>${esc(t('changelog.currentVersion'))}</span>
-            <strong id="changelog-current-version">${esc(t('changelog.loadingShort'))}</strong>
-          </div>
-          <div class="changelog-summary__item">
-            <span>${esc(t('changelog.latestVersion'))}</span>
-            <strong id="changelog-latest-version">${esc(t('changelog.loadingShort'))}</strong>
-          </div>
-        </div>
-        <p class="changelog-version-note" id="changelog-version-note"></p>
-        <div class="changelog-status changelog-status--muted" id="changelog-status" role="status">
-          ${esc(t('changelog.loading'))}
-        </div>
-        <div class="changelog-list" id="changelog-list"></div>
-      </div>
-    `,
-    onSave(panel) {
-      api.get('/changelog')
-        .then((payload) => renderChangelog(panel, payload))
-        .catch(() => {
-          panel.querySelector('#changelog-list')?.replaceChildren();
-          renderChangelogStatus(panel, t('changelog.loadError'), 'error');
-        });
-    },
-  });
 }
 
 function loadReminderStyles() {
@@ -2719,41 +2614,131 @@ function updateNav(path) {
 }
 
 function renderError(container, err) {
+  const report = buildErrorReport(err);
+
   const state = document.createElement('div');
-  state.className = 'empty-state';
+  state.className = 'empty-state empty-state--error';
   state.tabIndex = -1;
   state.setAttribute('role', 'alert');
+
+  const icon = document.createElement('i');
+  icon.dataset.lucide = 'alert-triangle';
+  icon.className = 'empty-state__icon';
+  icon.setAttribute('aria-hidden', 'true');
+
   const title = document.createElement('div');
   title.className = 'empty-state__title';
   title.textContent = t('common.errorOccurred');
+
   const desc = document.createElement('div');
   desc.className = 'empty-state__description';
   desc.textContent = friendlyError(err);
-  const btn = document.createElement('button');
-  btn.className = 'btn btn--primary';
-  btn.id = 'error-reload-btn';
-  btn.textContent = t('common.reload');
-  btn.addEventListener('click', () => location.reload());
-  state.append(title, desc, btn);
 
-  // „Ein unerwarteter Fehler ist aufgetreten" sagt niemandem, was kaputt ist -
-  // die einzige verwertbare Information (Name, Meldung, Stack) lag bisher nur in
-  // der Browserkonsole. Zugeklappt beigelegt stört sie das Layout nicht, ist
-  // aber ohne DevTools erreichbar und kopierbar.
-  const detailText = errorDetails(err);
-  if (detailText) {
-    const details = document.createElement('details');
-    details.className = 'empty-state__details';
-    const summary = document.createElement('summary');
-    summary.textContent = t('common.errorDetails');
+  const actions = document.createElement('div');
+  actions.className = 'empty-state__actions';
+
+  const reloadBtn = document.createElement('button');
+  reloadBtn.className = 'btn btn--primary';
+  reloadBtn.id = 'error-reload-btn';
+  reloadBtn.type = 'button';
+  reloadBtn.textContent = t('common.reload');
+  reloadBtn.addEventListener('click', () => location.reload());
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'btn btn--secondary';
+  copyBtn.id = 'error-copy-btn';
+  copyBtn.type = 'button';
+  copyBtn.textContent = t('common.errorCopy');
+  copyBtn.addEventListener('click', () => copyErrorReport(report, copyBtn));
+
+  actions.append(reloadBtn, copyBtn);
+  state.append(icon, title, desc, actions);
+
+  if (report) {
+    const panel = document.createElement('div');
+    panel.className = 'empty-state__error-panel';
+
+    const panelHead = document.createElement('div');
+    panelHead.className = 'empty-state__error-panel-head';
+
+    const panelTitle = document.createElement('span');
+    panelTitle.className = 'empty-state__error-panel-title';
+    panelTitle.textContent = t('common.errorDetails');
+
+    const panelCopy = document.createElement('button');
+    panelCopy.className = 'btn btn--ghost empty-state__error-copy';
+    panelCopy.type = 'button';
+    panelCopy.textContent = t('common.errorCopy');
+    panelCopy.addEventListener('click', () => copyErrorReport(report, panelCopy));
+
+    panelHead.append(panelTitle, panelCopy);
+
     const pre = document.createElement('pre');
-    pre.textContent = detailText;
-    details.append(summary, pre);
-    state.append(details);
+    pre.className = 'empty-state__error-pre';
+    pre.textContent = report;
+    pre.tabIndex = 0;
+    pre.setAttribute('aria-label', t('common.errorDetails'));
+
+    panel.append(panelHead, pre);
+    state.append(panel);
   }
 
   container.replaceChildren(state);
+  if (window.lucide) window.lucide.createIcons({ el: state });
   state.focus({ preventScroll: true });
+}
+
+async function copyErrorReport(report, btn) {
+  const ok = await copyTextToClipboard(report);
+  if (ok) {
+    showToast(t('common.errorCopied'), 'success', 2000);
+    const label = t('common.errorCopy');
+    const copied = t('common.errorCopied');
+    btn.textContent = copied;
+    window.setTimeout(() => { btn.textContent = label; }, 2000);
+  } else {
+    showToast(t('common.errorCopyFailed'), 'warning');
+  }
+}
+
+async function copyTextToClipboard(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch { /* execCommand fallback (some PWAs) */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+function buildErrorReport(err) {
+  const version = localStorage.getItem(APP_VERSION_STORAGE_KEY) || 'unknown';
+  const technical = errorDetails(err);
+  const lines = [
+    `My Hub v${version}`,
+    `URL: ${location.href}`,
+    `Time: ${new Date().toISOString()}`,
+    `Online: ${navigator.onLine}`,
+    '',
+    `Summary: ${friendlyError(err)}`,
+  ];
+  if (technical) {
+    lines.push('', technical);
+  }
+  return lines.join('\n').trim();
 }
 
 /**

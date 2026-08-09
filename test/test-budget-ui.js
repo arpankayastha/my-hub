@@ -402,3 +402,14 @@ test('die Platzhalter der neuen Sätze bleiben in jeder Locale erhalten', () => 
     }
   }
 });
+
+test('liquid glass stylesheet wires for Overview, Budget, and Health', () => {
+  const router = read('../public/router.js');
+  const lg = read('../public/styles/module-liquid-glass.css');
+  assert.match(router, /LIQUID_GLASS_MODULES/);
+  assert.match(router, /module-liquid-glass\.css/);
+  assert.match(router, /dataset\.lgModule/);
+  assert.match(lg, /data-lg-module="dashboard"/);
+  assert.match(lg, /data-lg-module="budget"/);
+  assert.match(lg, /data-lg-module="health"/);
+});

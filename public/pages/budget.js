@@ -22,6 +22,11 @@ import { budgetCategoryLabel } from '/utils/category-labels.js';
 import { englishBudgetSubcategoryLabel } from '/utils/budget-category-defaults.js';
 import { appendCurrencyOptions } from '/settings/currency.js';
 import { wireHorizontalSwipe } from '/utils/horizontal-swipe.js';
+import { downloadApiFile } from '/utils/api-download.js';
+import {
+  dashboardProfileToolMarkup,
+  wireDashboardProfileTool,
+} from '/components/profile-switcher.js';
 import '/components/category-manager.js';
 
 // --------------------------------------------------------
@@ -222,9 +227,13 @@ function tabCaps() {
 
 // currency-Override für Darlehen in Fremdwährung (#582); ohne Argument gilt
 // unverändert die haushaltweite Budget-Währung.
+// Whole numbers only — no cent display (personal CC / monthly planning).
+const BUDGET_CURRENCY_FMT = { maximumFractionDigits: 0, minimumFractionDigits: 0 };
+
 function formatAmount(n, currency = state.currency) {
   if (state.hideAmounts) return '••••';
-  return getNumberFormat({ style: 'currency', currency }).format(n);
+  const value = Math.round(Number(n) || 0);
+  return getNumberFormat({ style: 'currency', currency, ...BUDGET_CURRENCY_FMT }).format(value);
 }
 
 // Beträge eines Darlehens stehen in dessen eigener Währung (#582).
@@ -352,7 +361,12 @@ export async function render(container, { user }) {
   setHtml(container, `
     <div class="budget-page">
       <div class="page-toolbar page-toolbar--wrap budget-nav">
-        <h1 class="page-toolbar__title">${t('budget.title')}</h1>
+        <div class="page-toolbar__title-row">
+          <h1 class="page-toolbar__title">${t('budget.title')}</h1>
+          <div class="page-toolbar__profile-tools">
+            ${dashboardProfileToolMarkup(user)}
+          </div>
+        </div>
         <div class="page-toolbar__center budget-nav__month">
           <button class="btn btn--icon" id="budget-prev" aria-label="${t('budget.prevMonth')}">
             <i data-lucide="chevron-left" aria-hidden="true"></i>
@@ -377,11 +391,12 @@ export async function render(container, { user }) {
                 ['budget',        t('budget.budgetTab')],
                 ['accounts',      t('budget.accountsTab')],
                 ['plan',          t('budget.planTab')],
+                ['split-expenses',  t('splitExpenses.tabLabel')],
                 ['subscriptions', t('subscriptions.tabLabel')],
                 ['loans',         t('budget.loansTab')],
                 ['reports',       t('budget.reportsTab')],
               ]),
-              ['split-expenses',  t('splitExpenses.tabLabel')],
+              ...(user?.access_scope === 'split_guest' ? [['split-expenses', t('splitExpenses.tabLabel')]] : []),
             ].map(([id, label]) => {
               const on = id === state.activeTab;
               return `<button class="sub-tab${on ? ' sub-tab--active' : ''}" id="budget-tab-${id}" type="button" role="tab" data-tab-id="${id}" aria-controls="budget-body" aria-selected="${on ? 'true' : 'false'}" tabindex="${on ? '0' : '-1'}"><span class="sub-tab__label">${label}</span></button>`;
@@ -402,6 +417,10 @@ export async function render(container, { user }) {
   `);
 
   if (window.lucide) lucide.createIcons({ el: container });
+
+  wireDashboardProfileTool(container, user, (merged) => {
+    window.myHub?.applyProfileContext?.(merged);
+  });
 
   if (user?.access_scope !== 'split_guest') {
     // Konten einmalig beim Mount laden (Salden sind monatsunabhängig; kein
@@ -435,6 +454,9 @@ function wireNav() {
     onSwipeRight: () => goMonth(-1),
     isEnabled: () => tabCaps().month,
   });
+
+  _container.addEventListener('beforetoggle', onBudgetMorePanelBeforeToggle, true);
+  _container.addEventListener('toggle', onBudgetMorePanelToggle, true);
 
   _container.querySelector('#budget-prev').addEventListener('click', () => goMonth(-1));
   _container.querySelector('#budget-next').addEventListener('click', () => goMonth(1));
@@ -496,6 +518,90 @@ function updateLabel() {
 // --------------------------------------------------------
 // Body
 // --------------------------------------------------------
+
+const BUDGET_MORE_MENU_ID = 'budget-month-more-menu';
+
+function onBudgetMorePanelBeforeToggle(e) {
+  const panel = e.target;
+  if (!(panel instanceof HTMLElement) || !panel.matches('.icon-more-menu__panel')) return;
+  if (e.newState === 'open') panel.style.opacity = '0';
+}
+
+function onBudgetMorePanelToggle(e) {
+  const panel = e.target;
+  if (!(panel instanceof HTMLElement) || !panel.matches('.icon-more-menu__panel')) return;
+  if (e.newState !== 'open') { panel.style.opacity = ''; return; }
+  const trigger = _container?.querySelector(`[popovertarget="${panel.id}"]`);
+  if (trigger) {
+    const r = trigger.getBoundingClientRect();
+    const pw = panel.offsetWidth || 200;
+    const ph = panel.offsetHeight || 48;
+    const gap = 4;
+    let left = Math.min(Math.max(8, r.right - pw), window.innerWidth - pw - 8);
+    let top = r.bottom + gap;
+    if (top + ph > window.innerHeight - 8) top = r.top - ph - gap;
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(Math.max(8, top))}px`;
+  }
+  panel.style.opacity = '1';
+}
+
+function budgetMonthToolbarMarkup(expensesOnly) {
+  const exportQuery = `month=${state.month}&lang=${getLocale()}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
+  return `
+    <div class="month-hero__toolbar">
+      <button class="month-hero__icon-btn${expensesOnly ? ' month-hero__icon-btn--active' : ''}"
+              id="budget-expenses-only" type="button" role="switch"
+              aria-checked="${expensesOnly ? 'true' : 'false'}"
+              aria-label="${t('budget.expensesOnly')}"
+              title="${t('budget.expensesOnlyHint')}">
+        <i data-lucide="receipt" aria-hidden="true"></i>
+      </button>
+      <button class="month-hero__icon-btn${state.hideAmounts ? ' month-hero__icon-btn--active' : ''}"
+              id="budget-hide-amounts" type="button" role="switch"
+              aria-checked="${state.hideAmounts ? 'true' : 'false'}"
+              aria-label="${t('budget.hideAmountsHint')}"
+              title="${t('budget.hideAmountsHint')}">
+        <i data-lucide="${state.hideAmounts ? 'eye-off' : 'eye'}" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="month-hero__icon-btn"
+              popovertarget="${BUDGET_MORE_MENU_ID}"
+              aria-label="${t('budget.moreActions')}"
+              title="${t('budget.moreActions')}">
+        <i data-lucide="more-vertical" aria-hidden="true"></i>
+      </button>
+      <div class="icon-more-menu__panel" id="${BUDGET_MORE_MENU_ID}" popover role="menu">
+        <button type="button" class="icon-menu-item" id="budget-copy-prev" role="menuitem"
+                title="${t('budget.copyFromPrevMonthHint')}">
+          <i data-lucide="copy" class="icon-menu-item__icon" aria-hidden="true"></i>
+          ${t('budget.copyFromPrevMonth')}
+        </button>
+        <button type="button" class="icon-menu-item" id="budget-apply-recurring" role="menuitem"
+                title="${t('budget.applyRecurringHint')}">
+          <i data-lucide="repeat" class="icon-menu-item__icon" aria-hidden="true"></i>
+          ${t('budget.applyRecurring')}
+        </button>
+        <button type="button" class="icon-menu-item" id="budget-manage-categories" role="menuitem">
+          <i data-lucide="tags" class="icon-menu-item__icon" aria-hidden="true"></i>
+          ${t('budget.manageCategories')}
+        </button>
+        ${state.entries.length ? `
+        <button type="button" class="icon-menu-item" id="budget-csv-export" role="menuitem">
+          <i data-lucide="download" class="icon-menu-item__icon" aria-hidden="true"></i>
+          ${t('budget.csvExport')}
+        </button>` : ''}
+      </div>
+    </div>`;
+}
+
+function budgetMonthStatMarkup(label, amount, trendHtml, modifier = '') {
+  return `
+    <div class="month-hero__stat${modifier ? ` ${modifier}` : ''}">
+      <span class="month-hero__stat-value">${amount}</span>
+      <span class="month-hero__stat-label">${esc(label)}</span>
+      ${trendHtml ? `<div class="month-hero__stat-trend">${trendHtml}</div>` : ''}
+    </div>`;
+}
 
 function renderBody() {
   const body = _container.querySelector('#budget-body');
@@ -568,6 +674,7 @@ function renderBody() {
     : s.balance >= 0
       ? 'budget-summary-card--balance-positive'
       : 'budget-summary-card--balance-negative';
+  const balanceStatClass = balanceClass.replace('budget-summary-card', 'month-hero__stat');
   const prevLabel = p ? formatMonthLabel(p.month).split(' ')[0].slice(0, 3) : '';
 
   // „Nur Ausgaben" (#504): Einnahmen- und Saldo-Karte entfallen ganz, die Ausgaben-
@@ -575,48 +682,42 @@ function renderBody() {
   // (neutralen) Saldo und keine Dauer-Null bei den Einnahmen. Liste, Diagramm und
   // CSV-Export bleiben unberührt - der Umschalter fokussiert nur die Zusammenfassung.
   const expensesOnly = state.expensesOnly;
-  const incomeCard = `
-      <div class="budget-summary-card budget-summary-card--income">
-        <div class="budget-summary-card__label">${t('budget.income')}</div>
-        <div class="budget-summary-card__amount">${formatAmount(s.income)}</div>
-        ${p ? renderTrend(s.income, p.income, prevLabel) : ''}
-      </div>`;
-  const expensesCard = `
-      <div class="budget-summary-card budget-summary-card--expenses">
-        <div class="budget-summary-card__label">${t('budget.expenses')}</div>
-        <div class="budget-summary-card__amount">${formatAmount(Math.abs(s.expenses))}</div>
-        ${p ? renderTrend(s.expenses, p.expenses, prevLabel) : ''}
-      </div>`;
-  const balanceCard = `
-      <div class="budget-summary-card ${balanceClass}">
-        <div class="budget-summary-card__label">${t('budget.balance')}</div>
-        <div class="budget-summary-card__amount">${formatAmount(s.balance)}</div>
-        ${p && !balanceNeutral ? renderTrend(s.balance, p.balance, prevLabel) : ''}
-      </div>`;
+
+  const incomeStat = budgetMonthStatMarkup(
+    t('budget.income'),
+    formatAmount(s.income),
+    p ? renderTrend(s.income, p.income, prevLabel) : '',
+    'month-hero__stat--income',
+  );
+  const expensesStat = budgetMonthStatMarkup(
+    t('budget.expenses'),
+    formatAmount(Math.abs(s.expenses)),
+    p ? renderTrend(s.expenses, p.expenses, prevLabel) : '',
+    'month-hero__stat--expenses',
+  );
+  const balanceStat = budgetMonthStatMarkup(
+    t('budget.balance'),
+    formatAmount(s.balance),
+    p && !balanceNeutral ? renderTrend(s.balance, p.balance, prevLabel) : '',
+    balanceStatClass,
+  );
+  const statsMarkup = expensesOnly
+    ? `<div class="month-hero__stats month-hero__stats--single">${expensesStat}</div>`
+    : `<div class="month-hero__stats">${incomeStat}${expensesStat}${balanceStat}</div>`;
 
   setHtml(body, `
     <div class="budget-tab-panel budget-tab-panel--budget">
-    <!-- Anzeige-Umschalter: nur Ausgaben vs. volle Zusammenfassung -->
-    <div class="budget-summary-bar">
-      <button class="budget-expenses-toggle${expensesOnly ? ' budget-expenses-toggle--active' : ''}"
-              id="budget-expenses-only" type="button" role="switch"
-              aria-checked="${expensesOnly ? 'true' : 'false'}"
-              title="${t('budget.expensesOnlyHint')}">
-        <i data-lucide="receipt" class="icon-sm" aria-hidden="true"></i>
-        <span>${t('budget.expensesOnly')}</span>
-      </button>
-      <button class="budget-expenses-toggle budget-expenses-toggle--icon${state.hideAmounts ? ' budget-expenses-toggle--active' : ''}"
-              id="budget-hide-amounts" type="button" role="switch"
-              aria-checked="${state.hideAmounts ? 'true' : 'false'}"
-              aria-label="${t('budget.hideAmountsHint')}"
-              title="${t('budget.hideAmountsHint')}">
-        <i data-lucide="${state.hideAmounts ? 'eye-off' : 'eye'}" class="icon-sm" aria-hidden="true"></i>
-      </button>
-    </div>
-    <!-- Zusammenfassung -->
-    <div class="budget-summary${expensesOnly ? ' budget-summary--expenses-only' : ''}">
-      ${expensesOnly ? expensesCard : incomeCard + expensesCard + balanceCard}
-    </div>
+    <section class="budget-month-hero">
+      <div class="month-hero__head-row">
+        <div class="budget-month-hero__head">
+          <h2 class="budget-month-hero__title">${esc(formatMonthLabel(state.month))}</h2>
+          <p class="budget-month-hero__meta">${t('budget.monthHero.transactions', { count: state.entries.length })}</p>
+        </div>
+        ${budgetMonthToolbarMarkup(expensesOnly)}
+      </div>
+      ${renderMonthFlowBar(s, expensesOnly)}
+      ${statsMarkup}
+    </section>
 
     <!-- Kategorie-Balken -->
     ${s.byCategory.length ? `
@@ -640,16 +741,6 @@ function renderBody() {
             <span>${esc(accountName(state.accountFilterId))}</span>
             <i data-lucide="x" class="icon-sm" aria-hidden="true"></i>
           </button>` : ''}
-        </div>
-        <div class="budget-list-header__actions">
-        <button class="btn btn--secondary budget-manage-categories" id="budget-manage-categories"
-          title="${t('budget.manageCategories')}">
-          <i data-lucide="tags" class="icon-sm" aria-hidden="true"></i>${t('budget.manageCategories')}
-        </button>
-        ${state.entries.length ? `
-        <a href="/api/v1/budget/export?month=${state.month}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}" class="btn btn--secondary budget-csv-export">
-          <i data-lucide="download" class="icon-sm" aria-hidden="true"></i>CSV
-        </a>` : ''}
         </div>
       </div>
       <div class="budget-list" id="budget-list">
@@ -683,6 +774,12 @@ function renderBody() {
     renderBody();
   });
   _container.querySelector('#budget-manage-categories')?.addEventListener('click', openCategoryManager);
+  _container.querySelector('#budget-csv-export')?.addEventListener('click', () => {
+    const q = `month=${state.month}&lang=${getLocale()}${state.budgetMode === 'personal' ? `&scope=${state.scope}` : ''}`;
+    downloadApiFile(`/api/v1/budget/export?${q}`, `budget-${state.month}.csv`).catch(() => {});
+  });
+  _container.querySelector('#budget-copy-prev')?.addEventListener('click', () => copyFromPreviousMonth());
+  _container.querySelector('#budget-apply-recurring')?.addEventListener('click', () => applyRecurringToMonth());
   _container.querySelector('#budget-clear-account-filter')?.addEventListener('click', async () => {
     state.accountFilterId = null;
     await loadMonth(state.month);
@@ -1484,6 +1581,28 @@ function renderLoanCard(loan) {
  * @param {number} prev      Vormonatswert
  * @param {string} prevLabel Kurzname des Vormonats (z.B. "Mär")
  */
+function renderMonthFlowBar(s, expensesOnly) {
+  if (expensesOnly) return '';
+  const income = Math.max(0, s.income);
+  const expenses = Math.abs(s.expenses);
+  const total = income + expenses;
+  if (total < 0.005) return '';
+  const incomePct = (income / total) * 100;
+  const expensePct = (expenses / total) * 100;
+  return `
+    <div class="budget-month-flow">
+      <div class="budget-month-flow__bar" role="img"
+           aria-label="${esc(t('budget.income'))} ${esc(formatAmount(income))}, ${esc(t('budget.expenses'))} ${esc(formatAmount(expenses))}">
+        <div class="budget-month-flow__income" style="width: ${incomePct.toFixed(1)}%"></div>
+        <div class="budget-month-flow__expenses" style="width: ${expensePct.toFixed(1)}%"></div>
+      </div>
+      <div class="budget-month-flow__legend">
+        <span class="budget-month-flow__legend-item budget-month-flow__legend-item--income">${t('budget.income')} ${formatAmount(income)}</span>
+        <span class="budget-month-flow__legend-item budget-month-flow__legend-item--expenses">${t('budget.expenses')} ${formatAmount(expenses)}</span>
+      </div>
+    </div>`;
+}
+
 function renderTrend(current, prev, prevLabel) {
   const delta = current - prev;
   if (Math.abs(delta) < 0.005) {
@@ -1553,7 +1672,7 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
   const editAmount = isEdit && entry.recurrence_virtual && entry.recurrence_full_amount != null
     ? entry.recurrence_full_amount
     : (isEdit ? entry.amount : 0);
-  const absAmount  = isEdit ? Math.abs(editAmount).toFixed(2) : '';
+  const absAmount  = isEdit ? String(Math.round(Math.abs(editAmount))) : '';
   const curInterval = isEdit && entry.recurrence_interval ? entry.recurrence_interval : 'monthly';
   const intervalOption = (val, key) =>
     `<option value="${val}" ${curInterval === val ? 'selected' : ''}>${t(key)}</option>`;
@@ -1573,12 +1692,13 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
     `<option value="${a.id}" ${isEdit && entry.account_id === a.id ? 'selected' : ''}>${esc(a.name)}</option>`
   ).join('');
   const accountField = hasAccounts ? `
-        <div class="form-group">
+        <div class="form-field">
           <label class="form-label" for="bm-account">${t('budget.accountLabel')}</label>
           <select class="form-input" id="bm-account">${accountOpts}</select>
         </div>` : '';
 
   const content = `
+    <div class="form-stack modal-entry-form">
     <div class="amount-type-toggle ${isEdit ? 'amount-type-toggle--entry-only' : ''}">
       <button class="amount-type-btn amount-type-btn--expenses ${isExpense ? 'amount-type-btn--active' : ''}"
               id="type-expense" type="button">${t('budget.typeExpense')}</button>
@@ -1588,35 +1708,39 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
               id="type-loan" type="button">${t('budget.typeLoan')}</button>` : ''}
     </div>
 
-    <div class="form-group js-entry-field">
-      <label class="form-label" for="bm-title">${t('budget.titleLabel')}<span class="required-marker" aria-hidden="true"> *</span></label>
-      <input type="text" class="form-input" id="bm-title"
-             placeholder="${t('budget.titlePlaceholder')}" value="${esc(isEdit ? entry.title : '')}">
-    </div>
-
-    <div class="form-group js-entry-field">
-      <label class="form-label" for="bm-amount">${t('budget.amountLabel')}<span class="required-marker" aria-hidden="true"> *</span></label>
-      <input type="number" class="form-input" id="bm-amount"
-             placeholder="${t('budget.amountPlaceholder')}" step="0.01" min="0.01"
-             inputmode="decimal" value="${absAmount}">
-    </div>
-
-    <div class="form-group js-entry-field">
-      <div class="budget-field-header">
-        <label class="form-label" for="bm-category">${t('budget.categoryLabel')}</label>
-        <button class="btn btn--secondary budget-inline-add" type="button" id="bm-add-category">${t('budget.addCategory')}</button>
+    <div class="modal-grid modal-grid--2 js-entry-field">
+      <div class="form-field">
+        <label class="form-label" for="bm-title">${t('budget.titleLabel')}<span class="required-marker" aria-hidden="true"> *</span></label>
+        <input type="text" class="form-input" id="bm-title"
+               placeholder="${t('budget.titlePlaceholder')}" value="${esc(isEdit ? entry.title : '')}">
       </div>
-      <select class="form-input" id="bm-category">${catOpts}</select>
+      <div class="form-field">
+        <label class="form-label" for="bm-amount">${t('budget.amountLabel')}<span class="required-marker" aria-hidden="true"> *</span></label>
+        <input type="number" class="form-input" id="bm-amount"
+               placeholder="${t('budget.amountPlaceholder')}" step="1" min="1"
+               inputmode="numeric" value="${absAmount}">
+      </div>
     </div>
 
-    <div class="form-group js-entry-field">
+    <div class="form-field js-entry-field">
+      <label class="form-label" for="bm-category">${t('budget.categoryLabel')}</label>
+      <div class="modal-field-row">
+        <select class="form-input" id="bm-category">${catOpts}</select>
+        <button class="btn btn--secondary btn--icon budget-inline-add" type="button" id="bm-add-category"
+                aria-label="${t('budget.addCategory')}" title="${t('budget.addCategory')}">
+          <i data-lucide="plus" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-field js-entry-field">
       <label class="form-label" for="bm-date">${t('budget.dateLabel')}</label>
       <my-hub-datepicker type="date" id="bm-date"
              value="${isEdit ? entry.date : defaultDate}"></my-hub-datepicker>
     </div>
 
     ${state.budgetMode === 'personal' ? `
-    <div class="form-group js-entry-field">
+    <div class="form-field js-entry-field">
       <label class="toggle">
         <input type="checkbox" id="bm-shared" ${isEdit && entry.visibility === 'shared' ? 'checked' : ''}>
         <span class="toggle__track"></span>
@@ -1628,15 +1752,18 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
     <div class="js-entry-field">
       ${advancedSection(`
         ${accountField}
-        <div class="form-group" id="bm-subcategory-group" ${isExpense ? '' : 'hidden'}>
-          <div class="budget-field-header">
-            <label class="form-label" for="bm-subcategory">${t('budget.subcategoryLabel')}</label>
-            <button class="btn btn--secondary budget-inline-add" type="button" id="bm-add-subcategory">${t('budget.addSubcategory')}</button>
+        <div class="form-field" id="bm-subcategory-group" ${isExpense ? '' : 'hidden'}>
+          <label class="form-label" for="bm-subcategory">${t('budget.subcategoryLabel')}</label>
+          <div class="modal-field-row">
+            <select class="form-input" id="bm-subcategory">${subcatOpts}</select>
+            <button class="btn btn--secondary btn--icon budget-inline-add" type="button" id="bm-add-subcategory"
+                    aria-label="${t('budget.addSubcategory')}" title="${t('budget.addSubcategory')}">
+              <i data-lucide="plus" aria-hidden="true"></i>
+            </button>
           </div>
-          <select class="form-input" id="bm-subcategory">${subcatOpts}</select>
         </div>
 
-        <div class="form-group">
+        <div class="form-field">
           <label class="toggle">
             <input type="checkbox" id="bm-recurring" ${isEdit && entry.is_recurring ? 'checked' : ''}>
             <span class="toggle__track"></span>
@@ -1644,26 +1771,26 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
           </label>
         </div>
 
-        <div class="form-group" id="bm-recurrence-options" ${isEdit && entry.is_recurring ? '' : 'hidden'}>
+        <div class="form-field" id="bm-recurrence-options" ${isEdit && entry.is_recurring ? '' : 'hidden'}>
           <label class="form-label" for="bm-interval">${t('budget.recurringIntervalLabel')}</label>
           <select class="form-input" id="bm-interval">
             ${intervalOption('monthly', 'budget.intervalMonthly')}
             ${intervalOption('half_year', 'budget.intervalHalfYear')}
             ${intervalOption('yearly', 'budget.intervalYearly')}
           </select>
-          <label class="toggle" style="margin-top:var(--space-3)">
+          <label class="toggle" style="margin-top:var(--space-2)">
             <input type="checkbox" id="bm-virtual" ${isEdit && entry.recurrence_virtual ? 'checked' : ''}>
             <span class="toggle__track"></span>
             <span>${t('budget.virtualBudgetLabel')}</span>
           </label>
-          <p style="color:var(--color-text-secondary);font-size:var(--text-sm);margin-top:var(--space-1)">${t('budget.virtualBudgetHint')}</p>
-          <p class="form-hint" style="margin-top:var(--space-2)">${t('budget.recurringAutoHint')}</p>
+          <p class="form-hint">${t('budget.virtualBudgetHint')}</p>
+          <p class="form-hint">${t('budget.recurringAutoHint')}</p>
         </div>`,
         { open: isEdit && (entry.is_recurring || !!entry.subcategory || entry.account_id != null) })}
     </div>
 
     <div id="bm-loan-fields" hidden>
-      <div class="form-group">
+      <div class="form-field">
         <label class="form-label" for="lm-borrower">${t('budget.loanBorrowerLabel')}</label>
         <input type="text" class="form-input" id="lm-borrower"
                placeholder="${t('budget.loanBorrowerPlaceholder')}">
@@ -1689,17 +1816,18 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
         <label class="form-label" for="lm-start">${t('budget.loanStartMonthLabel')}</label>
         <input type="month" class="form-input" id="lm-start" value="${defaultDate.slice(0, 7)}">
       </div>
-      <div class="form-group">
+      <div class="form-field">
         <label class="form-label" for="lm-notes">${t('budget.loanNotesLabel')}</label>
-        <textarea class="form-input" id="lm-notes" rows="3"></textarea>
+        <textarea class="form-input" id="lm-notes" rows="2"></textarea>
       </div>
+    </div>
     </div>
 
     <div class="modal-panel__footer modal-panel__footer--plain">
       ${isEdit ? `<button class="btn btn--danger btn--icon" id="bm-delete" aria-label="${t('budget.deleteLabel')}">
         <i data-lucide="trash-2" class="icon-md" aria-hidden="true"></i>
       </button>` : '<div></div>'}
-      <div style="display:flex;gap:var(--space-3)">
+      <div class="modal-actions">
         <button class="btn btn--secondary" id="bm-cancel">${t('common.cancel')}</button>
         <button class="btn btn--primary" id="bm-save">${isEdit ? t('common.save') : t('common.add')}</button>
       </div>
@@ -1835,7 +1963,7 @@ function openBudgetModal({ mode, entry = null, initialType = '' }) {
         }
 
         const title      = panel.querySelector('#bm-title').value.trim();
-        const absVal     = parseFloat(panel.querySelector('#bm-amount').value);
+        const absVal     = Math.round(parseFloat(panel.querySelector('#bm-amount').value));
         const category   = panel.querySelector('#bm-category').value;
         const subcategory = currentType === 'expense' ? panel.querySelector('#bm-subcategory').value : '';
         const date       = panel.querySelector('#bm-date').value;
@@ -2486,10 +2614,49 @@ function recurringChoiceModal({ title, thisLabel, seriesLabel, seriesDanger = fa
   });
 }
 
+async function copyFromPreviousMonth() {
+  const fromMonth = addMonths(state.month, -1);
+  try {
+    const res = await api.post('/budget/clone-month', { from_month: fromMonth, to_month: state.month });
+    const copied = res.data?.copied ?? 0;
+    if (copied > 0) {
+      window.myHub?.showToast(t('budget.copyFromPrevMonthDone', { count: copied }), 'success');
+      await loadMonth(state.month);
+      renderBody();
+    } else {
+      window.myHub?.showToast(t('budget.copyFromPrevMonthEmpty'), 'info');
+    }
+  } catch (err) {
+    window.myHub?.showToast(err.data?.error ?? t('common.unknownError'), 'danger');
+  }
+}
+
+async function applyRecurringToMonth() {
+  try {
+    const res = await api.post('/budget/apply-recurring', { to_month: state.month });
+    const created = res.data?.created ?? 0;
+    if (created > 0) {
+      window.myHub?.showToast(t('budget.applyRecurringDone', { count: created }), 'success');
+      await loadMonth(state.month);
+      renderBody();
+    } else {
+      window.myHub?.showToast(t('budget.applyRecurringEmpty'), 'info');
+    }
+  } catch (err) {
+    window.myHub?.showToast(err.data?.error ?? t('common.unknownError'), 'danger');
+  }
+}
+
 async function deleteEntrySeries(id) {
   const entry = state.entries.find((e) => e.id === id);
   const parentId = entry?.recurrence_parent_id ?? (entry?.is_recurring ? entry.id : id);
-  state.entries = state.entries.filter((e) => e.id !== parentId && e.recurrence_parent_id !== parentId);
+  const cutoff = new Date().toISOString().slice(0, 7) + '-01';
+  const parentEntry = state.entries.find((e) => e.id === parentId);
+  state.entries = state.entries.filter((e) => {
+    if (e.recurrence_parent_id === parentId && e.date >= cutoff) return false;
+    if (e.id === parentId) return parentEntry && parentEntry.date < cutoff;
+    return true;
+  });
   renderBody();
   vibrate([30, 50, 30]);
 

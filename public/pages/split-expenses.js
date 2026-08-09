@@ -9,6 +9,14 @@ import { t, formatDate, getLocale, getNumberFormat, dateInputPlaceholder, parseD
 import { esc } from '/utils/html.js';
 import { stagger } from '/utils/ux.js';
 import { renderSkeletonList } from '/utils/skeleton.js';
+import { downloadApiFile } from '/utils/api-download.js';
+
+const DEFAULT_SPLIT_META = {
+  group_types: ['household', 'couple', 'travel', 'event', 'shopping', 'general'],
+  currencies: ['EUR', 'USD', 'GBP', 'CHF'],
+  split_methods: ['equal', 'exact', 'percentage', 'shares'],
+  default_currency: 'EUR',
+};
 
 let state = {
   meta: null,
@@ -105,28 +113,33 @@ export async function render(container, { user } = {}) {
 
 async function loadInitial() {
   try {
-    const calls = [
+    const [meta, dashboard, groups] = await Promise.all([
       api.get('/split-expenses/meta'),
       api.get('/split-expenses/dashboard'),
       api.get('/split-expenses/groups'),
-    ];
-    if (!isSplitGuest()) calls.push(api.get('/family/members'));
-    const [meta, dashboard, groups, members] = await Promise.all(calls);
+    ]);
     state.meta = meta.data && typeof meta.data === 'object' && !Array.isArray(meta.data)
-      ? meta.data
-      : { default_currency: 'EUR' };
+      ? { ...DEFAULT_SPLIT_META, ...meta.data }
+      : { ...DEFAULT_SPLIT_META };
     state.dashboard = dashboard.data && typeof dashboard.data === 'object' && !Array.isArray(dashboard.data)
       ? dashboard.data
       : { total_owed: [], total_owing: [] };
     state.groups = groups.data || [];
-    state.members = members?.data || [];
     state.activeGroupId = state.groups[0]?.id || null;
     if (state.activeGroupId) await loadGroupData();
   } catch (err) {
     console.error('[SplitExpenses] loadInitial error:', err);
-    state.meta = { default_currency: 'EUR' };
+    state.meta = { ...DEFAULT_SPLIT_META };
     state.dashboard = { total_owed: [], total_owing: [] };
     state.groups = [];
+  }
+  if (!isSplitGuest()) {
+    try {
+      const members = await api.get('/family/members');
+      state.members = members.data || [];
+    } catch {
+      state.members = [];
+    }
   }
 }
 
@@ -802,7 +815,8 @@ async function syncEditedGroupMembers(group, form) {
 }
 
 async function openGroupModal(group = null) {
-  const currency = state.meta?.default_currency || 'EUR';
+  const meta = { ...DEFAULT_SPLIT_META, ...(state.meta || {}) };
+  const currency = meta.default_currency || 'EUR';
   const isEdit = Boolean(group);
   const candidates = isEdit ? await loadMemberCandidates() : [];
   openSharedModal({
@@ -811,8 +825,8 @@ async function openGroupModal(group = null) {
       <form id="split-group-form" class="split-form">
         <label>${t('splitExpenses.name')}<input class="input" name="name" required maxlength="200" value="${esc(group?.name || '')}"></label>
         <label>${t('splitExpenses.description')}<textarea class="input" name="description" rows="3" maxlength="5000">${esc(group?.description || '')}</textarea></label>
-        <label>${t('splitExpenses.type')}<select class="input" name="type">${state.meta.group_types.map((type) => `<option value="${type}" ${type === group?.type ? 'selected' : ''}>${t(`splitExpenses.groupType.${type}`)}</option>`).join('')}</select></label>
-        <label>${t('splitExpenses.currency')}<select class="input" name="default_currency">${state.meta.currencies.map((c) => `<option value="${c}" ${c === (group?.default_currency || currency) ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+        <label>${t('splitExpenses.type')}<select class="input" name="type">${meta.group_types.map((type) => `<option value="${type}" ${type === group?.type ? 'selected' : ''}>${t(`splitExpenses.groupType.${type}`)}</option>`).join('')}</select></label>
+        <label>${t('splitExpenses.currency')}<select class="input" name="default_currency">${meta.currencies.map((c) => `<option value="${c}" ${c === (group?.default_currency || currency) ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
         ${isEdit ? renderGroupMemberEditor(candidates) : ''}
         ${isEdit ? renderGroupDefaults(group) : ''}
         <div class="modal-actions">
@@ -831,16 +845,21 @@ async function openGroupModal(group = null) {
         const form = panel.querySelector('#split-group-form');
         const data = Object.fromEntries(new FormData(form));
         collectGroupDefaults(form, data);
-        if (isEdit) await api.patch(`/split-expenses/groups/${group.id}`, data);
-        else await api.post('/split-expenses/groups', data);
-        if (isEdit) await syncEditedGroupMembers(group, form);
-        // Neue Gruppen sind aktiv - aus dem Archiv heraus angelegt bliebe die
-        // Liste sonst leer, obwohl die Gruppe existiert.
-        if (!isEdit) state.groupStatus = 'active';
-        closeModal({ force: true });
-        await loadGroups();
-        await loadGroupData();
-        renderAll();
+        try {
+          if (isEdit) await api.patch(`/split-expenses/groups/${group.id}`, data);
+          else {
+            const res = await api.post('/split-expenses/groups', data);
+            if (res?.data?.id) state.activeGroupId = res.data.id;
+          }
+          if (isEdit) await syncEditedGroupMembers(group, form);
+          if (!isEdit) state.groupStatus = 'active';
+          closeModal({ force: true });
+          await loadGroups();
+          await loadGroupData();
+          renderAll();
+        } catch (err) {
+          window.myHub?.showToast?.(err.message || t('common.error'));
+        }
       });
     },
   });

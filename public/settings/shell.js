@@ -1,5 +1,6 @@
 import { t } from '/i18n.js';
 import { toAppUrl } from '/app-path.js';
+import { APP_VERSION } from '/version.js';
 import { renderSkeletonList } from '/utils/skeleton.js';
 import { createRetryState } from './components.js';
 import { clearLeafEdits, confirmLeafExit, watchLeafForms } from './dirty-guard.js';
@@ -278,6 +279,12 @@ function createNavigation(domains, user, activeLeaf) {
   }
 
   createNavigationSearch(navigation, domains, user, activeLeaf);
+
+  const version = document.createElement('p');
+  version.className = 'settings-shell__version';
+  version.textContent = t('settings.appVersion', { version: APP_VERSION });
+  navigation.appendChild(version);
+
   return navigation;
 }
 
@@ -642,6 +649,11 @@ export async function renderSettingsShell(container, {
     pageTitle.className = 'settings-shell-header__title';
     pageTitle.textContent = t('settings.title');
     pageHeader.appendChild(pageTitle);
+
+    const pageVersion = document.createElement('p');
+    pageVersion.className = 'settings-shell-header__version';
+    pageVersion.textContent = t('settings.appVersion', { version: APP_VERSION });
+    pageHeader.appendChild(pageVersion);
 
     shell = document.createElement('div');
     shell.className = 'settings-shell';

@@ -11,14 +11,19 @@
  *        /components/modal.js, /utils/health-vitals.js, /utils/health-tabs.js
  */
 
-import { api, auth } from '/api.js';
+import { api } from '/api.js';
 import { fromAppUrl } from '/app-path.js';
 import { effectiveUserId } from '/utils/profile-context.js';
+import {
+  dashboardProfileToolMarkup,
+  wireDashboardProfileTool,
+} from '/components/profile-switcher.js';
 import { t, formatDate, formatTime, getLocale, getNumberFormat } from '/i18n.js';
 import { esc } from '/utils/html.js';
+import { downloadApiFile } from '/utils/api-download.js';
 import { wireScrollFade, scheduleUndoableDelete } from '/utils/ux.js';
 import { toLocalDateKey, parseLocalDateKey, addLocalDays } from '/utils/date.js';
-import { openModal, closeModal, confirmModal, reportFieldError } from '/components/modal.js';
+import { openModal, closeModal, confirmModal, reportFieldError, modalFormSubmitButton } from '/components/modal.js';
 import { createPageFab, setPageFabAction } from '/utils/fab.js';
 import { computeVitalSeries, VITAL_METRICS, vitalMetric } from '/utils/health-vitals.js';
 import {
@@ -60,17 +65,16 @@ function effectiveMeId() {
   return effectiveUserId(_sessionUser) ?? _sessionUser?.id ?? null;
 }
 
-async function syncPersonContext(personId) {
-  if (!_sessionUser || _sessionUser.role !== 'admin') return;
-  const selfId = Number(_sessionUser.id);
-  const target = Number(personId);
-  if (target === effectiveMeId()) return;
-  try {
-    const res = await auth.switchContext(target);
-    _sessionUser = { ...res.user, acting_as: res.acting_as ?? null };
-    window.dispatchEvent(new CustomEvent('profile:context-changed', { detail: _sessionUser }));
-  } catch (err) {
-    console.error('[Health] profile context sync failed:', err);
+function syncHealthPersonIds(user) {
+  if (!user?.id) return;
+  _sessionUser = user;
+  const authId = Number(user.id);
+  const viewId = effectiveUserId(user) ?? authId;
+  for (const state of [vitals, meds, labs, activity, cycle, overview]) {
+    state.meId = authId;
+    state.personId = viewId;
+    state.loaded = false;
+    state.root = null;
   }
 }
 
@@ -271,34 +275,27 @@ function refreshHealthFab() {
   updateHealthFab(normalizeHealthPath(fromAppUrl(window.location.pathname)));
 }
 
+function mountHealthProfileTool(container) {
+  const bar = container.querySelector('.health-tabs-bar');
+  if (!bar) return;
+  let slot = bar.querySelector('.sub-tabs-bar__tools');
+  if (!slot) {
+    slot = document.createElement('div');
+    slot.className = 'sub-tabs-bar__tools sub-tabs-bar__tools--lead';
+    const anchor = bar.querySelector('.sub-tab') || bar.querySelector('.sub-tabs-bar__title');
+    if (anchor) bar.insertBefore(slot, anchor);
+    else bar.appendChild(slot);
+  }
+  slot.innerHTML = dashboardProfileToolMarkup(_sessionUser);
+  if (window.lucide) window.lucide.createIcons({ el: slot });
+  wireDashboardProfileTool(container, _sessionUser, (merged) => {
+    window.myHub?.applyProfileContext?.(merged);
+  });
+}
+
 export async function render(container, ctx = {}) {
   _container = container;
-  _sessionUser = ctx.user ?? null;
-  const meId = effectiveMeId();
-  vitals.meId = meId;
-  vitals.personId = meId;
-  vitals.root = null;
-  vitals.loaded = false;
-  meds.meId = meId;
-  meds.personId = meId;
-  meds.root = null;
-  meds.loaded = false;
-  labs.meId = meId;
-  labs.personId = meId;
-  labs.root = null;
-  labs.loaded = false;
-  activity.meId = meId;
-  activity.personId = meId;
-  activity.root = null;
-  activity.loaded = false;
-  cycle.meId = meId;
-  cycle.personId = meId;
-  cycle.root = null;
-  cycle.loaded = false;
-  overview.meId = meId;
-  overview.personId = meId;
-  overview.root = null;
-  overview.loaded = false;
+  syncHealthPersonIds(ctx.user ?? null);
   await loadHealthPrefs();
   const activeRoute = normalizeHealthPath(fromAppUrl(window.location.pathname));
   const panels = PANELS().filter((panel) => cycleEnabled || panel.route !== '/health/cycle');
@@ -317,6 +314,7 @@ export async function render(container, ctx = {}) {
   if (window.lucide) window.lucide.createIcons({ el: container });
   showPanel(activeRoute);
   renderHealthTabsBar(container, activeRoute, { cycleEnabled });
+  mountHealthProfileTool(container);
   updateHealthFab(activeRoute);
   maybeMountOverview(activeRoute);
   maybeMountVitals(activeRoute);
@@ -331,12 +329,13 @@ export async function render(container, ctx = {}) {
 // + Panel-Sync) aus — kein Full-Reload. Rückgabe false erzwingt volles Rendern.
 export async function update({ path, user } = {}) {
   if (!_container?.isConnected) return false;
-  if (user?.id) { vitals.meId = user.id; meds.meId = user.id; labs.meId = user.id; activity.meId = user.id; cycle.meId = user.id; overview.meId = user.id; }
+  if (user?.id) syncHealthPersonIds(user);
   const activeRoute = normalizeHealthPath(path || fromAppUrl(window.location.pathname));
 
   showPanel(activeRoute);
   _container.querySelector('.sub-tabs-bar')?.remove();
   renderHealthTabsBar(_container, activeRoute, { cycleEnabled });
+  mountHealthProfileTool(_container);
   updateHealthFab(activeRoute);
   maybeMountOverview(activeRoute);
   maybeMountVitals(activeRoute);
@@ -415,9 +414,6 @@ function renderVitalsShell() {
   }
 
   vitals.root.insertAdjacentHTML('beforeend', `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.vitals.personsLabel'))}">
-      ${personChipsMarkup(vitals.members, vitals.personId, vitals.meId)}
-    </div>
     ${readOnlyBannerMarkup(vitals.members, vitals.personId, isOwnView())}
     <div class="health-vitals__toolbar">
       <div class="health-vitals__ranges" role="tablist" aria-label="${esc(t('health.vitals.chartTitle'))}">
@@ -436,25 +432,7 @@ function renderVitalsShell() {
   renderDetail();
 }
 
-// Geteilter Personen-Umschalter (Vitalwerte + Medikamente): identisches Markup,
-// die aktive Person und „Ich"-Markierung kommen je Tab per Argument.
-function personChipsMarkup(members, activeId, meId) {
-  return (members || []).map((m) => {
-    const active = m.id === activeId;
-    const label = m.id === meId
-      ? `${m.display_name} · ${t('health.vitals.you')}`
-      : m.display_name;
-    return `
-      <button type="button" class="health-person-chip${active ? ' is-active' : ''}"
-        data-person-id="${esc(m.id)}" role="tab" aria-selected="${active}">
-        <span class="health-person-chip__dot" aria-hidden="true"
-          style="background:${esc(m.avatar_color) || 'var(--module-health)'}"></span>
-        <span class="health-person-chip__name">${esc(label)}</span>
-      </button>`;
-  }).join('');
-}
-
-// Nur-Lesen-Hinweis beim Betrachten der Daten einer anderen Person. Das bloße
+// Geteilter Nur-Lesen-Hinweis beim Betrachten der Daten einer anderen Person. Das bloße
 // Fehlen der Bearbeiten-Buttons ist leicht zu übersehen — der Banner macht den
 // View-Only-Zustand explizit. Gibt '' für die eigene Ansicht zurück.
 function readOnlyBannerMarkup(members, personId, own) {
@@ -471,7 +449,14 @@ function readOnlyBannerMarkup(members, personId, own) {
 // Medizinischer Disclaimer (kein Diagnose-Anspruch). Übersicht-Fuß + Erfassungs-
 // Modals, die Werte interpretieren. `modal` unterdrückt den oberen Abstand.
 function disclaimerMarkup(modal = false) {
-  return `<p class="health-disclaimer${modal ? ' health-disclaimer--modal' : ''}">${esc(t('health.disclaimer'))}</p>`;
+  if (modal) {
+    return `
+      <details class="health-disclaimer-details">
+        <summary class="health-disclaimer-details__summary">${esc(t('health.disclaimerSummary'))}</summary>
+        <p class="health-disclaimer health-disclaimer--modal">${esc(t('health.disclaimer'))}</p>
+      </details>`;
+  }
+  return `<p class="health-disclaimer">${esc(t('health.disclaimer'))}</p>`;
 }
 
 // Screenreader-Alternative zu den nativen SVG-Charts: eine visuell versteckte
@@ -533,14 +518,6 @@ function wireTablistKeys(root) {
 
 function wireVitals() {
   wireTablistKeys(vitals.root);
-  vitals.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === vitals.personId) return;
-      vitals.personId = id;
-      syncPersonContext(id);
-      switchPerson();
-    }));
 
   vitals.root.querySelectorAll('.health-vitals__range').forEach((btn) =>
     btn.addEventListener('click', () => {
@@ -872,6 +849,16 @@ function localDateTimeValue(date) {
   return `${key}T${hh}:${mm}`;
 }
 
+/** Reads canonical ISO from my-hub-datepicker (or falls back to the value attribute). */
+function formDateTimeValue(host, selector) {
+  const el = host.querySelector(selector);
+  if (!el) return '';
+  const raw = el.value;
+  if (raw != null && String(raw).trim()) return String(raw).trim();
+  const attr = el.getAttribute?.('value');
+  return attr ? String(attr).trim() : '';
+}
+
 function valueFieldsMarkup(type) {
   const metric = vitalMetric(type) || VITAL_METRICS[0];
   if (type === 'bp') {
@@ -962,26 +949,32 @@ function openVitalModal(opts = {}) {
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const submitBtn = form.querySelector('[type="submit"]');
+        const submitBtn = modalFormSubmitButton(panel, form);
         const body = collectVitalBody(panel, typeSelect.value);
         if (!body) {
-          submitBtn.disabled = false;
+          if (submitBtn) submitBtn.disabled = false;
           // Fehler am Wertefeld statt als ortloser Toast (geteiltes Muster,
           // Critique P1): erstes Eingabefeld der Metrik markieren.
           reportFieldError(panel.querySelector('#vital-value-fields input'), t('health.vitals.invalidValue'));
           return;
         }
-        submitBtn.disabled = true;
+        if (submitBtn) submitBtn.disabled = true;
         try {
           await api.post('/health/vitals', body);
-          closeModal({ force: true });
+          await closeModal({ force: true });
           window.myHub?.showToast(t('health.vitals.saved'), 'success');
-          await reloadAfterSave(body.type);
-          await opts.onSaved?.();
+          try {
+            await reloadAfterSave(body.type);
+            await opts.onSaved?.();
+          } catch (refreshErr) {
+            console.error('[Health] vitals post-save refresh error:', refreshErr);
+            window.myHub?.showToast(t('health.vitals.loadError'), 'warning');
+          }
         } catch (err) {
           console.error('[Health] vitals save error:', err);
-          submitBtn.disabled = false;
-          window.myHub?.showToast(err?.data?.error || t('health.vitals.saveError'), 'danger');
+          if (submitBtn) submitBtn.disabled = false;
+          const msg = err?.data?.error || err?.message;
+          window.myHub?.showToast(msg && err?.status !== 0 ? msg : t('health.vitals.saveError'), 'danger');
         }
       });
     },
@@ -995,7 +988,7 @@ function numOrNull(input) {
 }
 
 function collectVitalBody(panel, type) {
-  const measuredAt = panel.querySelector('#vital-measured-at')?.value;
+  const measuredAt = formDateTimeValue(panel, '#vital-measured-at');
   const visibility = panel.querySelector('#vital-visibility')?.value || 'private';
   const note = panel.querySelector('#vital-note')?.value.trim() || undefined;
   if (!measuredAt) return null;
@@ -1031,7 +1024,14 @@ async function reloadAfterSave(savedType) {
     console.error('[Health] vitals reload error:', err);
     vitals.error = true;
   }
-  renderVitalsShell();
+  if (!vitals.root?.isConnected) return;
+  try {
+    renderVitalsShell();
+  } catch (err) {
+    console.error('[Health] vitals render error:', err);
+    vitals.error = true;
+    throw err;
+  }
 }
 
 // --------------------------------------------------------
@@ -1169,9 +1169,6 @@ function renderMedsShell() {
   }
 
   meds.root.insertAdjacentHTML('beforeend', `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.meds.personsLabel'))}">
-      ${personChipsMarkup(meds.members, meds.personId, meds.meId)}
-    </div>
     ${readOnlyBannerMarkup(meds.members, meds.personId, isOwnMedsView())}
     <div class="health-meds__toolbar">
       <h3 class="health-meds__section-title u-toolbar-title">${esc(t('health.meds.dueToday.title'))}</h3>
@@ -1337,15 +1334,6 @@ function medCardMarkup(med) {
 
 function wireMeds() {
   wireTablistKeys(meds.root);
-  meds.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === meds.personId) return;
-      meds.personId = id;
-      syncPersonContext(id);
-      switchMedsPerson();
-    }));
-
 
   meds.root.querySelectorAll('[data-med-edit]').forEach((card) =>
     card.addEventListener('click', () => {
@@ -1798,9 +1786,6 @@ function renderLabsShell() {
   }
 
   labs.root.insertAdjacentHTML('beforeend', `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.labs.personsLabel'))}">
-      ${personChipsMarkup(labs.members, labs.personId, labs.meId)}
-    </div>
     ${readOnlyBannerMarkup(labs.members, labs.personId, isOwnLabsView())}
     <div class="health-labs__toolbar">
       <h3 class="health-labs__section-title u-toolbar-title">${esc(t('health.labs.reportsTitle'))}</h3>
@@ -2045,15 +2030,6 @@ const FLAG_DOT_COLORS = {
 
 function wireLabs() {
   wireTablistKeys(labs.root);
-  labs.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === labs.personId) return;
-      labs.personId = id;
-      syncPersonContext(id);
-      switchLabsPerson();
-    }));
-
 
   labs.root.querySelectorAll('.health-lab-card').forEach((card) =>
     card.addEventListener('click', () => {
@@ -2493,9 +2469,6 @@ function renderActivityShell() {
   // Leer-Meldung im Log entfallen (Audit A2-09/A2-21).
 
   activity.root.insertAdjacentHTML('beforeend', `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.activity.personsLabel'))}">
-      ${personChipsMarkup(activity.members, activity.personId, activity.meId)}
-    </div>
     ${readOnlyBannerMarkup(activity.members, activity.personId, isOwnActivityView())}
     <div class="health-activity__toolbar">
       <div class="health-activity__stepper">
@@ -2627,14 +2600,6 @@ function activityRowMarkup(row, own) {
 
 function wireActivity() {
   wireTablistKeys(activity.root);
-  activity.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === activity.personId) return;
-      activity.personId = id;
-      syncPersonContext(id);
-      switchActivityPerson();
-    }));
 
   activity.root.querySelectorAll('[data-step]').forEach((btn) =>
     btn.addEventListener('click', () => {
@@ -2937,17 +2902,6 @@ function overviewFindLog(dose) {
   ) || null;
 }
 
-async function switchOverviewPerson() {
-  try {
-    await loadOverview();
-    overview.error = false;
-  } catch (err) {
-    console.error('[Health] overview load error:', err);
-    overview.error = true;
-  }
-  renderOverviewShell();
-}
-
 async function reloadOverview() {
   try {
     await loadOverview();
@@ -2957,6 +2911,56 @@ async function reloadOverview() {
     overview.error = true;
   }
   renderOverviewShell();
+}
+
+function overviewMonthHeroMarkup() {
+  const today = toLocalDateKey(new Date());
+  const monthLabel = new Intl.DateTimeFormat(getLocale(), { month: 'long', year: 'numeric' }).format(new Date());
+  const schedules = overviewAllSchedules();
+  const due = computeDueDoses(schedules, { from: today, to: today });
+  const pendingDue = due.filter((dose) => {
+    const log = overviewFindLog(dose);
+    return !log || (log.status !== 'taken' && log.status !== 'skipped');
+  }).length;
+
+  const from = addLocalDays(today, -(OVERVIEW_ADHERENCE_DAYS - 1));
+  const planned = computeDueDoses(schedules, { from, to: today }).length;
+  const logs = overviewAllLogs().filter((l) => {
+    const k = String(l.scheduled_at || l.taken_at || l.created_at || '').slice(0, 10);
+    return k >= from && k <= today;
+  });
+  const a = computeAdherence(logs, planned);
+  const streak = computeAdherenceStreak(schedules, overviewAllLogs(), { today });
+  const adherenceValue = a.rate !== null && a.taken > 0
+    ? `${fmtNum(Math.round(a.rate * 100))}%`
+    : t('health.overview.monthHero.noAdherence');
+  const streakValue = streak > 0
+    ? `<span class="month-hero__stat-value month-hero__stat-value--streak"><i data-lucide="flame" class="icon-sm" aria-hidden="true"></i>${esc(fmtNum(streak))}</span>`
+    : `<span class="month-hero__stat-value">${esc(t('health.overview.monthHero.noAdherence'))}</span>`;
+
+  return `
+    <section class="health-month-hero" aria-label="${esc(t('health.overview.monthHero.label'))}">
+      <div class="month-hero__head-row">
+        <div class="health-month-hero__head">
+          <h2 class="health-month-hero__title">${esc(monthLabel)}</h2>
+          <p class="health-month-hero__subtitle">${esc(t('health.overview.monthHero.subtitle'))}</p>
+        </div>
+      </div>
+      <div class="month-hero__stats">
+        <div class="month-hero__stat">
+          <span class="month-hero__stat-value">${esc(adherenceValue)}</span>
+          <span class="month-hero__stat-label">${esc(t('health.overview.monthHero.adherence', { days: OVERVIEW_ADHERENCE_DAYS }))}</span>
+        </div>
+        <div class="month-hero__stat">
+          <span class="month-hero__stat-value">${esc(fmtNum(pendingDue))}</span>
+          <span class="month-hero__stat-label">${esc(t('health.overview.monthHero.dueToday'))}</span>
+        </div>
+        <div class="month-hero__stat">
+          ${streakValue}
+          <span class="month-hero__stat-label">${esc(t('health.overview.monthHero.streak'))}</span>
+        </div>
+      </div>
+    </section>`;
 }
 
 function renderOverviewShell() {
@@ -2980,9 +2984,8 @@ function renderOverviewShell() {
   }
 
   overview.root.insertAdjacentHTML('beforeend', `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.overview.personsLabel'))}">
-      ${personChipsMarkup(overview.members, overview.personId, overview.meId)}
-    </div>
+    ${overviewMonthHeroMarkup()}
+    ${overviewQuickTabsMarkup()}
     ${readOnlyBannerMarkup(overview.members, overview.personId, isOwnOverviewView())}
     <div class="health-overview__grid">
       ${overviewCard('calendar-check', 'health.overview.dueToday.title', overviewDueMarkup())}
@@ -2996,6 +2999,35 @@ function renderOverviewShell() {
   `);
   if (window.lucide) window.lucide.createIcons({ el: overview.root });
   wireOverview();
+}
+
+function overviewQuickTabsMarkup() {
+  const tabs = [
+    { route: '/health/vitals', icon: 'activity', labelKey: 'health.tabs.vitals' },
+    { route: '/health/meds', icon: 'pill', labelKey: 'health.tabs.meds' },
+  ];
+  if (cycleEnabled) tabs.push({ route: '/health/cycle', icon: 'droplet', labelKey: 'health.tabs.cycle' });
+  tabs.push(
+    { route: '/health/labs', icon: 'flask-conical', labelKey: 'health.tabs.labs' },
+    { route: '/health/activity', icon: 'dumbbell', labelKey: 'health.tabs.activity' },
+  );
+  return `
+    <nav class="health-overview__quick-tabs" aria-label="${esc(t('health.overview.quickTabs'))}">
+      ${tabs.map((tab) => `
+        <button type="button" class="health-overview__quick-tab" data-health-route="${esc(tab.route)}"
+                aria-label="${esc(t(tab.labelKey))}" title="${esc(t(tab.labelKey))}">
+          <i data-lucide="${esc(tab.icon)}" aria-hidden="true"></i>
+        </button>`).join('')}
+    </nav>`;
+}
+
+function wireOverviewQuickTabs() {
+  overview.root?.querySelectorAll('[data-health-route]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const route = btn.dataset.healthRoute;
+      if (route) window.myHub?.navigate(route);
+    });
+  });
 }
 
 function overviewCard(icon, titleKey, body) {
@@ -3231,10 +3263,10 @@ function overviewExportHref(area) {
 
 function exportButtonsMarkup() {
   return EXPORT_AREAS.map((e) => `
-    <a class="btn btn--secondary health-overview__export-btn" href="${esc(overviewExportHref(e.area))}"
-       download data-export-area="${esc(e.area)}">
+    <button type="button" class="btn btn--secondary health-overview__export-btn"
+            data-export-download="${esc(e.area)}">
       <i data-lucide="${esc(e.icon)}" class="icon-md" aria-hidden="true"></i>${esc(t(e.labelKey))}
-    </a>`).join('');
+    </button>`).join('');
 }
 
 function overviewExportMarkup() {
@@ -3262,18 +3294,22 @@ function rerenderExportButtons() {
   host.replaceChildren();
   host.insertAdjacentHTML('beforeend', exportButtonsMarkup());
   if (window.lucide) window.lucide.createIcons({ el: host });
+  wireOverviewExportButtons();
+}
+
+function wireOverviewExportButtons() {
+  overview.root?.querySelectorAll('[data-export-download]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const area = btn.dataset.exportDownload;
+      if (!area) return;
+      downloadApiFile(overviewExportHref(area), `health-${area}.csv`).catch(() => {});
+    });
+  });
 }
 
 function wireOverview() {
   wireTablistKeys(overview.root);
-  overview.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === overview.personId) return;
-      overview.personId = id;
-      syncPersonContext(id);
-      switchOverviewPerson();
-    }));
+  wireOverviewQuickTabs();
 
   overview.root.querySelectorAll('[data-ov-dose-take]').forEach((btn) =>
     btn.addEventListener('click', () => handleOverviewDose(btn, 'take')));
@@ -3297,6 +3333,8 @@ function wireOverview() {
   const toEl = overview.root.querySelector('#ov-export-to');
   fromEl?.addEventListener('change', () => { overview.exportRange.from = fromEl.value || null; rerenderExportButtons(); });
   toEl?.addEventListener('change', () => { overview.exportRange.to = toEl.value || null; rerenderExportButtons(); });
+
+  wireOverviewExportButtons();
 }
 
 // ========================================================
@@ -3454,11 +3492,7 @@ function renderCycleShell() {
   const own = isOwnCycleView();
   const prediction = predictCycle(cycle.periods, cycleSettings());
 
-  const persons = `
-    <div class="health-persons" role="tablist" aria-label="${esc(t('health.cycle.personsLabel'))}">
-      ${personChipsMarkup(cycle.members, cycle.personId, cycle.meId)}
-    </div>
-    ${readOnlyBannerMarkup(cycle.members, cycle.personId, own)}`;
+  const persons = readOnlyBannerMarkup(cycle.members, cycle.personId, own);
 
   // Schwangerschafts-Modus: Vorhersagen sind pausiert — statt Ring/Prognose wird
   // der Schwangerschafts-Status gezeigt. Logging, Kalender (ohne Projektion) und
@@ -3500,7 +3534,7 @@ function renderCycleShell() {
       ${cycleRingMarkup(prediction)}
       <div class="cycle-hero__side">
         ${cycleStatsMarkup(prediction)}
-        ${prediction.trackFertility ? `<p class="health-disclaimer">${esc(t('health.cycle.fertilityDisclaimer'))}</p>` : ''}
+        ${prediction.trackFertility ? `<p class="health-disclaimer health-disclaimer--cycle">${esc(t('health.cycle.fertilityDisclaimer'))}</p>` : ''}
       </div>
     </div>
     ${own ? cycleTodayActionsMarkup() : ''}
@@ -3588,6 +3622,7 @@ function cycleRingMarkup(prediction) {
   const ringAria = `${phaseLabel} · ${t('health.cycle.ring.cycleDay', { day: prediction.cycleDay })}`;
 
   return `
+    <div class="cycle-hero__ring-wrap">
     <div class="cycle-ring" data-phase="${esc(prediction.phase)}">
       <svg class="cycle-ring__svg" viewBox="0 0 220 220" role="img" aria-label="${esc(ringAria)}">
         <circle class="cycle-ring__track" cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke-width="${SW}" />
@@ -3596,8 +3631,39 @@ function cycleRingMarkup(prediction) {
       </svg>
       <div class="cycle-ring__center">
         <span class="cycle-ring__phase">${esc(phaseLabel)}</span>
-        <span class="cycle-ring__day">${esc(t('health.cycle.ring.cycleDay', { day: prediction.cycleDay }))}</span>
-        <span class="cycle-ring__status">${esc(`${t('health.cycle.status.nextPeriod')}: ${cycleCountdownText(prediction)}`)}</span>
+        <span class="cycle-ring__day">${esc(t('health.cycle.ring.cycleDay', { day: prediction.cycleDay }))} · ${esc(t('health.cycle.ring.of', { total: prediction.avgCycle }))}</span>
+        <span class="cycle-ring__started">${esc(t('health.cycle.status.periodStarted', { date: formatDate(prediction.lastStart) }))}</span>
+        <span class="cycle-ring__status">${esc(`${t('health.cycle.status.nextPeriod')}: ${formatDate(prediction.nextStart)}`)}</span>
+        <span class="cycle-ring__status-sub">${esc(cycleCountdownText(prediction))}</span>
+      </div>
+    </div>
+    ${cycleTimelineMarkup(prediction)}
+    </div>`;
+}
+
+function cycleTimelineMarkup(prediction) {
+  const total = prediction.avgCycle;
+  const periodEnd = Math.min(prediction.avgPeriod, total);
+  const periodPct = (periodEnd / total) * 100;
+  const currentPct = Math.min(100, Math.max(0, ((prediction.cycleDay - 0.5) / total) * 100));
+  let ovPct = null;
+  if (prediction.trackFertility && prediction.ovulationDate) {
+    const ovDay = total - prediction.lutealLength;
+    ovPct = Math.min(100, Math.max(0, ((ovDay - 0.5) / total) * 100));
+  }
+  const ovMarker = ovPct != null
+    ? `<span class="cycle-timeline__ov" style="--cycle-pos:${ovPct.toFixed(2)}%" title="${esc(t('health.cycle.status.ovulation'))}" aria-hidden="true"></span>`
+    : '';
+  return `
+    <div class="cycle-timeline" aria-hidden="true">
+      <div class="cycle-timeline__track">
+        <span class="cycle-timeline__period" style="width:${periodPct.toFixed(2)}%"></span>
+        ${ovMarker}
+        <span class="cycle-timeline__now" style="--cycle-pos:${currentPct.toFixed(2)}%"></span>
+      </div>
+      <div class="cycle-timeline__labels">
+        <span>${esc(formatDate(prediction.lastStart))}</span>
+        <span>${esc(formatDate(prediction.nextStart))}</span>
       </div>
     </div>`;
 }
@@ -3626,13 +3692,18 @@ function cycleStatsMarkup(prediction) {
   const stats = prediction.stats;
   const tiles = [];
 
-  // Nächste Periode: nur das Datum — der Countdown steht bereits im Ring-Zentrum,
-  // die Karte würde ihn sonst dublieren (Critique).
+  tiles.push(cycleStatCardMarkup({
+    icon: 'calendar',
+    labelKey: 'health.cycle.status.currentCycle',
+    value: t('health.cycle.ring.cycleDay', { day: prediction.cycleDay }),
+    sub: t('health.cycle.status.periodStarted', { date: formatDate(prediction.lastStart) }),
+  }));
+
   tiles.push(cycleStatCardMarkup({
     icon: 'calendar-heart',
     labelKey: 'health.cycle.status.nextPeriod',
     value: formatDate(prediction.nextStart),
-    sub: '',
+    sub: cycleCountdownText(prediction),
   }));
 
   if (prediction.trackFertility) {
@@ -3750,6 +3821,7 @@ function cycleCalendarMarkup(own) {
     if (c.isToday) cls.push('is-today');
     if (c.phase) cls.push(`is-${c.phase}`);
     if (c.predicted) cls.push('is-predicted');
+    if (c.currentCycle) cls.push('is-current');
     if (c.hasLog) cls.push('has-log');
     const flowAttr = c.flow ? ` data-flow="${esc(c.flow)}"` : '';
     const tag = own ? 'button' : 'div';
@@ -3782,8 +3854,9 @@ function cycleLegendMarkup() {
   const items = [
     { cls: 'is-menstruation', key: 'health.cycle.legend.period' },
     { cls: 'is-menstruation is-predicted', key: 'health.cycle.legend.predicted' },
-    { cls: 'is-fertile', key: 'health.cycle.legend.fertile' },
-    { cls: 'is-ovulation', key: 'health.cycle.legend.ovulation' },
+    { cls: 'is-fertile is-current', key: 'health.cycle.legend.fertileCurrent' },
+    { cls: 'is-fertile is-predicted', key: 'health.cycle.legend.fertilePredicted' },
+    { cls: 'is-ovulation is-current', key: 'health.cycle.legend.ovulation' },
     { cls: 'is-today', key: 'health.cycle.legend.today' },
   ];
   return `<div class="cycle-legend">${items.map((i) => `
@@ -3833,12 +3906,11 @@ function cycleHistoryMarkup(own) {
 }
 
 function cycleFooterMarkup(own) {
-  const q = cycle.personId ? `?user_id=${encodeURIComponent(cycle.personId)}` : '';
   return `
     <div class="cycle-footer">
-      <a class="btn btn--ghost btn--sm" href="/api/v1/health/export/cycle${q}" download>
+      <button type="button" class="btn btn--ghost btn--sm" data-action="cycle-export-csv">
         <i data-lucide="download" aria-hidden="true"></i>${esc(t('health.cycle.export.csv'))}
-      </a>
+      </button>
       ${own ? `<button class="btn btn--ghost btn--sm" data-action="cycle-settings"><i data-lucide="settings-2" aria-hidden="true"></i>${esc(t('health.cycle.settings.open'))}</button>` : ''}
     </div>
     ${disclaimerMarkup()}`;
@@ -3850,14 +3922,6 @@ function cycleFooterMarkup(own) {
 
 function wireCycle() {
   wireTablistKeys(cycle.root);
-  cycle.root.querySelectorAll('.health-person-chip').forEach((chip) =>
-    chip.addEventListener('click', () => {
-      const id = Number(chip.dataset.personId);
-      if (id === cycle.personId) return;
-      cycle.personId = id;
-      syncPersonContext(id);
-      switchCyclePerson();
-    }));
 
   cycle.root.querySelectorAll('[data-cycle-month]').forEach((btn) =>
     btn.addEventListener('click', () => { stepCycleMonth(Number(btn.dataset.cycleMonth)); renderCycleShell(); }));
@@ -3876,6 +3940,10 @@ function wireCycle() {
   cycle.root.querySelector('[data-action="cycle-end-period"]')?.addEventListener('click', () => cycleEndPeriodToday());
   cycle.root.querySelector('[data-action="cycle-log-today"]')?.addEventListener('click', () => openDayLogModal(toLocalDateKey(new Date())));
   cycle.root.querySelector('[data-action="cycle-settings"]')?.addEventListener('click', () => openCycleSettingsModal());
+  cycle.root.querySelector('[data-action="cycle-export-csv"]')?.addEventListener('click', () => {
+    const q = cycle.personId ? `?user_id=${encodeURIComponent(cycle.personId)}` : '';
+    downloadApiFile(`/api/v1/health/export/cycle${q}`, 'health-cycle.csv').catch(() => {});
+  });
 }
 
 // Sichtbarkeit für ein Zyklus-Event vorauswählen: bestehender Wert gewinnt,

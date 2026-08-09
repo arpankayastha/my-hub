@@ -326,6 +326,21 @@ export function openModal({ title, content, onSave, onDelete, onClose, size = 'm
     panel.appendChild(bodyFooter);
   }
 
+  // Health/Budget-Formulare nutzen oft .modal-actions im scrollenden Body —
+  // dieselbe Anhebung wie .modal-panel__footer, damit Speichern mobil sichtbar bleibt.
+  const bodyActions = [...panel.querySelectorAll('.modal-panel__body .modal-actions')].pop();
+  if (bodyActions) {
+    bodyActions.classList.add('modal-panel__footer', 'modal-panel__footer--plain', 'modal-panel__footer--actions');
+    const ownerForm = bodyActions.closest('form') ?? panel.querySelector('.modal-panel__body form');
+    if (ownerForm) {
+      if (!ownerForm.id) ownerForm.id = `modal-form-${++_modalFormSeq}`;
+      bodyActions.querySelectorAll('button, input, select, textarea').forEach((el) => {
+        if (!el.hasAttribute('form')) el.setAttribute('form', ownerForm.id);
+      });
+    }
+    panel.appendChild(bodyActions);
+  }
+
   trapFocus(panel);
 
   // Snapshot für Dirty-Check (kurzer Delay: Felder könnten noch per JS befüllt werden)
@@ -735,6 +750,23 @@ export function validateAll(formContainer) {
  * bei der nächsten Eingabe im Feld selbst auf. Gibt immer false zurück, damit
  * Speicherpfade kompakt `return reportFieldError(...)` abbrechen können.
  */
+/**
+ * Find the submit button for a modal form. Footer actions are moved outside the
+ * <form> (modal.js) and linked via the HTML form attribute — not queryable from
+ * inside the form alone.
+ */
+export function modalFormSubmitButton(panel, form) {
+  if (!panel || !form) return null;
+  const id = form.id;
+  if (id && typeof panel.querySelectorAll === 'function') {
+    for (const btn of panel.querySelectorAll('button[type="submit"]')) {
+      if (btn.getAttribute?.('form') === id) return btn;
+    }
+  }
+  return panel.querySelector('.modal-panel__footer [type="submit"]')
+    ?? form.querySelector?.('[type="submit"]');
+}
+
 export function reportFieldError(input, message) {
   if (!input) return false;
   const group = (typeof input.closest === 'function' ? input.closest('.form-field') : null) ?? input.parentElement;

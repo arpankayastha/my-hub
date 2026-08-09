@@ -20,6 +20,7 @@ import {
   wireDashboardProfileTool,
 } from '/components/profile-switcher.js';
 import { profileDisplayName } from '/utils/profile-context.js';
+import { vitalMetric } from '/utils/health-vitals.js';
 
 // Hält den AbortController des aktuellen FAB-Listeners - wird bei jedem render() erneuert.
 let _fabController = null;
@@ -270,7 +271,7 @@ const COCKPIT_COVERED_WIDGETS = new Set(['tasks', 'calendar', 'shopping', 'meals
 // spezialisiert und nicht in jedem Haushalt aktiv — sie erscheinen als Opt-in im
 // „Anpassen"-Panel, statt frische Dashboards mit leeren Kacheln zu überladen
 // (PRODUCT.md: „Power wird auf Abruf enthüllt, nicht in einem Raster ausgebreitet").
-const DEFAULT_HIDDEN_WIDGETS = new Set([...COCKPIT_COVERED_WIDGETS, 'rewards', 'health', 'cycle', 'housekeeping']);
+const DEFAULT_HIDDEN_WIDGETS = new Set([...COCKPIT_COVERED_WIDGETS, 'rewards', 'cycle', 'housekeeping']);
 
 function defaultWidgetVisible(id) {
   return !DEFAULT_HIDDEN_WIDGETS.has(id);
@@ -491,6 +492,18 @@ function initials(name = '') {
   return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
+function formatBudgetCurrency(amount, currency = 'EUR') {
+  try {
+    if (localStorage.getItem(HIDE_AMOUNTS_KEY) === '1') return '••••';
+  } catch (_) { /* Private-Mode */ }
+  return getNumberFormat({
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  }).format(Math.round(Number(amount) || 0));
+}
+
 function formatCurrency(amount, currency = 'EUR') {
   try {
     if (localStorage.getItem(HIDE_AMOUNTS_KEY) === '1') return '••••';
@@ -504,6 +517,10 @@ function formatCurrency(amount, currency = 'EUR') {
 
 function formatPoints(value) {
   return getNumberFormat().format(Number(value) || 0);
+}
+
+function fmtNum(value) {
+  return getNumberFormat({ maximumFractionDigits: 1 }).format(Number(value) || 0);
 }
 
 function widgetHeader(icon, title, count, linkHref, linkLabel) {
@@ -851,21 +868,21 @@ function renderBudgetWidget(budget, currency) {
     <div class="budget-widget">
       <div class="budget-widget__headline">
         <span>${t('dashboard.monthlyBalance')}</span>
-        <strong class="budget-widget__balance budget-widget__balance--${balanceTone}">${formatCurrency(balance, currency)}</strong>
+        <strong class="budget-widget__balance budget-widget__balance--${balanceTone}">${formatBudgetCurrency(balance, currency)}</strong>
       </div>
       ${renderBudgetSavings(budget, balance, income, savingsRate)}
       <div class="budget-widget__flow">
         <span class="budget-widget__flow-item budget-widget__flow-item--income">
           <span>${t('dashboard.monthlyIncome')}</span>
-          <strong>${formatCurrency(income, currency)}</strong>
+          <strong>${formatBudgetCurrency(income, currency)}</strong>
         </span>
         <span class="budget-widget__flow-item budget-widget__flow-item--expense">
           <span>${t('dashboard.monthlyExpenses')}</span>
-          <strong>${formatCurrency(expenses, currency)}</strong>
+          <strong>${formatBudgetCurrency(expenses, currency)}</strong>
         </span>
       </div>
       ${budget?.topExpenseCategory
-        ? `<div class="budget-widget__footer">${t('dashboard.topExpense')}: <strong>${esc(budgetCategoryLabel(budget.topExpenseCategory))}</strong> · ${formatCurrency(budget.topExpenseAmount, currency)}</div>`
+        ? `<div class="budget-widget__footer">${t('dashboard.topExpense')}: <strong>${esc(budgetCategoryLabel(budget.topExpenseCategory))}</strong> · ${formatBudgetCurrency(budget.topExpenseAmount, currency)}</div>`
         : ''}
     </div>
   </div>`;
@@ -925,58 +942,95 @@ function renderRewardsWidget(rewards) {
 // Gesundheit-Widget (heutige Medikamenten-Dosen)
 // --------------------------------------------------------
 
+function formatVitalChip(v) {
+  const metric = vitalMetric(v.type);
+  if (!metric) return '';
+  const label = t(metric.labelKey);
+  let value = '';
+  if (v.type === 'bp' && v.value_num != null && v.value_num2 != null) {
+    value = `${fmtNum(v.value_num)}/${fmtNum(v.value_num2)}`;
+    if (v.value_num3 != null) value += ` · ${fmtNum(v.value_num3)}`;
+  } else if (v.value_num != null) {
+    value = fmtNum(v.value_num);
+  }
+  const unit = v.unit ? ` ${v.unit}` : '';
+  return `${label}: ${value}${unit}`;
+}
+
 function renderHealthWidget(health) {
-  if (!health?.hasMeds) {
+  const hasMeds = health?.hasMeds && (Number(health?.dosesTotal) > 0 || health?.nextDose);
+  const hasVitals = health?.hasVitals && health?.vitalsLatest?.length;
+  const hasCycle = health?.hasCycle;
+  const hasEvents = health?.upcomingEvents?.length > 0;
+  const hasAny = hasMeds || hasVitals || hasCycle || hasEvents;
+
+  if (!hasAny) {
     return `<div class="widget widget--health">
       ${widgetHeader('heart-pulse', t('nav.health'), null, '/health')}
       <div class="widget__empty">
         <i data-lucide="heart-pulse" class="empty-state__icon" aria-hidden="true"></i>
-        <div>${t('dashboard.healthNoMeds')}</div>
-        ${emptyStateCta('/health', t('health.meds.add'))}
+        <div>${t('dashboard.healthNoData')}</div>
+        ${emptyStateCta('/health', t('health.overview.title'))}
       </div>
     </div>`;
   }
 
-  const total = Number(health?.dosesTotal) || 0;
-  const taken = Number(health?.dosesTaken) || 0;
-  const lowStock = Number(health?.lowStockCount) || 0;
-  const pct = total > 0 ? Math.max(0, Math.min(1, taken / total)) : 0;
-  const allTaken = total > 0 && taken >= total;
+  const chips = [];
 
+  if (hasVitals) {
+    const lines = health.vitalsLatest.slice(0, 2).map((v) => esc(formatVitalChip(v))).join(' · ');
+    chips.push(`
+      <a class="health-widget__chip" href="/health/vitals" data-route="/health/vitals">
+        <i data-lucide="activity" aria-hidden="true"></i>
+        <span>${lines}</span>
+      </a>`);
+  }
+
+  if (hasMeds) {
+    const total = Number(health?.dosesTotal) || 0;
+    const taken = Number(health?.dosesTaken) || 0;
+    const medLine = total > 0
+      ? t('dashboard.healthDosesProgress', { taken, total })
+      : health?.nextDose
+        ? `${esc(health.nextDose.time)} · ${esc(health.nextDose.name)}`
+        : t('dashboard.healthGlanceNone');
+    chips.push(`
+      <a class="health-widget__chip" href="/health/meds" data-route="/health/meds">
+        <i data-lucide="pill" aria-hidden="true"></i>
+        <span>${medLine}</span>
+      </a>`);
+  }
+
+  if (hasCycle) {
+    const cycleLine = health.cycleNextPeriod
+      ? `${t('health.cycle.status.nextPeriod')}: ${formatDate(health.cycleNextPeriod)}`
+      : t('health.cycle.title');
+  const dayPart = health.cycleDay ? ` · ${t('health.cycle.ring.cycleDay', { day: health.cycleDay })}` : '';
+    chips.push(`
+      <a class="health-widget__chip" href="/health/cycle" data-route="/health/cycle">
+        <i data-lucide="droplet" aria-hidden="true"></i>
+        <span>${esc(cycleLine + dayPart)}</span>
+      </a>`);
+  }
+
+  if (hasEvents) {
+    const ev = health.upcomingEvents[0];
+    chips.push(`
+      <a class="health-widget__chip" href="/calendar" data-route="/calendar">
+        <i data-lucide="syringe" aria-hidden="true"></i>
+        <span>${esc(ev.title)} · ${formatDate(ev.start_datetime?.slice(0, 10))}</span>
+      </a>`);
+  }
+
+  const lowStock = Number(health?.lowStockCount) || 0;
   const lowChip = lowStock > 0
     ? `<div class="health-widget__refill"><i data-lucide="package" aria-hidden="true"></i><span>${t('dashboard.healthRefill', { count: lowStock })}</span></div>`
     : '';
 
-  let main;
-  if (total === 0) {
-    main = `<div class="health-widget__none">
-      <i data-lucide="coffee" class="health-widget__none-icon" aria-hidden="true"></i>
-      <span>${t('dashboard.healthNoDosesToday')}</span>
-    </div>`;
-  } else {
-    const status = allTaken
-      ? `<div class="health-widget__status health-widget__status--done"><i data-lucide="check" aria-hidden="true"></i>${t('dashboard.healthAllTaken')}</div>`
-      : health?.nextDose
-        ? `<div class="health-widget__next">
-            <span class="health-widget__next-time">${esc(health.nextDose.time)}</span>
-            <span class="health-widget__next-name">${esc(health.nextDose.name)}</span>
-          </div>`
-        : '';
-    main = `
-      <div class="health-widget__progress">
-        <div class="health-widget__bar" role="img" aria-label="${t('dashboard.healthDosesProgress', { taken, total })}">
-          <div class="health-widget__bar-fill${allTaken ? ' health-widget__bar-fill--done' : ''}" style="--dose-scale:${pct}"></div>
-        </div>
-        <div class="health-widget__count"><strong>${taken}</strong>/${total}</div>
-      </div>
-      ${status}
-    `;
-  }
-
   return `<div class="widget widget--health">
     ${widgetHeader('heart-pulse', t('nav.health'), null, '/health')}
     <div class="widget__body">
-      <div class="health-widget">${main}${lowChip}</div>
+      <div class="health-widget health-widget--multi">${chips.join('')}${lowChip}</div>
     </div>
   </div>`;
 }
@@ -1178,17 +1232,64 @@ function renderTodayCockpit(data, cfg = []) {
 }
 
 
-function renderDashboardOverview(user, editing = false) {
+function renderDashboardHeroGlance(data, currency) {
+  const items = [];
+  if (!window.myHub?.isModuleDisabled('budget') && data?.budget) {
+    const balance = Number(data.budget.balance) || 0;
+    const tone = balance >= 0 ? 'positive' : 'negative';
+    items.push(`
+      <a class="dashboard-hero__glance dashboard-hero__glance--budget" href="/budget" data-route="/budget">
+        <i data-lucide="wallet" aria-hidden="true"></i>
+        <span class="dashboard-hero__glance-label">${esc(t('dashboard.monthlyBalance'))}</span>
+        <strong class="dashboard-hero__glance-value dashboard-hero__glance-value--${tone}">${formatBudgetCurrency(balance, currency)}</strong>
+      </a>`);
+  }
+  if (!window.myHub?.isModuleDisabled('health') && data?.health) {
+    const h = data.health;
+    let label = t('dashboard.healthGlanceNone');
+    let icon = 'heart-pulse';
+    if (h.hasVitals && h.vitalsLatest?.length) {
+      icon = 'activity';
+      label = formatVitalChip(h.vitalsLatest[0]);
+    } else if (h.hasMeds) {
+      const total = Number(h.dosesTotal) || 0;
+      const taken = Number(h.dosesTaken) || 0;
+      icon = 'pill';
+      label = total > 0 ? t('dashboard.healthGlanceTaken', { taken, total }) : t('dashboard.healthGlanceNone');
+    } else if (h.hasCycle && h.cycleNextPeriod) {
+      icon = 'droplet';
+      label = `${t('health.cycle.status.nextPeriod')}: ${formatDate(h.cycleNextPeriod)}`;
+    } else if (h.upcomingEvents?.length) {
+      icon = 'syringe';
+      label = h.upcomingEvents[0].title;
+    }
+    if (h.hasVitals || h.hasMeds || h.hasCycle || h.upcomingEvents?.length) {
+      items.push(`
+      <a class="dashboard-hero__glance dashboard-hero__glance--health" href="/health" data-route="/health">
+        <i data-lucide="${icon}" aria-hidden="true"></i>
+        <span class="dashboard-hero__glance-label">${esc(t('dashboard.healthGlanceLabel'))}</span>
+        <strong class="dashboard-hero__glance-value">${esc(label)}</strong>
+      </a>`);
+    }
+  }
+  if (!items.length) return '';
+  return `<div class="dashboard-hero__glance-row" role="list">${items.join('')}</div>`;
+}
+
+function renderDashboardOverview(user, editing = false, data = null, currency = 'EUR') {
   const dateLabel = formatDate(new Date());
+  const glanceHtml = editing ? '' : renderDashboardHeroGlance(data, currency);
 
   return `
-    <section class="dashboard-overview">
-      <div class="dashboard-overview__header${editing ? ' dashboard-overview__header--editing' : ''}">
-        <div class="dashboard-overview__heading">
-          <span class="dashboard-overview__date">${dateLabel}</span>
-          <h2 class="dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(profileDisplayName(user))}</h2>
+    <section class="dashboard-overview dashboard-hero">
+      <div class="dashboard-hero__row${editing ? ' dashboard-overview__header--editing' : ''}">
+        <div class="dashboard-hero__content">
+          <div class="dashboard-hero__badge">${esc(dateLabel)}</div>
+          <h2 class="dashboard-hero__title dashboard-overview__title dashboard-overview__title--${greetingPeriod()}">${greeting(profileDisplayName(user))}</h2>
+          <p class="dashboard-hero__subtitle">${esc(t('dashboard.heroSubtitle'))}</p>
+          ${glanceHtml}
         </div>
-        <div class="dashboard-overview__tools">
+        <div class="dashboard-overview__tools dashboard-hero__tools">
           ${editing ? `
           <div class="dashboard-customize-toolbar" role="toolbar" aria-label="${t('dashboard.customizeTitle')}">
             <button class="btn btn--ghost" id="dashboard-customize-reset">
@@ -1349,9 +1450,16 @@ function renderDashboardLayout(cfg, data, weather, currency, { editing = false, 
   // (kein dense-Umpacken); der Autor-Default darf dicht packen.
   const preserveOrder = (editing || isUserOrderedConfig(cfg)) ? ' dashboard__grid--preserve-order' : '';
   const grid = `<div class="dashboard__grid ${editing ? 'dashboard__grid--editing' : ''}${preserveOrder}" id="dashboard-widget-grid">${gridInner}</div>`;
+  const widgetsSection = `
+    <section class="dashboard-widgets" aria-labelledby="dashboard-widgets-title">
+      <header class="dashboard-widgets__head">
+        <h2 id="dashboard-widgets-title" class="dashboard-widgets__title">${esc(t('dashboard.widgetsTitle'))}</h2>
+      </header>
+      ${grid}
+    </section>`;
   // Im Bearbeiten-Modus folgt die Wieder-Einblenden-Leiste dem Grid, damit
   // ausgeblendete Widgets nicht in einer Sackgasse verschwinden.
-  return editing ? `${grid}${renderHiddenWidgetsTray(cfg)}` : grid;
+  return editing ? `${widgetsSection}${renderHiddenWidgetsTray(cfg)}` : widgetsSection;
 }
 
 function renderDashboardSkeleton() {
@@ -2022,7 +2130,7 @@ export async function render(container, { user }) {
     if (!shell) return;
     if (loadFailed) {
       setHtml(shell, `
-        ${renderDashboardOverview(user, false)}
+        ${renderDashboardOverview(user, false, data, currency)}
         ${renderDashboardError(loadErrorStatus)}
       `);
       if (window.lucide) window.lucide.createIcons({ el: shell });
@@ -2039,7 +2147,7 @@ export async function render(container, { user }) {
     const mastheadSlim = cockpitHtml ? '' : ' dashboard-masthead--slim';
     setHtml(shell, `
       <section class="dashboard-masthead dashboard-masthead--${greetingPeriod()}${mastheadSlim}">
-        ${renderDashboardOverview(user, isCustomizing)}
+        ${renderDashboardOverview(user, isCustomizing, data, currency)}
         ${cockpitHtml}
       </section>
       ${renderDashboardLayout(cfg, data, weather, currency, { editing: isCustomizing, visibleMealTypes })}
@@ -2090,8 +2198,6 @@ export async function render(container, { user }) {
     if (titleEl) {
       titleEl.replaceChildren();
       titleEl.insertAdjacentHTML('afterbegin', greeting(profileDisplayName(user)));
-      // Gradient-Periode mit-resyncen: sonst aktualisieren sich über Mittag/18 Uhr
-      // die Worte, aber der Tageszeit-Gradient bliebe auf dem alten Fenster stehen.
       titleEl.classList.remove(
         'dashboard-overview__title--morning',
         'dashboard-overview__title--day',
@@ -2099,8 +2205,8 @@ export async function render(container, { user }) {
       );
       titleEl.classList.add(`dashboard-overview__title--${greetingPeriod()}`);
     }
-    const dateEl  = container.querySelector('.dashboard-overview__date');
-    if (dateEl)  dateEl.textContent = formatDate(new Date());
+    const badgeEl = container.querySelector('.dashboard-hero__badge');
+    if (badgeEl) badgeEl.textContent = formatDate(new Date());
   }, { signal: _fabController.signal });
 
   // 30-Minuten Auto-Refresh für Wetter (inkl. optionaler Standort-Aktualisierung)
