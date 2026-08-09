@@ -1,0 +1,1005 @@
+.subscriptions-page {
+  /* Sub-Domain erbt den Parent-Akzent (DESIGN.md §2): Abos leben unter Budget
+   * und tragen Teal - nicht das globale Violett (Akzentregel „Modul-Akzent führt"). */
+  --module-accent: var(--module-budget);
+  min-height: 100%;
+  /* Achsen getrennt: --page-gutter steigt ab 1024px auf --space-8 (Issue #577).
+   * Als Shorthand hätte das auch den vertikalen Rand mit verdoppelt, was mit der
+   * Kopf-Fluchtlinie nichts zu tun hat. */
+  padding-block: var(--space-4);
+  padding-inline: var(--page-gutter);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--module-accent) 9%, transparent), transparent 280px),
+    var(--color-bg);
+}
+
+.subscriptions-toolbar {
+  display: grid;
+  /* Suche · 4 beschriftete Filter · Zurücksetzen · 2 Icon-Aktionen */
+  grid-template-columns: minmax(220px, 1fr) repeat(4, minmax(130px, auto)) auto auto auto;
+  gap: var(--space-2);
+  /* An der Unterkante ausrichten: die Filterfelder tragen jetzt eine Labelzeile
+   * über dem Select, die Suche nicht — sonst stünden die Eingaben versetzt. */
+  align-items: end;
+  margin-bottom: var(--space-3);
+}
+
+/* Sichtbares Label statt reinem aria-label: vier gleich aussehende Selects sind
+ * ohne Beschriftung nicht auseinanderzuhalten, sobald ein Wert gewählt ist. */
+.subscriptions-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.subscriptions-filter-field__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.subscriptions-filter-reset {
+  min-height: var(--target-base);
+  white-space: nowrap;
+}
+
+/* Desktop: Wrapper ist transparent — die beiden Icon-Buttons bleiben direkte
+ * Grid-Items in den letzten zwei auto-Spalten. */
+.subscriptions-toolbar__actions {
+  display: contents;
+}
+
+.subscriptions-search {
+  position: relative;
+}
+
+.subscriptions-search svg {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  width: 18px;
+  transform: translateY(-50%);
+  color: var(--color-text-secondary);
+}
+
+.subscriptions-search input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-3) 0 calc(var(--space-3) + 26px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg-card);
+  color: var(--color-text);
+  /* Drop WebKit's native type=search magnifier; the explicit leading icon is
+   * the only magnifier this field should show. */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.subscriptions-search input::-webkit-search-decoration,
+.subscriptions-search input::-webkit-search-results-decoration,
+.subscriptions-search input::-webkit-search-results-button,
+.subscriptions-search input::-webkit-search-cancel-button,
+.subscriptions-combobox__control .form-input::-webkit-search-decoration,
+.subscriptions-combobox__control .form-input::-webkit-search-results-decoration,
+.subscriptions-combobox__control .form-input::-webkit-search-results-button,
+.subscriptions-combobox__control .form-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.subscriptions-filter {
+  min-height: 44px;
+  margin: 0;
+}
+
+.subscriptions-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.subscriptions-summary-card,
+.subscriptions-chart,
+.subscriptions-list-section {
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-glass-card);
+  background: var(--glass-bg-card);
+  box-shadow: var(--glass-shadow-sm);
+}
+
+.subscriptions-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+}
+
+.subscriptions-summary-card > span,
+.subscriptions-summary-card small {
+  color: var(--color-text-secondary);
+}
+
+.subscriptions-summary-card strong {
+  font-size: var(--text-lg);
+}
+
+.subscriptions-summary-card--danger strong {
+  color: var(--color-danger);
+}
+
+.subscriptions-budget-progress {
+  height: 7px;
+  margin-top: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-3);
+}
+
+.subscriptions-budget-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--module-accent);
+}
+
+.subscriptions-analytics {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.1fr) minmax(220px, 0.85fr) minmax(240px, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.subscriptions-chart {
+  padding: var(--space-3);
+}
+
+.subscriptions-chart__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin-bottom: var(--space-2);
+}
+
+.subscriptions-chart__head strong {
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.subscriptions-chart h2,
+.subscriptions-section-head h2 {
+  margin: 0;
+}
+
+.subscriptions-area-chart {
+  display: block;
+  width: 100%;
+  height: 72px;
+  margin-top: var(--space-1);
+}
+
+.subscriptions-area-chart polygon {
+  fill: color-mix(in srgb, var(--module-accent) 18%, transparent);
+}
+
+.subscriptions-area-chart polyline {
+  fill: none;
+  stroke: var(--module-accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+}
+
+.subscriptions-chart-axis {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.subscriptions-pie-layout {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.subscriptions-pie {
+  width: 96px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 10px color-mix(in srgb, var(--color-surface) 78%, transparent);
+}
+
+.subscriptions-pie-legend {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+}
+
+.subscriptions-pie-legend span {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subscriptions-pie-legend i {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.subscriptions-chart-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.8fr) minmax(100px, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.subscriptions-chart-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subscriptions-chart-row > div {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-3);
+}
+
+.subscriptions-chart-row i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--module-accent);
+}
+
+.subscriptions-list-section {
+  padding: var(--space-3);
+}
+
+.subscriptions-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.subscriptions-section-head > div {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.subscriptions-section-head span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.subscriptions-rate-status--warning {
+  color: var(--color-warning-text);
+}
+
+.subscriptions-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.subscription-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-glass-inner);
+  background: var(--color-surface);
+}
+
+.subscription-card--disabled {
+  opacity: 0.62;
+}
+
+.subscription-card__brand {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--subscription-color) 16%, var(--color-surface));
+  color: var(--subscription-color);
+  font-weight: var(--font-weight-bold);
+}
+
+.subscription-card__brand img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.subscription-card__title-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.subscription-card h3,
+.subscription-card p {
+  margin: 0;
+}
+
+.subscription-card p,
+.subscription-card__cost span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.subscription-status {
+  align-self: flex-start;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-3);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+}
+
+.subscription-status--active {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+/* Abgeschlossen (#594): abgesetzt vom Pausiert-Grau über den Modul-Akzent. */
+.subscription-card--completed {
+  opacity: 0.78;
+}
+
+.subscription-status--completed {
+  background: color-mix(in srgb, var(--module-accent) 16%, var(--color-surface));
+  color: color-mix(in srgb, var(--module-accent) 72%, var(--color-text-primary));
+}
+
+.subscription-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+}
+
+.subscription-card__meta span {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.subscription-card__meta svg {
+  width: 14px;
+  height: 14px;
+}
+
+.subscription-card__cost {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.subscription-card__actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.subscription-card__actions .btn--icon {
+  width: var(--target-md);
+  min-height: var(--target-md);
+}
+
+.subscriptions-enabled-row,
+.subscriptions-metadata-add,
+.subscriptions-logo-search,
+.subscriptions-settings-section {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.subscriptions-logo-search .form-input {
+  flex: 1;
+}
+
+.subscriptions-logo-search .btn {
+  flex: 0 0 auto;
+}
+
+.subscriptions-logo-search .btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.subscription-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.subscription-form__section {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-glass-inner);
+  background: color-mix(in srgb, var(--glass-bg-card) 76%, transparent);
+}
+
+.subscription-form__section > h3 {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.subscription-form__section > h3 svg {
+  width: 17px;
+  height: 17px;
+  color: var(--module-budget);
+}
+
+.subscription-form__identity {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.subscription-form__identity-fields {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.subscription-logo-picker {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  cursor: pointer;
+}
+
+.subscription-logo-tools {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: stretch;
+}
+
+.subscription-logo-picker > span {
+  display: grid;
+  width: 84px;
+  height: 84px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--module-budget);
+  font-size: var(--text-xl);
+}
+
+.subscription-logo-picker img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.subscription-logo-picker small {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: center;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.subscription-logo-picker small svg {
+  width: 14px;
+  height: 14px;
+}
+
+.subscription-logo-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.subscription-find-logo-btn {
+  justify-content: center;
+  min-height: 38px;
+  padding-inline: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.subscription-find-logo-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.subscription-form__billing-grid {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.8fr) minmax(180px, 1.3fr) minmax(130px, 1fr) minmax(90px, 0.65fr);
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.subscription-form__organization-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 90px;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.subscription-form__color .form-input--color {
+  width: 100%;
+}
+
+.subscriptions-combobox {
+  position: relative;
+}
+
+.subscriptions-combobox__control {
+  position: relative;
+}
+
+.subscriptions-combobox__control > svg {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: var(--space-3);
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.subscriptions-combobox__control .form-input {
+  padding-left: calc(var(--space-3) + 22px);
+  /* Drop WebKit's native type=search magnifier; the explicit leading icon is
+   * the only magnifier this field should show. */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.subscriptions-combobox__options {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.subscriptions-combobox__options button {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  text-align: start;
+  cursor: pointer;
+}
+
+.subscriptions-combobox__options button:hover,
+.subscriptions-combobox__options button:focus,
+.subscriptions-combobox__options button[aria-selected="true"] {
+  outline: none;
+  background: color-mix(in srgb, var(--module-accent) 12%, transparent);
+  color: color-mix(in srgb, var(--module-accent, var(--color-accent)) 70%, var(--color-text-primary));
+}
+
+/* Tastatur-Fokus zusätzlich mit Inset-Ring markieren (Audit F-16): die reine
+ * Flächenfarbe unterscheidet Fokus nicht von Hover/aria-selected. */
+.subscriptions-combobox__options button:focus-visible {
+  outline: 2px solid var(--module-accent);
+  outline-offset: -2px;
+}
+
+.subscriptions-enabled-row > div {
+  display: grid;
+  gap: var(--space-0h);
+}
+
+.subscriptions-enabled-row small {
+  color: var(--color-text-secondary);
+}
+
+.subscriptions-settings-section {
+  justify-content: space-between;
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.subscriptions-settings-section > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.subscriptions-enabled-row {
+  justify-content: space-between;
+  min-height: 44px;
+}
+
+.subscriptions-modal-footer {
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+  padding: var(--space-3) 0 0;
+  border: 0;
+  gap: var(--space-2);
+}
+
+.subscriptions-logo-picker-modal {
+  position: fixed;
+  z-index: calc(var(--z-modal) + 1);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--color-overlay) 84%, transparent);
+}
+
+.subscriptions-logo-picker-panel {
+  width: min(720px, 100%);
+  max-height: min(720px, calc(100dvh - (2 * var(--space-4))));
+  overflow: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-glass-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xl);
+}
+
+.subscriptions-logo-picker-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.subscriptions-logo-picker-head h3 {
+  margin: 0;
+}
+
+.subscriptions-logo-search-form {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.subscriptions-logo-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.subscriptions-logo-option {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: var(--text-xs);
+}
+
+.subscriptions-logo-option:hover,
+.subscriptions-logo-option:focus-visible {
+  outline: none;
+  border-color: var(--module-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--module-accent) 18%, transparent);
+}
+
+.subscriptions-logo-option img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.subscriptions-logo-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.subscriptions-metadata {
+  display: grid;
+  /* auto-fit: zwei Spalten nur, wenn jede breit genug für Name + vier Icon-Buttons
+   * ist (>= 24rem), sonst eine Spalte. Verhindert das Quetschen im schmalen Modal
+   * auf Tablet/Phone; min(100%, ...) schützt vor Overflow unter 24rem. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: var(--space-4);
+}
+
+.subscriptions-metadata ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.subscriptions-metadata li {
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.subscriptions-metadata-row__view {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+}
+
+/* Name behält Vorrang; die vier Icon-Buttons rutschen bei Enge (schmales
+ * Mobile) in die nächste Zeile, statt den Namen auf wenige Zeichen zu quetschen. */
+.subscriptions-metadata-row__view > span {
+  flex: 1 1 7rem;
+  min-width: 0;
+}
+
+.subscriptions-metadata-row__view .subscriptions-metadata-row__actions {
+  margin-left: auto;
+}
+
+.subscriptions-metadata-row__edit {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: 36px;
+}
+
+/* [hidden] hat gegenüber den display-Klassen zu geringe Spezifität - explizit übersteuern. */
+.subscriptions-metadata-row__view[hidden],
+.subscriptions-metadata-row__edit[hidden] {
+  display: none;
+}
+
+.subscriptions-metadata-edit-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.subscriptions-metadata-row__edit .form-input--color {
+  width: 44px;
+  flex: 0 0 44px;
+  padding: 2px;
+}
+
+.subscriptions-metadata-row__actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.subscriptions-metadata-row__view > i {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.subscriptions-metadata-add {
+  align-items: stretch;
+}
+
+.subscriptions-metadata-add .form-input--color {
+  width: 52px;
+  flex: 0 0 52px;
+}
+
+.subscriptions-metadata > .subscriptions-modal-footer {
+  grid-column: 1 / -1;
+}
+
+.subscriptions-notifications ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.subscriptions-notifications li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.subscriptions-notifications li > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.subscriptions-notifications li span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 1023px) {
+  .subscriptions-toolbar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .subscriptions-search {
+    grid-column: 1 / -1;
+  }
+
+  /* Dritte Zeile: Zurücksetzen links, die beiden Icon-Aktionen rechts in ihrer
+   * natürlichen Breite — als Grid-Items würden sie sich sonst über je eine
+   * volle Spalte spannen und als überbreite leere Pillen erscheinen. */
+  .subscriptions-filter-reset {
+    grid-column: 1 / 3;
+    justify-self: start;
+  }
+
+  .subscriptions-toolbar__actions {
+    display: flex;
+    gap: var(--space-2);
+    grid-column: 3 / -1;
+    justify-content: flex-end;
+  }
+
+  .subscriptions-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .subscriptions-analytics {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .subscription-card__actions {
+    grid-column: 2 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 640px) {
+  .subscriptions-page {
+    padding: var(--space-3);
+  }
+
+  .subscriptions-toolbar,
+  .subscriptions-metadata {
+    grid-template-columns: 1fr;
+  }
+
+  /* Kennzahlen bleiben zweispaltig (kompakte Bento-Dichte statt vier
+   * vollbreiter Einzelwert-Karten, Audit F5). */
+  .subscriptions-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .subscriptions-notifications li {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .subscriptions-notifications li .btn {
+    grid-column: span 1;
+  }
+
+  /* Mobile: die beiden Aktions-Icons teilen sich eine kompakte Zeile statt je
+   * eine vollbreite leere Pille zu bilden (Audit F8). */
+  .subscriptions-toolbar__actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .subscriptions-toolbar__actions .btn--icon {
+    flex: 1;
+  }
+
+  .subscription-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .subscription-card__cost {
+    grid-column: 1 / -1;
+    align-items: flex-start;
+  }
+
+  .subscription-card__actions {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+
+  .subscription-card__actions .btn {
+    flex: 1;
+  }
+
+  .subscriptions-section-head {
+    align-items: flex-start;
+  }
+
+  .subscription-form__identity,
+  .subscription-form__billing-grid,
+  .subscription-form__organization-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-logo-tools {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    justify-items: stretch;
+  }
+
+  .subscription-logo-picker {
+    grid-template-columns: auto minmax(0, 1fr);
+    justify-items: start;
+  }
+
+  .subscription-logo-picker > span {
+    grid-row: span 2;
+    width: 68px;
+    height: 68px;
+  }
+
+  .subscriptions-logo-search {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .subscriptions-logo-picker-modal {
+    align-items: end;
+    padding: var(--space-2);
+  }
+
+  .subscriptions-logo-picker-panel {
+    max-height: min(680px, calc(100dvh - (2 * var(--space-2))));
+  }
+
+  .subscriptions-logo-results {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
