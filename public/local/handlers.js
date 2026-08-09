@@ -1097,6 +1097,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
         content: body.content,
         color: body.color ?? '#FFEB3B',
         pinned: body.pinned ? 1 : 0,
+        is_secret: body.is_secret ? 1 : 0,
         created_by: effectiveUserId,
         created_at: nowIso(),
         updated_at: nowIso(),
@@ -1122,6 +1123,7 @@ export async function handleLocalApi(method, path, body, query = {}) {
         content: body.content ?? note.content,
         color: body.color ?? note.color,
         pinned: body.pinned !== undefined ? (body.pinned ? 1 : 0) : note.pinned,
+        is_secret: body.is_secret !== undefined ? (body.is_secret ? 1 : 0) : note.is_secret ?? 0,
         updated_at: nowIso(),
       });
       await saveState();

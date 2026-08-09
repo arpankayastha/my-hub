@@ -2,10 +2,25 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.34] - 2026-08-09
+
+### Added
+- Board secret notes with PIN/fingerprint unlock (same as budget amount reveal).
+- Unlock required to show masked budget amounts.
+
+### Fixed
+- Recurring delete dialog button alignment on mobile.
+- Board note card action button alignment.
+
+## [1.1.33] - 2026-08-04
+
+### Fixed
+- Budget Statistics tab scrolls again (expense shares and full report reachable on mobile).
+- Health Cycle page: cleaner hero card, readable stat tiles, split ring labels, and improved mobile layout for today actions and calendar legend.
+
 ## [1.1.32] - 2026-08-04
 
 ### Fixed
-- Health vitals modal: Save works again when the footer button sits outside the form (fixes “An unexpected error occurred” on submit).
 
 ## [1.1.31] - 2026-08-04
 

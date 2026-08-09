@@ -775,7 +775,18 @@
         "groupOthers": "Weitere Notizen",
         "filterCreatorLabel": "Erstellt von",
         "formatToolbarLabel": "Textformatierung",
-        "noResultsCreatorDescription": "Keine Notiz von {{name}}."
+        "noResultsCreatorDescription": "Keine Notiz von {{name}}.",
+        "secretLabel": "Geheime Notiz",
+        "secretHint": "Inhalt wird ausgeblendet, bis du die Sperre löst (PIN oder Fingerabdruck).",
+        "secretBadge": "Geheim",
+        "filterAll": "Alle",
+        "filterSecret": "Geheim",
+        "filterRegular": "Normal",
+        "filterKindLabel": "Notiztyp",
+        "groupSecret": "Geheime Notizen",
+        "secretLockedPlaceholder": "Zum Anzeigen entsperren",
+        "lockVault": "Sensible Inhalte sperren",
+        "unlockVault": "Sensible Inhalte entsperren"
     },
     "contacts": {
         "manageCategories": "Kategorien verwalten",
@@ -3685,5 +3696,18 @@
             "jar": "Glas",
             "bag": "Beutel"
         }
+    },
+    "sensitive": {
+        "pinLabel": "PIN",
+        "pinPlaceholder": "4–8 Ziffern",
+        "pinConfirmLabel": "PIN bestätigen",
+        "pinInvalid": "PIN muss 4–8 Ziffern haben.",
+        "pinMismatch": "PINs stimmen nicht überein.",
+        "unlockAction": "Entsperren",
+        "unlockTitle": "Sensible Inhalte entsperren",
+        "unlockDetail": "Budget-Beträge und geheime Notizen werden erst nach Entsperren angezeigt.",
+        "unlockFailed": "PIN falsch.",
+        "setupPinTitle": "Sperre einrichten",
+        "setupPinDetail": "Lege eine PIN fest. Optional kann später der Fingerabdruck genutzt werden."
     }
 }

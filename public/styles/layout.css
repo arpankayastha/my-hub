@@ -2218,6 +2218,40 @@ p.field-hint--warn[hidden] {
   align-items: stretch;
 }
 
+.modal-actions--stack > .btn {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  text-wrap: balance;
+}
+
+/* Volle Breite für Wahl-Dialoge (z. B. wiederkehrende Löschung): verhindert
+ * horizontales Overflow und abgeschnittene Pill-Buttons auf schmalen Sheets. */
+.modal-choice-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.modal-choice-list__item {
+  width: 100%;
+  min-width: 0;
+  justify-content: center;
+  text-wrap: balance;
+}
+
+.sensitive-concealed {
+  filter: blur(6px);
+  user-select: none;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sensitive-concealed { filter: none; }
+}
+
 .modal-panel__footer {
   display: flex;
   align-items: center;

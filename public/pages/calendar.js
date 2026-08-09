@@ -3440,9 +3440,9 @@ function recurringDeleteChoice(event) {
       size: 'sm',
       content: `
         ${renderRecurringScopeChooser('rds', occDateKey)}
-        <div class="modal-actions modal-actions--stack">
-          <button type="button" class="btn btn--danger" id="rds-confirm">${t('common.delete')}</button>
-          <button type="button" class="btn btn--ghost" id="rds-cancel">${t('common.cancel')}</button>
+        <div class="modal-choice-list">
+          <button type="button" class="btn btn--danger modal-choice-list__item" id="rds-confirm">${t('common.delete')}</button>
+          <button type="button" class="btn btn--ghost modal-choice-list__item" id="rds-cancel">${t('common.cancel')}</button>
         </div>`,
       onClose: () => finish(null),
       onSave(panel) {

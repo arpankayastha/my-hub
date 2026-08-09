@@ -4176,6 +4176,14 @@ const MIGRATIONS = [
         BEGIN UPDATE users SET updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = OLD.id; END;
     `,
   },
+  {
+    version: 112,
+    description: 'Notes: is_secret flag for vault-protected secret notes',
+    up: `
+      ALTER TABLE notes ADD COLUMN is_secret INTEGER NOT NULL DEFAULT 0;
+      CREATE INDEX IF NOT EXISTS idx_notes_secret ON notes(is_secret);
+    `,
+  },
 ];
 
 /**

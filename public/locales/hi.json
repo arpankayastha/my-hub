@@ -754,7 +754,18 @@
         "groupOthers": "अन्य नोट्स",
         "filterCreatorLabel": "द्वारा बनाया गया",
         "formatToolbarLabel": "टेक्स्ट स्वरूपण",
-        "noResultsCreatorDescription": "{{name}} का कोई नोट नहीं।"
+        "noResultsCreatorDescription": "{{name}} का कोई नोट नहीं।",
+        "secretLabel": "Secret note",
+        "secretHint": "Content stays hidden until you unlock (PIN or fingerprint).",
+        "secretBadge": "Secret",
+        "filterAll": "All",
+        "filterSecret": "Secret",
+        "filterRegular": "Regular",
+        "filterKindLabel": "Note type",
+        "groupSecret": "Secret notes",
+        "secretLockedPlaceholder": "Unlock to view",
+        "lockVault": "Lock sensitive content",
+        "unlockVault": "Unlock sensitive content"
     },
     "contacts": {
         "manageCategories": "श्रेणियाँ प्रबंधित करें",
@@ -922,7 +933,6 @@
         "catPersonalHealth": "व्यक्तिगत देखभाल / स्वास्थ्य",
         "catShoppingClothing": "खरीदारी और कपड़े",
         "catFinancialOther": "वित्तीय सेवाएं और अन्य",
-        "catEducation": "शिक्षा",
         "subcatRentMortgage": "किराया / गृह ऋण",
         "subcatCondominium": "सोसाइटी शुल्क",
         "subcatUtilities": "बिजली / पानी / गैस",
@@ -3647,5 +3657,18 @@
             "jar": "जार",
             "bag": "थैली"
         }
+    },
+    "sensitive": {
+        "pinLabel": "PIN",
+        "pinPlaceholder": "4–8 digits",
+        "pinConfirmLabel": "Confirm PIN",
+        "pinInvalid": "PIN must be 4–8 digits.",
+        "pinMismatch": "PINs do not match.",
+        "unlockAction": "Unlock",
+        "unlockTitle": "Unlock sensitive content",
+        "unlockDetail": "Budget amounts and secret notes are shown only after you unlock.",
+        "unlockFailed": "Wrong PIN.",
+        "setupPinTitle": "Set up lock",
+        "setupPinDetail": "Choose a PIN. Fingerprint unlock can be added when your device supports it."
     }
 }

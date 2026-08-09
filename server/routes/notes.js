@@ -44,7 +44,7 @@ router.get('/', (req, res) => {
  */
 router.post('/', (req, res) => {
   try {
-    const { pinned = 0 } = req.body;
+    const { pinned = 0, is_secret = 0 } = req.body;
     const vContent = str(req.body.content, 'Inhalt', { max: MAX_TEXT });
     const vTitle   = str(req.body.title,   'Titel',  { max: MAX_TITLE, required: false });
     const vColor   = color(req.body.color || '#FFEB3B', 'Farbe');
@@ -52,9 +52,9 @@ router.post('/', (req, res) => {
     if (errors.length) return res.status(400).json({ error: errors.join(' '), code: 400 });
 
     const result = db.get().prepare(`
-      INSERT INTO notes (content, title, color, pinned, created_by)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(vContent.value, vTitle.value, vColor.value, pinned ? 1 : 0, viewerId(req));
+      INSERT INTO notes (content, title, color, pinned, is_secret, created_by)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(vContent.value, vTitle.value, vColor.value, pinned ? 1 : 0, is_secret ? 1 : 0, viewerId(req));
 
     const note = db.get().prepare(`
       SELECT n.*, u.display_name AS creator_name, u.avatar_color AS creator_color, u.avatar_data AS creator_avatar
@@ -81,7 +81,7 @@ router.put('/:id', (req, res) => {
     const note = db.get().prepare('SELECT * FROM notes WHERE id = ?').get(id);
     if (!note) return res.status(404).json({ error: 'Notiz nicht gefunden', code: 404 });
 
-    const { pinned } = req.body;
+    const { pinned, is_secret } = req.body;
     const checks = [];
     if (req.body.content !== undefined) checks.push(str(req.body.content, 'Inhalt', { max: MAX_TEXT, required: false }));
     if (req.body.title !== undefined)   checks.push(str(req.body.title,   'Titel',  { max: MAX_TITLE, required: false }));
@@ -94,13 +94,15 @@ router.put('/:id', (req, res) => {
       SET content = COALESCE(?, content),
           title   = ?,
           color   = COALESCE(?, color),
-          pinned  = COALESCE(?, pinned)
+          pinned  = COALESCE(?, pinned),
+          is_secret = COALESCE(?, is_secret)
       WHERE id = ?
     `).run(
       req.body.content?.trim() ?? null,
       req.body.title !== undefined ? (req.body.title?.trim() || null) : note.title,
       req.body.color ?? null,
       pinned !== undefined ? (pinned ? 1 : 0) : null,
+      is_secret !== undefined ? (is_secret ? 1 : 0) : null,
       id
     );
 
