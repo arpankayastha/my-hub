@@ -2,6 +2,16 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.18] - 2026-08-09
+
+### Added
+- **Board: secret notes** — mark notes as secret (advanced options). Content stays blurred until you unlock with PIN or device fingerprint, same flow as revealing budget amounts.
+- **Budget + Board: unlock to reveal** — showing masked budget amounts now requires PIN/fingerprint unlock (set up on first use).
+
+### Fixed
+- Recurring-payment delete dialog: full-width stacked buttons on mobile so choices are not clipped.
+- Board note cards: aligned expand/delete action buttons.
+
 ## [1.1.17] - 2026-08-02
 
 ### Added

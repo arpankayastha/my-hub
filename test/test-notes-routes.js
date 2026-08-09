@@ -79,6 +79,12 @@ test('POST /: legt Notiz an (Default-Farbe, created_by, creator_name-Join)', asy
   assert.equal(note.creator_name, 'Uli');
 });
 
+test('POST /: is_secret flag', async () => {
+  const r = await call('POST', '/', { content: 'Hidden', is_secret: true });
+  assert.equal(r.status, 201);
+  assert.equal(r.body.data.is_secret, 1);
+});
+
 test('POST / mit pinned:true → pinned=1', async () => {
   const r = await call('POST', '/', { content: 'Wichtig', pinned: true });
   assert.equal(r.status, 201);

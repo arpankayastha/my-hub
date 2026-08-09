@@ -8,6 +8,7 @@
 import { api } from '/api.js';
 import { openModal as openSharedModal, closeModal, confirmModal, advancedSection, wireBlurValidation, reportFieldError } from '/components/modal.js';
 import { stagger, vibrate, scheduleUndoableDelete } from '/utils/ux.js';
+import { ensureSensitiveUnlocked, lockSensitive } from '/utils/sensitive-vault.js';
 import { wireTablist } from '/utils/tablist.js';
 import { t, formatDate, getLocale, getNumberFormat } from '/i18n.js';
 import { esc } from '/utils/html.js';
@@ -668,8 +669,15 @@ function renderBody() {
     vibrate(10);
     renderBody();
   });
-  _container.querySelector('#budget-hide-amounts')?.addEventListener('click', () => {
-    state.hideAmounts = !state.hideAmounts;
+  _container.querySelector('#budget-hide-amounts')?.addEventListener('click', async () => {
+    if (state.hideAmounts) {
+      const ok = await ensureSensitiveUnlocked();
+      if (!ok) return;
+      state.hideAmounts = false;
+    } else {
+      state.hideAmounts = true;
+      lockSensitive();
+    }
     try { localStorage.setItem(HIDE_AMOUNTS_KEY, state.hideAmounts ? '1' : '0'); } catch (_) { /* Private-Mode */ }
     vibrate(10);
     renderBody();
@@ -2463,10 +2471,10 @@ function recurringChoiceModal({ title, thisLabel, seriesLabel, seriesDanger = fa
       title,
       size: 'sm',
       content: `
-        <div class="modal-actions modal-actions--stack">
-          <button type="button" class="btn btn--secondary" id="rcs-this">${thisLabel}</button>
-          <button type="button" class="btn ${seriesDanger ? 'btn--danger' : 'btn--primary'}" id="rcs-series">${seriesLabel}</button>
-          <button type="button" class="btn btn--ghost" id="rcs-cancel">${t('common.cancel')}</button>
+        <div class="modal-choice-list">
+          <button type="button" class="btn btn--secondary modal-choice-list__item" id="rcs-this">${thisLabel}</button>
+          <button type="button" class="btn ${seriesDanger ? 'btn--danger' : 'btn--primary'} modal-choice-list__item" id="rcs-series">${seriesLabel}</button>
+          <button type="button" class="btn btn--ghost modal-choice-list__item" id="rcs-cancel">${t('common.cancel')}</button>
         </div>`,
       onClose: () => finish(null),
       onSave(panel) {

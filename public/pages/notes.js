@@ -7,6 +7,11 @@
 import { api } from '/api.js';
 import { openModal as openSharedModal, closeModal, btnError, advancedSection, reportFieldError } from '/components/modal.js';
 import { stagger, vibrate, scheduleUndoableDelete } from '/utils/ux.js';
+import {
+  isSensitiveUnlocked,
+  toggleSensitiveLock,
+  ensureSensitiveUnlocked,
+} from '/utils/sensitive-vault.js';
 import { t } from '/i18n.js';
 import { esc, renderMarkdownLight } from '/utils/html.js';
 import { getReadableTextColor } from '/utils/color.js';
@@ -39,11 +44,19 @@ const NOTE_COLOR_NAMES = () => ({
   '#FBFAF7': t('notes.colorWhite'),
 });
 
+function isNoteSecret(note) {
+  return note?.is_secret === 1 || note?.is_secret === true;
+}
+
+function noteContentVisible(note) {
+  return !isNoteSecret(note) || isSensitiveUnlocked();
+}
+
 // --------------------------------------------------------
 // State
 // --------------------------------------------------------
 
-let state = { notes: [], user: null, filterQuery: '', filterCreator: '' };
+let state = { notes: [], user: null, filterQuery: '', filterCreator: '', filterKind: 'all' };
 let _container = null;
 
 // --------------------------------------------------------
@@ -60,11 +73,17 @@ export async function render(container, { user }) {
       <div class="page-toolbar notes-toolbar">
         <h1 class="page-toolbar__title">${t('notes.title')}</h1>
         ${renderPageSearch({ id: 'notes-search', label: t('notes.searchPlaceholder'), placeholder: t('notes.searchPlaceholder'), value: state.filterQuery, clearLabel: t('common.searchClear'), className: 'notes-toolbar__search' })}
+        <button type="button" class="btn btn--icon notes-vault-toggle" id="notes-vault-toggle"
+                aria-pressed="${isSensitiveUnlocked() ? 'false' : 'true'}"
+                aria-label="${isSensitiveUnlocked() ? t('notes.lockVault') : t('notes.unlockVault')}">
+          <i data-lucide="${isSensitiveUnlocked() ? 'lock-open' : 'lock'}" class="icon-md" aria-hidden="true"></i>
+        </button>
         <button class="btn btn--primary toolbar-new-btn" id="notes-add-btn">
           <i data-lucide="plus" class="icon-md" aria-hidden="true"></i>
           ${t('notes.addNoteLabel')}
         </button>
       </div>
+      <div class="notes-kind-filters" id="notes-kind-filters" role="group" aria-label="${t('notes.filterKindLabel')}"></div>
       <div class="notes-filters" id="notes-filters" role="group" aria-label="${t('notes.filterCreatorLabel')}" hidden></div>
       <div class="notes-scroll">
         <div id="notes-grid" class="notes-grid" aria-busy="true">${renderSkeletonList({ rows: 5, lines: 3 })}</div>
@@ -97,10 +116,17 @@ export async function render(container, { user }) {
     const card = e.target.closest('.note-card[data-id]');
     if (card) {
       const note = state.notes.find((n) => n.id === parseInt(card.dataset.id, 10));
+      if (note && isNoteSecret(note) && !isSensitiveUnlocked()) {
+        const ok = await ensureSensitiveUnlocked();
+        if (!ok) return;
+        updateVaultToggle();
+        renderGrid();
+      }
       if (note) openNoteModal({ mode: 'edit', note });
     }
   });
 
+  renderKindFilter();
   renderCreatorFilter();
   renderGrid();
 
@@ -109,6 +135,12 @@ export async function render(container, { user }) {
   // bleibt aber als einheitliches Modul-Muster erhalten (frontend-audit 1.9).
   _container.querySelector('#notes-add-btn').addEventListener('click', addHandler);
   _container.querySelector('#fab-new-note').addEventListener('click', addHandler);
+
+  _container.querySelector('#notes-vault-toggle')?.addEventListener('click', async () => {
+    await toggleSensitiveLock();
+    updateVaultToggle();
+    renderGrid();
+  });
 
   wirePageSearch(_container, {
     id: 'notes-search',
@@ -123,6 +155,43 @@ export async function render(container, { user }) {
 // --------------------------------------------------------
 // Grid
 // --------------------------------------------------------
+
+function updateVaultToggle() {
+  const btn = _container?.querySelector('#notes-vault-toggle');
+  if (!btn) return;
+  const unlocked = isSensitiveUnlocked();
+  btn.setAttribute('aria-pressed', unlocked ? 'false' : 'true');
+  btn.setAttribute('aria-label', unlocked ? t('notes.lockVault') : t('notes.unlockVault'));
+  const icon = btn.querySelector('[data-lucide]');
+  if (icon) icon.setAttribute('data-lucide', unlocked ? 'lock-open' : 'lock');
+  if (window.lucide) lucide.createIcons({ el: btn });
+}
+
+function renderKindFilter() {
+  const row = _container.querySelector('#notes-kind-filters');
+  if (!row) return;
+  row.replaceChildren();
+  const kinds = [
+    ['all', t('notes.filterAll')],
+    ['regular', t('notes.filterRegular')],
+    ['secret', t('notes.filterSecret')],
+  ];
+  kinds.forEach(([value, label]) => {
+    const active = state.filterKind === value;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = `filter-chip filter-chip--sm${active ? ' filter-chip--active' : ''}`;
+    chip.dataset.kind = value;
+    chip.setAttribute('aria-pressed', String(active));
+    chip.textContent = label;
+    chip.addEventListener('click', () => {
+      state.filterKind = state.filterKind === value ? 'all' : value;
+      renderKindFilter();
+      renderGrid();
+    });
+    row.appendChild(chip);
+  });
+}
 
 /**
  * Ersteller-Filterzeile. Erst ab zwei Autorinnen/Autoren sinnvoll — in einem
@@ -171,9 +240,12 @@ function visibleNotes() {
   const q = state.filterQuery.trim().toLowerCase();
   return state.notes.filter((n) => {
     if (state.filterCreator && n.creator_name !== state.filterCreator) return false;
+    if (state.filterKind === 'secret' && !isNoteSecret(n)) return false;
+    if (state.filterKind === 'regular' && isNoteSecret(n)) return false;
     if (!q) return true;
-    return (n.title   || '').toLowerCase().includes(q)
-        || (n.content || '').toLowerCase().includes(q);
+    const titleMatch = (n.title || '').toLowerCase().includes(q);
+    if (isNoteSecret(n) && !isSensitiveUnlocked()) return titleMatch;
+    return titleMatch || (n.content || '').toLowerCase().includes(q);
   });
 }
 
@@ -243,17 +315,23 @@ function renderNoteCard(note) {
   const textColor = getReadableTextColor(note.color);
   const avatarColor = note.creator_color || '#8E8E93';
   const avatarTextColor = getReadableTextColor(avatarColor);
+  const secret = isNoteSecret(note);
+  const showContent = noteContentVisible(note);
+  const contentHtml = showContent
+    ? renderMarkdownLight(note.content)
+    : `<p class="note-card__locked"><i data-lucide="lock" class="icon-sm" aria-hidden="true"></i>${esc(t('notes.secretLockedPlaceholder'))}</p>`;
 
   return `
-    <div class="note-card ${note.pinned ? 'note-card--pinned' : ''}"
+    <div class="note-card ${note.pinned ? 'note-card--pinned' : ''}${secret ? ' note-card--secret' : ''}"
          data-id="${note.id}"
          style="background-color:${esc(note.color)};color:${textColor};">
       <button class="note-card__pin" data-action="pin" data-id="${note.id}"
               aria-label="${note.pinned ? t('notes.unpinAction') : t('notes.pinAction')}">
         <i data-lucide="${note.pinned ? 'pin-off' : 'pin'}" class="icon-sm" aria-hidden="true"></i>
       </button>
+      ${secret ? `<span class="note-card__secret-badge"><i data-lucide="lock" class="icon-sm" aria-hidden="true"></i>${esc(t('notes.secretBadge'))}</span>` : ''}
       ${note.title ? `<div class="note-card__title">${esc(note.title)}</div>` : ''}
-      <div class="note-card__content">${renderMarkdownLight(note.content)}</div>
+      <div class="note-card__content${showContent ? '' : ' note-card__content--locked'}">${contentHtml}</div>
       <div class="note-card__footer">
         <div class="note-card__creator">
           <span class="note-card__avatar"
@@ -526,16 +604,24 @@ function openNoteModal({ mode, note = null }) {
       </div>
       <div class="form-group">
         <label class="toggle">
+          <input type="checkbox" id="note-secret" ${isEdit && isNoteSecret(note) ? 'checked' : ''}>
+          <span class="toggle__track"></span>
+          <span>${t('notes.secretLabel')}</span>
+        </label>
+        <p class="form-hint">${t('notes.secretHint')}</p>
+      </div>
+      <div class="form-group">
+        <label class="toggle">
           <input type="checkbox" id="note-pinned" ${isEdit && note.pinned ? 'checked' : ''}>
           <span class="toggle__track"></span>
           <span>${t('notes.pinnedLabel')}</span>
         </label>
       </div>`,
-      { open: isEdit && (!!note.pinned || (!!note.color && note.color !== NOTE_COLORS[0])) })}
+      { open: isEdit && (!!note.pinned || isNoteSecret(note) || (!!note.color && note.color !== NOTE_COLORS[0])) })}
       </div>
 
       <div class="modal-panel__footer modal-panel__footer--plain note-modal__footer">
-        ${isEdit ? `<button type="button" class="btn btn--danger-outline" id="note-modal-delete" style="margin-right:auto">${t('common.delete')}</button>` : ''}
+        ${isEdit ? `<button type="button" class="btn btn--danger-outline note-modal__delete" id="note-modal-delete">${t('common.delete')}</button>` : ''}
         <button type="button" class="btn btn--secondary" id="note-modal-cancel" data-editor-only>${t('common.cancel')}</button>
         <button type="button" class="btn btn--primary" id="note-modal-save" data-editor-only>${isEdit ? t('common.save') : t('common.create')}</button>
       </div>
@@ -697,6 +783,7 @@ function openNoteModal({ mode, note = null }) {
         const cnt     = panel.querySelector('#note-content').value.trim();
         const color   = panel.querySelector('.note-color-swatch--active')?.dataset.color || NOTE_COLORS[0];
         const pinned  = panel.querySelector('#note-pinned').checked ? 1 : 0;
+        const is_secret = panel.querySelector('#note-secret')?.checked ? 1 : 0;
 
         if (!cnt) {
           // Fehler am Feld statt als ortloser Toast (geteiltes Muster, Critique P1).
@@ -709,10 +796,10 @@ function openNoteModal({ mode, note = null }) {
 
         try {
           if (mode === 'create') {
-            const res = await api.post('/notes', { title, content: cnt, color, pinned });
+            const res = await api.post('/notes', { title, content: cnt, color, pinned, is_secret });
             state.notes.unshift(res.data);
           } else {
-            const res = await api.put(`/notes/${note.id}`, { title, content: cnt, color, pinned });
+            const res = await api.put(`/notes/${note.id}`, { title, content: cnt, color, pinned, is_secret });
             const idx = state.notes.findIndex((n) => n.id === note.id);
             if (idx !== -1) state.notes[idx] = res.data;
             state.notes.sort((a, b) => b.pinned - a.pinned);

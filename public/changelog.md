@@ -2,6 +2,16 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.18] - 2026-08-09
+
+### Added
+- Board secret notes with PIN/fingerprint unlock (same as budget amount reveal).
+- Unlock required to show masked budget amounts.
+
+### Fixed
+- Recurring delete dialog button alignment on mobile.
+- Board note card action button alignment.
+
 ## [1.1.17] - 2026-08-02
 
 ### Added
