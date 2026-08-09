@@ -785,7 +785,7 @@
         "filterKindLabel": "Notiztyp",
         "groupSecret": "Geheime Notizen",
         "secretLockedPlaceholder": "Zum Anzeigen entsperren",
-        "lockVault": "Sensible Inhalte sperren",
+        "lockVault": "Alle geheimen Notizen sperren",
         "unlockVault": "Sensible Inhalte entsperren"
     },
     "contacts": {
@@ -3708,6 +3708,7 @@
         "unlockDetail": "Budget-Beträge und geheime Notizen werden erst nach Entsperren angezeigt.",
         "unlockFailed": "PIN falsch.",
         "setupPinTitle": "Sperre einrichten",
-        "setupPinDetail": "Lege eine PIN fest. Optional kann später der Fingerabdruck genutzt werden."
+        "setupPinDetail": "Lege eine PIN fest. Optional kann später der Fingerabdruck genutzt werden.",
+        "unlockNoteDetail": "Nur diese Notiz wird angezeigt. Andere geheime Notizen bleiben verborgen."
     }
 }

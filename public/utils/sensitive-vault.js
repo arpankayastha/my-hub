@@ -1,7 +1,7 @@
 /**
  * Client-side vault for concealing sensitive UI (budget amounts, secret notes).
  * WebAuthn platform auth when available; otherwise a device-local PIN.
- * Session unlock expires after 15 minutes; not cryptographic server security.
+ * Budget uses a session-wide unlock; secret notes unlock individually.
  */
 
 import { openModal, closeModal } from '/components/modal.js';
@@ -9,9 +9,14 @@ import { t } from '/i18n.js';
 import { esc } from '/utils/html.js';
 
 const UNLOCK_TS_KEY = 'yuvomi-sensitive-unlock-ts';
+const SECRET_NOTES_UNLOCK_KEY = 'yuvomi-secret-notes-unlocked';
 const PIN_HASH_KEY = 'yuvomi-sensitive-pin-hash';
 const WEBAUTHN_ID_KEY = 'yuvomi-sensitive-webauthn-id';
 const UNLOCK_TTL_MS = 15 * 60 * 1000;
+
+function showToast(message, type) {
+  window.myHub?.showToast?.(message, type) ?? window.yuvomi?.showToast?.(message, type);
+}
 
 function bufferToBase64url(buffer) {
   const bytes = new Uint8Array(buffer);
@@ -53,6 +58,45 @@ export function markSensitiveUnlocked() {
   sessionStorage.setItem(UNLOCK_TS_KEY, String(Date.now()));
 }
 
+function readSecretNoteUnlocks() {
+  try {
+    const raw = sessionStorage.getItem(SECRET_NOTES_UNLOCK_KEY);
+    if (!raw) return {};
+    const map = JSON.parse(raw);
+    return map && typeof map === 'object' ? map : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSecretNoteUnlocks(map) {
+  sessionStorage.setItem(SECRET_NOTES_UNLOCK_KEY, JSON.stringify(map));
+}
+
+function pruneExpiredSecretUnlocks(map) {
+  const now = Date.now();
+  for (const [id, ts] of Object.entries(map)) {
+    if (!Number.isFinite(ts) || now - ts > UNLOCK_TTL_MS) delete map[id];
+  }
+  return map;
+}
+
+export function isSecretNoteUnlocked(noteId) {
+  const map = pruneExpiredSecretUnlocks(readSecretNoteUnlocks());
+  writeSecretNoteUnlocks(map);
+  return map[String(noteId)] != null;
+}
+
+export function hasUnlockedSecretNotes() {
+  const map = pruneExpiredSecretUnlocks(readSecretNoteUnlocks());
+  writeSecretNoteUnlocks(map);
+  return Object.keys(map).length > 0;
+}
+
+export function lockAllSecretNotes() {
+  sessionStorage.removeItem(SECRET_NOTES_UNLOCK_KEY);
+}
+
 export function concealText(text = '') {
   if (!text) return '••••';
   return '•'.repeat(Math.min(8, Math.max(4, text.length)));
@@ -81,7 +125,7 @@ async function registerWebAuthn() {
   const credential = await navigator.credentials.create({
     publicKey: {
       challenge,
-      rp: { name: 'Yuvomi' },
+      rp: { name: 'My Hub' },
       user: {
         id: userId,
         name: 'vault',
@@ -162,13 +206,13 @@ function pinModal({ mode, title, detail }) {
           e.preventDefault();
           const pin = pinInput.value.trim();
           if (!/^\d{4,8}$/.test(pin)) {
-            window.myHub?.showToast?.(t('sensitive.pinInvalid'), 'danger') ?? window.yuvomi?.showToast?.(t('sensitive.pinInvalid'), 'danger');
+            showToast(t('sensitive.pinInvalid'), 'danger');
             return;
           }
           if (isSetup) {
             const confirm = confirmInput?.value?.trim() ?? '';
             if (pin !== confirm) {
-              window.myHub?.showToast?.(t('sensitive.pinMismatch'), 'danger') ?? window.yuvomi?.showToast?.(t('sensitive.pinMismatch'), 'danger');
+              showToast(t('sensitive.pinMismatch'), 'danger');
               return;
             }
             localStorage.setItem(PIN_HASH_KEY, await hashPin(pin));
@@ -177,7 +221,7 @@ function pinModal({ mode, title, detail }) {
           }
           const stored = localStorage.getItem(PIN_HASH_KEY);
           if (!stored || stored !== await hashPin(pin)) {
-            window.myHub?.showToast?.(t('sensitive.unlockFailed'), 'danger') ?? window.yuvomi?.showToast?.(t('sensitive.unlockFailed'), 'danger');
+            showToast(t('sensitive.unlockFailed'), 'danger');
             return;
           }
           finish(true);
@@ -189,12 +233,10 @@ function pinModal({ mode, title, detail }) {
 }
 
 /**
- * Prompt until unlocked, setup on first use, or cancelled.
+ * Verifies PIN/fingerprint without granting global or per-note unlock.
  * @returns {Promise<boolean>}
  */
-export async function ensureSensitiveUnlocked() {
-  if (isSensitiveUnlocked()) return true;
-
+async function verifyVaultAccess({ detail } = {}) {
   const platform = await isPlatformAuthAvailable();
 
   if (!hasVaultPin() && !hasWebAuthnCredential()) {
@@ -207,43 +249,46 @@ export async function ensureSensitiveUnlocked() {
     if (platform) {
       try { await registerWebAuthn(); } catch { /* PIN still works */ }
     }
-    markSensitiveUnlocked();
     return true;
   }
 
   if (hasWebAuthnCredential() && platform) {
     const ok = await unlockWithWebAuthn();
-    if (ok) {
-      markSensitiveUnlocked();
-      return true;
-    }
+    if (ok) return true;
   }
 
   if (hasVaultPin()) {
-    const ok = await pinModal({
+    return await pinModal({
       mode: 'unlock',
       title: t('sensitive.unlockTitle'),
-      detail: t('sensitive.unlockDetail'),
+      detail: detail ?? t('sensitive.unlockDetail'),
     });
-    if (ok) {
-      markSensitiveUnlocked();
-      return true;
-    }
-    return false;
   }
 
   return false;
 }
 
 /**
- * Toolbar lock toggle: locks immediately or prompts unlock.
- * @returns {Promise<boolean>} new unlocked state
+ * Budget-wide unlock (masked amounts).
+ * @returns {Promise<boolean>}
  */
-export async function toggleSensitiveLock() {
-  if (isSensitiveUnlocked()) {
-    lockSensitive();
-    return false;
-  }
-  const ok = await ensureSensitiveUnlocked();
+export async function ensureSensitiveUnlocked() {
+  if (isSensitiveUnlocked()) return true;
+  const ok = await verifyVaultAccess();
+  if (ok) markSensitiveUnlocked();
   return ok;
+}
+
+/**
+ * Unlock a single secret note (does not reveal other secret notes).
+ * @returns {Promise<boolean>}
+ */
+export async function unlockSecretNote(noteId) {
+  if (isSecretNoteUnlocked(noteId)) return true;
+  const ok = await verifyVaultAccess({ detail: t('sensitive.unlockNoteDetail') });
+  if (!ok) return false;
+  const map = pruneExpiredSecretUnlocks(readSecretNoteUnlocks());
+  map[String(noteId)] = Date.now();
+  writeSecretNoteUnlocks(map);
+  return true;
 }

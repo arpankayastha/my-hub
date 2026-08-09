@@ -2,6 +2,12 @@
 
 All notable changes to **My Hub** (this personal fork).
 
+## [1.1.35] - 2026-08-09
+
+### Fixed
+- Board: deleting a note asks for confirmation before removal.
+- Secret notes unlock individually — opening one secret note no longer reveals every other secret note on the board.
+
 ## [1.1.34] - 2026-08-09
 
 ### Added
