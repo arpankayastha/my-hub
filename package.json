@@ -199,7 +199,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "puppeteer": "^25.4.0",
+    "puppeteer": "^25.5.0",
     "sharp": "^0.35.3"
   },
   "allowScripts": {
